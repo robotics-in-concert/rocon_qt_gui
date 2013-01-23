@@ -15,11 +15,10 @@ from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractList
 from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QCompleter, QBrush, QColor, QPen
 from python_qt_binding.QtSvg import QSvgGenerator
 
-import roslib
-roslib.load_manifest('rocon_gateway_graph')
 import rosgraph.impl.graph
 import rosservice
 import rostopic
+import rospkg
 
 from .dotcode import RosGraphDotcodeGenerator, GATEWAY_GATEWAY_GRAPH, GATEWAY_FLIPPED_GRAPH, GATEWAY_PULLED_GRAPH
 from .interactive_graphics_view import InteractiveGraphicsView
@@ -101,7 +100,9 @@ class GatewayGraph(Plugin):
         self.dot_to_qt = DotToQtGenerator()
         self._graph = Graph()
 
-        ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ui', 'gateway_graph.ui')
+        rospack = rospkg.RosPack()
+        ui_file = os.path.join(rospack.get_path('rocon_gateway_graph'), 'ui', 'gateway_graph.ui')
+        #ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ui', 'gateway_graph.ui')
         loadUi(ui_file, self._widget, {'InteractiveGraphicsView': InteractiveGraphicsView})
         self._widget.setObjectName('GatewayGraphUi')
         if context.serial_number() > 1:

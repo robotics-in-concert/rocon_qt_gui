@@ -5,7 +5,7 @@
     </description>
     <qtgui>
       <label>Gateway Graph</label>
-      <icon type="file">src/rocon_gateway_graph/resources/images/rocon_logo.png</icon>
+      <icon type="file">resources/images/rocon_logo.png</icon>
       <statustip>Gateway Graph for Multimaster</statustip>
     </qtgui>
   </class>
