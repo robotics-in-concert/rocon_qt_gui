@@ -19,7 +19,7 @@
   <run_depend>rqt_gui_py</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>rocon_gateway</run_depend>
-  <run_depend>rospkg</run_depend>
+  <run_depend>python-rospkg</run_depend>
   
   <export>
     <rqt_gui plugin="${prefix}/gateway_plugin.xml"/>
