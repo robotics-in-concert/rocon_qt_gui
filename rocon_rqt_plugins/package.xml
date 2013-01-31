@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+  <name>rocon_rqt_plugins</name>
+  <version>0.2.0</version>
+  <description>
+    Rqt plugins for monitoring and interacting with the rocon framework.
+  </description>
+  <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
+  <license>BSD</license>
+  <url type="website">http://www.ros.org/wiki/rocon_rqt_plugins</url>
+  <url type="repository">https://github.com/robotics-in-concert/rocon_rqt_plugins</url>
+  <url type="bugtracker">https://github.com/robotics-in-concert/rocon_rqt_plugins/issues</url>
+  <author email="d.stonier@gmail.com">Daniel Stonier</author>
+
+  <run_depend>rocon_gateway_graph</run_depend>
+  
+  <export>
+    <metapackage/>
+  </export>
+</package>
+
