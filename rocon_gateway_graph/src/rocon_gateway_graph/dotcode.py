@@ -9,7 +9,7 @@
 
 import re
 import copy
-
+import rocon_utilities
 import rosgraph.impl.graph
 import roslib
 
@@ -72,8 +72,12 @@ class RosGraphDotcodeGenerator:
         else:
             dotcode_factory.add_node_to_graph(dotgraph,
                                               nodename=node,
+                                              #nodename=rocon_utilities.gateway_basename(node),
+                                              #nodelabel=rocon_utilities.gateway_basename(node),
                                               shape='ellipse',
-                                              url=node)
+                                              url=rocon_utilities.gateway_basename(node),
+                                              #url=node
+                                              )
 
     def _add_topic_node(self, node, dotcode_factory, dotgraph):
         label = rosgraph.impl.graph.node_topic(node)
