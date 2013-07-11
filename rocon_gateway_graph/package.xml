@@ -10,11 +10,12 @@
   <url type="website">http://wiki.ros.org/rocon_gateway_graph</url>
   <url type="repository">https://github.com/robotics-in-concert/rocon_multimaster</url>
   <url type="bugtracker">https://github.com/robotics-in-concert/rocon_multimaster/issues</url>
-  <author email="d.stonier@gmail.com">Daniel Stonier</author> -->
+  <author email="d.stonier@gmail.com">Daniel Stonier</author> 
 
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>qt_gui_py_common</run_depend>
+  <run_depend>qt_dotgraph</run_depend>
   <run_depend>rqt_gui</run_depend>
   <run_depend>rqt_gui_py</run_depend>
   <run_depend>rospy</run_depend>
