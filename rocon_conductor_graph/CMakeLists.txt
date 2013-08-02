@@ -118,7 +118,7 @@ catkin_package(
 
 
 install(
-    FILES gateway_plugin.xml 
+    FILES conductor_plugin.xml 
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
 
