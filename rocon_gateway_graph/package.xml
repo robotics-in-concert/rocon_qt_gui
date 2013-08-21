@@ -2,8 +2,8 @@
   <name>rocon_gateway_graph</name>
   <version>0.5.2</version>
   <description>
-    A hub acts as a shared key-value store for multiple ros 
-    systems (primarily used by gateways).
+    An rqt plugin that displays the gateway graph across multiple ros masters from
+    the perspective of the master executing the plugin.
   </description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <license>BSD</license>
