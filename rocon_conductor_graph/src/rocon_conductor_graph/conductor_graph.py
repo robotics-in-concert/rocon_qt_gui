@@ -11,7 +11,7 @@ from __future__ import division
 import os
 
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal
+from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot,SIGNAL,SLOT
 from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QCompleter, QBrush, QColor, QPen, QPushButton, QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout
 from python_qt_binding.QtSvg import QSvgGenerator
 
@@ -26,6 +26,8 @@ import rosnode
 import roslib
 import rospy
 from concert_msgs.msg import ConcertClients
+from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
+from rocon_app_manager_msgs.msg import PlatformInfo
 ###########################
 
 from .dotcode import RosGraphDotcodeGenerator
@@ -155,11 +157,33 @@ class ConductorGraph(Plugin):
         self._deferred_fit_in_view.emit()
         
         #add by dwlee
+        self._widget.tabWidget.currentChanged.connect(lambda index: self._test_function(index));
         self._client_list_update_signal.connect(self._update_conductor_graph)
         rospy.Subscriber("/concert/list_concert_clients", ConcertClients, self._update_client_list)
-
+        
         context.add_widget(self._widget)
   
+    def _test_function(self, index):
+
+        # get tab widget handle
+        service_text_widget = None        
+        cur_tab_widget = self._widget.tabWidget.currentWidget()
+        
+        if cur_tab_widget == None:
+            return
+        
+        object_name = 'services_text_widget'
+        for k in cur_tab_widget.children():
+            if k.objectName().count(object_name) >= 1 :
+                service_text_widget = k
+                break
+       
+        if service_text_widget == None:
+            return
+            
+        service_text_widget.clear()
+
+        
     def restore_settings(self, plugin_settings, instance_settings):
         self.initialised = True
         self._refresh_rosgraph()
@@ -170,7 +194,6 @@ class ConductorGraph(Plugin):
     def _update_conductor_graph(self):
         # re-enable controls customizing fetched ROS graph
 
-        self._graph.update()
         self._refresh_rosgraph()
         self._update_client_tab()
 
@@ -195,40 +218,99 @@ class ConductorGraph(Plugin):
         pass
     
     def _start_service(self,node_name,service_name):
-        print node_name+":\n "+service_name
+
+        # get tab widget handle
+        service_text_widget = None
+
+        cur_tab_widget = self._widget.tabWidget.currentWidget()        
+        if cur_tab_widget == None:
+            return
             
+        object_name = 'services_text_widget'
+        for k in cur_tab_widget.children():
+            if k.objectName().count(object_name) >= 1 :
+                service_text_widget = k
+                break
+       
+        if service_text_widget == None:
+            return
+            
+        service_text_widget.clear()
+        
+        service = self._graph._client_info_list[node_name]['gateway_name']+"/"+service_name  
+        info_text = '' 
+        if service_name == 'status':
+            service_handle = rospy.ServiceProxy(service, Status)
+            call_result = service_handle()
+            
+            info_text = "<html>"
+            info_text += "<p>-------------------------------------------</p>"
+            info_text += "<p><b>application_namespace: </b>" +call_result.application_namespace+"</p>"
+            info_text += "<p><b>remote_controller: </b>" +call_result.remote_controller+"</p>"
+            info_text += "<p><b>app_status: </b>" +call_result.app_status+"</p>"
+            info_text +="</html>"
+            
+        elif service_name == 'platform_info':
+        
+            service_handle = rospy.ServiceProxy(service, GetPlatformInfo)
+            call_result = service_handle()
+            
+            info_text = "<html>"
+            info_text += "<p>-------------------------------------------</p>"
+            info_text += "<p><b>platform: </b>" +call_result.platform_info.platform+"</p>"
+            info_text += "<p><b>system: </b>" +call_result.platform_info.system+"</p>"
+            info_text += "<p><b>robot: </b>" +call_result.platform_info.robot+"</p>"
+            info_text += "<p><b>name: </b>" +call_result.platform_info.name+"</p>"
+            info_text +="</html>"
+
+        elif service_name == 'invite':
+            print 'invite'
+        
+        elif service_name == 'start_app':
+            print 'start app'
+        
+        elif service_name == 'stop_app':
+            service_handle = rospy.ServiceProxy(service, StopApp)
+            call_result = service_handle()
+            print 'stop app'
+        else:
+            print 'has no service'
+
+        service_text_widget.appendHtml(info_text)
+        
+        
     def _update_client_tab(self):
         self._widget.tabWidget.clear()    
         for k in self._graph._client_info_list.values(): 
             main_widget=QWidget()
            
             ver_layout = QVBoxLayout(main_widget)
+           
             ver_layout.setContentsMargins (9,9,9,9)
             ver_layout.setSizeConstraint (ver_layout.SetDefaultConstraint)
             
             sub_widget = QWidget()
+            sub_widget.setAccessibleName('sub_widget')
             btn_grid_layout = QGridLayout(sub_widget)
+
             btn_grid_layout.setContentsMargins (9,9,9,9)
 
             btn_grid_layout.setColumnStretch (1, 0)
             btn_grid_layout.setRowStretch (2, 0)
 
             btn_invite = QPushButton("invite")
-            btn_list_apps = QPushButton("list_apps")
             btn_platform_info = QPushButton("platform_info")
             btn_status = QPushButton("status")
             btn_start_app = QPushButton("start_app")
             btn_stop_app = QPushButton("stop_app")            
 
             btn_invite.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"invite"))
-            btn_list_apps.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"list_apps"))  
             btn_platform_info.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"platform_info"))  
             btn_status.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"status"))  
             btn_start_app.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"start_app"))  
             btn_stop_app.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"stop_app"))  
                     
             btn_grid_layout.addWidget(btn_invite)
-            btn_grid_layout.addWidget(btn_list_apps)
             btn_grid_layout.addWidget(btn_platform_info)
             btn_grid_layout.addWidget(btn_status)
             btn_grid_layout.addWidget(btn_start_app)
@@ -236,11 +318,22 @@ class ConductorGraph(Plugin):
              
             ver_layout.addWidget(sub_widget)            
             
-            text_widget = QPlainTextEdit()
-            text_widget.appendHtml(k["tab_context"])
-            ver_layout.addWidget(text_widget)
+            app_context_widget = QPlainTextEdit()
+            app_context_widget.setObjectName(k["app_name"]+'_'+'app_context_widget')
+            app_context_widget.setAccessibleName('app_context_widget')
+            app_context_widget.appendHtml(k["app_context"])
             
-            self._widget.tabWidget.addTab(main_widget, k["tab_name"]);
+            ver_layout.addWidget(app_context_widget)
+            
+            services_text_widget = QPlainTextEdit()
+            services_text_widget.setObjectName(k["app_name"]+'_'+'services_text_widget')
+            ver_layout.addWidget(services_text_widget)
+            
+            self._widget.tabWidget.addTab(main_widget, k["app_name"]);
+
+            
+
+            
         
     def _redraw_graph_view(self):
         self._scene.clear()
@@ -263,6 +356,12 @@ class ConductorGraph(Plugin):
                 royal_blue = QColor(65, 105, 255)
                 node_item._default_color = royal_blue
                 node_item.set_color(royal_blue)
+            
+            #set the uuid
+            
+            #print self._graph._client_info_list
+            if self._graph._client_info_list.has_key(str(node_item._label.text())):         
+                node_item.setToolTip(self._graph._client_info_list[node_item._label.text()]['uuid'])
           
             # redefine mouse event
             self._node_item_events[node_item._label.text()] = NodeEventHandler(self._widget.tabWidget,node_item,node_item.mouseDoubleClickEvent);

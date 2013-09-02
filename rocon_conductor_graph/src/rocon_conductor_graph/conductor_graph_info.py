@@ -6,6 +6,9 @@ import rospy
 import rosgraph
 from rosgraph.impl.graph import Edge, EdgeList
 from concert_msgs.msg import ConcertClients
+from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
+from rocon_app_manager_msgs.msg import PlatformInfo
+
 import random
 from std_msgs.msg import String
 ##############################################################################
@@ -46,35 +49,41 @@ class ConductorGraphInfo(object):
             if k.client_status == 'connected':
                 self.gateway_edges.add(Edge(self._concert_conductor_name,k.name,k.client_status))
         
-        #update tab widget info
+        #update app widget info
         self._client_info_list = {}
         for k in data.clients:
             #temp function
             connection_strength = self.set_random_connection_strength()
-        
+            
+            #uuid
+            service = k.gateway_name+'/'+'platform_info'
+            service_handle = rospy.ServiceProxy(service, GetPlatformInfo)
+            call_result = service_handle()
+            if k.gateway_name.count(call_result.platform_info.name)>0:                    
+                uuid = k.gateway_name.replace(call_result.platform_info.name,'')
+            else:
+                uuid ="None"
+                
             #html
-            tab_context = "<html>"
-            tab_context += "<p>-------------------------------------------</p>"
-            tab_context += "<p><b>name: </b>" +k.name+"</p>"
-            tab_context += "<p><b>gateway_name: </b>" +k.gateway_name+"</p>"
-            tab_context += "<p><b>platform: </b>" +k.platform+"</p>"
-            tab_context += "<p><b>system: </b>" +k.system+"</p>"
-            tab_context += "<p><b>robot: </b>" +k.robot+"</p>"
-            tab_context += "<p><b>client_status: </b>" +k.client_status+"</p>"
-            tab_context += "<p><b>connection_strengh: </b>" +connection_strength+"</p>"
-            tab_context +="</html>"
-            tab_name = k.name            
+            app_context = "<html>"
+            app_context += "<p>-------------------------------------------</p>"
+            app_context += "<p><b>name: </b>" +k.name+"</p>"
+            app_context += "<p><b>gateway_name: </b>" +k.gateway_name+"</p>"
+            app_context += "<p><b>platform: </b>" +k.platform+"</p>"
+            app_context += "<p><b>system: </b>" +k.system+"</p>"
+            app_context += "<p><b>robot: </b>" +k.robot+"</p>"
+            app_context += "<p><b>client_status: </b>" +k.client_status+"</p>"
+            app_context += "<p><b>connection_strengh: </b>" +connection_strength+"</p>"
+            app_context +="</html>"
+            app_name = k.name            
            
-            self._client_info_list[tab_name]={}
-            self._client_info_list[tab_name]["tab_name"]=tab_name
-            self._client_info_list[tab_name]["tab_context"]=tab_context
-            self._client_info_list[tab_name]["connection_strength"]=connection_strength  
-        
-    def update(self):
-        print "update info"
-        pass       
-        # Gateways
-    
+            self._client_info_list[app_name]={}
+            self._client_info_list[app_name]["app_name"]=app_name
+            self._client_info_list[app_name]["gateway_name"]=k.gateway_name
+            self._client_info_list[app_name]["app_context"]=app_context
+            self._client_info_list[app_name]["connection_strength"]=connection_strength  
+            self._client_info_list[app_name]["uuid"]= uuid
+
     def set_random_connection_strength(self):
         connection_strength = random.randrange(1,6)
         if connection_strength == 1:
