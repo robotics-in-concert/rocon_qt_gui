@@ -33,6 +33,7 @@ class ConductorGraphInfo(object):
         
         rospy.Subscriber("/concert/list_concert_clients", ConcertClients, self.update_client_list)
         self._client_info_list = {}
+        
        
 
     def update_client_list(self, data):
@@ -50,9 +51,8 @@ class ConductorGraphInfo(object):
                 self.gateway_edges.add(Edge(self._concert_conductor_name,k.name,k.client_status))
         
         #update app widget info
-        self._client_info_list = {}
         for k in data.clients:
-            #temp function
+            #temp function for assigning connection strength
             connection_strength = self.set_random_connection_strength()
             
             #uuid
@@ -77,12 +77,25 @@ class ConductorGraphInfo(object):
             app_context +="</html>"
             app_name = k.name            
            
-            self._client_info_list[app_name]={}
+            if self._client_info_list.has_key(app_name):
+                self._client_info_list[app_name]["isNew"] = False
+            else:
+                self._client_info_list[app_name]={}
+                self._client_info_list[app_name]["isNew"] = True
+
+            self._client_info_list[app_name]["isCheck"]=True
             self._client_info_list[app_name]["app_name"]=app_name
             self._client_info_list[app_name]["gateway_name"]=k.gateway_name
             self._client_info_list[app_name]["app_context"]=app_context
             self._client_info_list[app_name]["connection_strength"]=connection_strength  
             self._client_info_list[app_name]["uuid"]= uuid
+  
+        for k in self._client_info_list.keys():
+            if self._client_info_list[k]["isCheck"] == True:
+                self._client_info_list[k]["isCheck"] = False
+            else:
+                del self._client_info_list[k]
+
 
     def set_random_connection_strength(self):
         connection_strength = random.randrange(1,6)

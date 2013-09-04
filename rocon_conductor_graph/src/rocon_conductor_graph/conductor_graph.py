@@ -12,7 +12,7 @@ import os
 
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot,SIGNAL,SLOT
-from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QCompleter, QBrush, QColor, QPen, QPushButton, QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout
+from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox, QSizePolicy,QTextEdit ,QCompleter, QBrush,QDialog, QColor, QPen, QPushButton, QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
 from python_qt_binding.QtSvg import QSvgGenerator
 
 import rosgraph.impl.graph
@@ -144,7 +144,8 @@ class ConductorGraph(Plugin):
         self._scene.setBackgroundBrush(Qt.white)
         self._widget.graphics_view.setScene(self._scene)
 
-        self._widget.refresh_graph_push_button.setIcon(QIcon.fromTheme('view-refresh'))
+        #self._widget.refresh_graph_push_button.setIcon(QIcon.fromTheme('view-refresh'))
+        self._widget.refresh_graph_push_button.setIcon(QIcon.fromTheme('window-new'))
         self._widget.refresh_graph_push_button.pressed.connect(self._update_conductor_graph)
 
         self._widget.highlight_connections_check_box.toggled.connect(self._redraw_graph_view)
@@ -239,6 +240,7 @@ class ConductorGraph(Plugin):
         
         service = self._graph._client_info_list[node_name]['gateway_name']+"/"+service_name  
         info_text = '' 
+        
         if service_name == 'status':
             service_handle = rospy.ServiceProxy(service, Status)
             call_result = service_handle()
@@ -264,9 +266,158 @@ class ConductorGraph(Plugin):
             info_text +="</html>"
 
         elif service_name == 'invite':
-            print 'invite'
-        
+            #sesrvice
+            service_handle = rospy.ServiceProxy(service, Invite)            
+            #dialog
+            dlg = QDialog(self._widget) 
+            
+            dlg.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
+            dlg.setMinimumSize(500,0)
+            dlg_rect = dlg.geometry()
+
+            #dialog layout
+            ver_layout = QVBoxLayout(dlg)           
+            ver_layout.setContentsMargins (9,9,9,9)
+            
+            #param layout
+            text_grid_sub_widget = QWidget()
+            text_grid_layout = QGridLayout(text_grid_sub_widget)            
+            text_grid_layout.setColumnStretch (1, 0)
+            text_grid_layout.setRowStretch (2, 0)
+
+            #param 1
+            remote_target_name =u""
+            title_widget1 = QLabel("remote_target_name: ")
+            context_widget1 = QTextEdit()
+            context_widget1.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
+            context_widget1.setMinimumSize(0,30)
+            context_widget1.append("")
+            
+            #param 2
+            application_namespace=u""
+            title_widget2 = QLabel("application_namespace: ")
+            context_widget2 = QTextEdit()
+            context_widget2.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
+            context_widget2.setMinimumSize(0,30)
+            context_widget2.append("")
+            
+            #param 3
+            cancel=False
+            title_widget3 = QLabel("cancel: ")           
+            context_widget3 = QComboBox() 
+            context_widget3.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
+            context_widget3.setMinimumSize(0,30)
+            
+            context_widget3.addItem("True",True)
+            context_widget3.addItem("False",False)
+            
+            #add param
+            text_grid_layout.addWidget(title_widget1)
+            text_grid_layout.addWidget(context_widget1)
+            
+            text_grid_layout.addWidget(title_widget2)
+            text_grid_layout.addWidget(context_widget2)
+            
+            text_grid_layout.addWidget(title_widget3)
+            text_grid_layout.addWidget(context_widget3)
+            
+            #add param layout
+            ver_layout.addWidget(text_grid_sub_widget) 
+            
+            #button layout
+            button_hor_sub_widget = QWidget()
+            button_hor_layout = QHBoxLayout(button_hor_sub_widget)
+
+            #button
+            btn_call = QPushButton("Call")
+            btn_cancel = QPushButton("cancel")
+    
+            btn_call.clicked.connect(lambda: dlg.done(0))
+            btn_call.clicked.connect(lambda : service_handle(context_widget1.toPlainText(),
+                                                        context_widget2.toPlainText(),
+                                                        context_widget3.itemData(context_widget3.currentIndex())
+                                                        ))
+            
+            btn_cancel.clicked.connect(lambda: dlg.done(0))
+            
+            #add button
+            button_hor_layout.addWidget(btn_call)            
+            button_hor_layout.addWidget(btn_cancel)
+
+            #add button layout            
+            ver_layout.addWidget(button_hor_sub_widget)
+
+            dlg.setVisible(True)
+
         elif service_name == 'start_app':
+                        #sesrvice
+            service_handle = rospy.ServiceProxy(service, StartApp)            
+            #dialog
+            dlg = QDialog(self._widget) 
+            
+            dlg.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
+            dlg.setMinimumSize(500,0)
+            dlg_rect = dlg.geometry()
+
+            #dialog layout
+            ver_layout = QVBoxLayout(dlg)           
+            ver_layout.setContentsMargins (9,9,9,9)
+            
+            #param layout
+            text_grid_sub_widget = QWidget()
+            text_grid_layout = QGridLayout(text_grid_sub_widget)            
+            text_grid_layout.setColumnStretch (1, 0)
+            text_grid_layout.setRowStretch (2, 0)
+
+            #param 1
+            name =u""
+            title_widget1 = QLabel("name: ")
+            context_widget1 = QTextEdit()
+            context_widget1.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
+            context_widget1.setMinimumSize(0,30)
+            context_widget1.append("")
+            
+            #param 2
+            cancel=False
+            title_widget2 = QLabel("remappings: ")           
+            context_widget2 = QTextEdit()
+            context_widget2.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
+            context_widget2.setMinimumSize(0,30)
+            context_widget2.append("")
+            
+            #add param
+            text_grid_layout.addWidget(title_widget1)
+            text_grid_layout.addWidget(context_widget1)
+            
+            text_grid_layout.addWidget(title_widget2)
+            text_grid_layout.addWidget(context_widget2)
+         
+            #add param layout
+            ver_layout.addWidget(text_grid_sub_widget) 
+            
+            #button layout
+            button_hor_sub_widget = QWidget()
+            button_hor_layout = QHBoxLayout(button_hor_sub_widget)
+
+            #button
+            btn_call = QPushButton("Call")
+            btn_cancel = QPushButton("cancel")
+    
+            btn_call.clicked.connect(lambda: dlg.done(0))
+            btn_call.clicked.connect(lambda : service_handle(context_widget1.toPlainText(),
+                                                        []))
+            
+            btn_cancel.clicked.connect(lambda: dlg.done(0))
+            
+            #add button
+            button_hor_layout.addWidget(btn_call)            
+            button_hor_layout.addWidget(btn_cancel)
+
+            #add button layout            
+            ver_layout.addWidget(button_hor_sub_widget)
+
+            dlg.setVisible(True)
+            
             print 'start app'
         
         elif service_name == 'stop_app':
@@ -329,11 +480,13 @@ class ConductorGraph(Plugin):
             services_text_widget.setObjectName(k["app_name"]+'_'+'services_text_widget')
             ver_layout.addWidget(services_text_widget)
             
-            self._widget.tabWidget.addTab(main_widget, k["app_name"]);
-
+            # new icon
+            path = ""
+            if k["isNew"] == True:
+                path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/new.gif")            
             
-
-            
+            #add tab
+            self._widget.tabWidget.addTab(main_widget,QIcon(path), k["app_name"]);
         
     def _redraw_graph_view(self):
         self._scene.clear()
