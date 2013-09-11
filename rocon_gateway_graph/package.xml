@@ -1,6 +1,6 @@
 <package>
   <name>rocon_gateway_graph</name>
-  <version>0.5.3</version>
+  <version>0.5.4</version>
   <description>
     An rqt plugin that displays the gateway graph across multiple ros masters from
     the perspective of the master executing the plugin.
