@@ -2,6 +2,10 @@
 Changelog for package rocon_gateway_graph
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.4 (2013-09-11)
+------------------
+* fixed the package description.
+
 0.5.3 (2013-08-30)
 ------------------
 * fixed the package description.

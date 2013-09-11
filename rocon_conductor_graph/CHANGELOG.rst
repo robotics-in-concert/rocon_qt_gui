@@ -2,6 +2,11 @@
 Changelog for package rocon_conductor_graph
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.4 (2013-09-11)
+------------------
+* available using service call button and info new client
+* add CHANGELOG files
+
 0.5.3 (2013-08-30)
 ------------------
 * missing file
