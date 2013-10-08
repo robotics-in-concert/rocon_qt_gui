@@ -350,7 +350,7 @@ class ConductorGraph(Plugin):
             dlg.setVisible(True)
 
         elif service_name == 'start_app':
-                        #sesrvice
+            #service
             service_handle = rospy.ServiceProxy(service, StartApp)            
             #dialog
             dlg = QDialog(self._widget) 

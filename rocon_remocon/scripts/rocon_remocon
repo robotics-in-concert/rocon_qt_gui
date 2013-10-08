@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.github.com/robotics-in-concert/rocon_multimaster/master/rocon_remote_control/LICENSE
+#
+##############################################################################
+# Imports
+##############################################################################
+
+import sys, signal
+#from rqt_gui.main import Main
+from PyQt4.QtGui import QAction, QApplication, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
+import remocon
+
+##############################################################################
+# Main
+##############################################################################.
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    myapp = remocon.Remocon(None, "My System Tray App")
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    sys.exit(app.exec_())
+
