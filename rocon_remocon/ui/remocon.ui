@@ -22,7 +22,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QListWidget" name="listWidget">
+    <widget class="QListWidget" name="list_widget">
      <property name="movement">
       <enum>QListView::Static</enum>
      </property>
