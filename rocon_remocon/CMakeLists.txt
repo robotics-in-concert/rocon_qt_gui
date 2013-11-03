@@ -115,10 +115,11 @@ catkin_package(
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-install(
-    FILES remocon_plugin.xml 
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-    )
+# DJS : not valid anymore.
+#install(
+#    FILES remocon_plugin.xml 
+#    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+#    )
 
 install(DIRECTORY resources
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
