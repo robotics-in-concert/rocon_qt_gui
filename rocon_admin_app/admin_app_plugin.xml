@@ -1,0 +1,12 @@
+<library path="src">
+  <class name="Admin App" type="rocon_admin_app.admin_app.AdminApp" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      Administartor application for enable and disable service
+    </description>
+    <qtgui>
+      <label>Admin App</label>
+      <icon type="file">./resources/images/rocon_logo.png</icon>
+      <statustip>Administrator Application for managing service</statustip>
+    </qtgui>
+  </class>
+</library>

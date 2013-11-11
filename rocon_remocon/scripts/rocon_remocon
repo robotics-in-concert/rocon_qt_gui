@@ -7,9 +7,10 @@
 # Imports
 ##############################################################################
 
-import sys, signal
+import sys, signal, string, atexit
 #from rqt_gui.main import Main
 from PyQt4.QtGui import QAction, QApplication, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
+from PyQt4.QtCore import QTimer
 
 from os import path
 src_dir = path.join(path.dirname(__file__), '../src/rocon_remocon')
@@ -17,14 +18,23 @@ sys.path.append(src_dir)
 
 import remocon
 
+def signal_handler(signum, f): 
+    if signum == signal.SIGINT:
+        sys.exit()
+
 ##############################################################################
 # Main
 ##############################################################################.
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
+    
     app = QApplication(sys.argv)
-    myapp = remocon.Remocon(None, "My System Tray App")
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-    sys.exit(app.exec_())
+    # Let the interpreter run each 200 ms.
+    timer = QTimer()
+    timer.start(200)  
+    timer.timeout.connect(lambda: None)  
+    myapp = remocon.RemoconConcert(None, "My System Tray App")
+    app.exec_()
 
 sys.path.remove(src_dir)
 

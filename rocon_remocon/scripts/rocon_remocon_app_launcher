@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+#
+import sys
+import os
+import subprocess
+import time
+import uuid
+import signal
+import string
+import tempfile
+
+
+import rospy
+import rocon_utilities
+import roslaunch.parent
+
+from rocon_std_msgs.msg import Remapping
+from rocon_std_msgs.msg import KeyValue
+
+launch_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../resources/launch/")
+
+if __name__ == "__main__":
+
+    print len(sys.argv)
+    if len(sys.argv) < 5:
+        print "more the arguments"
+        sys.exit()
+        
+    print sys.argv
+    
+    
+    pkg_name = sys.argv[1] #package_name
+    launch_name = sys.argv[2] #launch_file_name
+    remappings_roles = sys.argv[3] #mapping roles pair
+    parameters_roles = sys.argv[4] #parameters pair
+    remappings = []
+    parameters = []
+    
+    if len(remappings_roles)>0:
+        for k in remappings_roles.split(","):
+            if k.find(':') == -1:
+                continue
+                
+            remap_from = k.split(":")[0]
+            remap_to = k.split(":")[1]
+            remappings.append(Remapping(remap_from,remap_to))
+
+    if len(parameters_roles)>0:
+        for k in parameters_roles.split(","):
+            if k.find(':') == -1:
+                continue
+            key = k.split(":")[0]
+            value = k.split(":")[1]
+            parameters.append(KeyValue(key,value))
+
+    print pkg_name
+    print launch_name
+    print parameters    
+    print remappings
+    
+    full_path =  rocon_utilities.find_resource(pkg_name,launch_name)
+    launch_path =full_path[string.find(full_path, pkg_name)+len(pkg_name):string.find(full_path, launch_name)]   
+
+    temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+    data = '$(find '+pkg_name+')'+launch_path+launch_name
+    launch_text = '<launch>\n  <include file="%s"/>\n</launch>\n' % (data)
+    temp.write(launch_text)
+    temp.close()  # unlink it later
+    
+    _launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
+                                                    [temp.name],
+                                                    is_core=False,)    
+    #add parameters
+    #for k in parameters:
+    #    N.remap_args.append([k.remap_from, k.remap_to])
+
+    _launch._load_config()
+    remap_size = len(remappings)
+    #print dir(_launch.config)
+    for N in _launch.config.nodes:
+        for k in remappings:
+            print dir(N)
+            N.remap_args.append([k.remap_from, k.remap_to])
+            print N.to_xml()
+    
+    _launch.start()
+    _launch.spin()
