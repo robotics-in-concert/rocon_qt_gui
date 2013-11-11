@@ -26,6 +26,11 @@ def signal_handler(signum, f):
 # Main
 ##############################################################################.
 if __name__ == "__main__":
+    host_name='127.0.0.1'
+    
+    if len(sys.argv) > 1:
+        host_name = sys.argv[1] #name
+
     signal.signal(signal.SIGINT, signal_handler)
     
     app = QApplication(sys.argv)
@@ -33,7 +38,8 @@ if __name__ == "__main__":
     timer = QTimer()
     timer.start(200)  
     timer.timeout.connect(lambda: None)  
-    myapp = remocon.RemoconConcert(None, "My System Tray App")
+    myapp = remocon.RemoconConcert(None, "My System Tray App",host_name)
+    
     app.exec_()
 
 sys.path.remove(src_dir)

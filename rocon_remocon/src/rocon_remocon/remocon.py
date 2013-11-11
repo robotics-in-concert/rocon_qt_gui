@@ -29,40 +29,40 @@ from PyQt4.QtSvg import QSvgGenerator
 from remocon_info import RemoconInfo
 
 class RemoconRole(QMainWindow):
-    def __init__(self, parent, title,concert_index ="", concert_name = "",concert_ip = '127.0.0.1'):
-        self.concert_index = concert_index
-        self.concert_ip = concert_ip
-        self.concert_name = concert_name
-        
-        self._context = parent
+    def __init__(self, parent, title,concert_index="", concert_name="", concert_ip='127.0.0.1', host_name='127.0.0.1'):
+        self.concert_index= concert_index
+        self.concert_ip= concert_ip
+        self.concert_name= concert_name    
+        self.host_name= host_name    
+        self._context= parent
       
         
         super(RemoconRole, self).__init__(parent)
-        self.initialised = False
+        self.initialised= False
         
-        self._widget_app_list = QWidget()                
-        self._widget_role_list = QWidget()
+        self._widget_app_list= QWidget()                
+        self._widget_role_list= QWidget()
         
-        self.concert_list = {}
+        self.concert_list= {}
         
         self.role_list= {}
-        self.cur_selected_role = 0
+        self.cur_selected_role= 0
         
-        self.app_list = {}
-        self.cur_selected_app = 0
+        self.app_list= {}
+        self.cur_selected_app= 0
         
-        self.remocon_info = RemoconInfo()
+        self.remocon_info= RemoconInfo()
     
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/applist.ui")
+        path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/applist.ui")
         uic.loadUi(path, self._widget_app_list)
         
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/rolelist.ui")
+        path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/rolelist.ui")
         uic.loadUi(path, self._widget_role_list)
        
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/rolelist.ui")
+        path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/rolelist.ui")
        
-        self.cache_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/cache/concert_info_list.cache")
-        self.scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
+        self.cache_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/cache/concert_info_list.cache")
+        self.scripts_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
         
         #role list widget
         self._widget_role_list.back_btn.pressed.connect(self._back_role_list) 
@@ -86,7 +86,7 @@ class RemoconRole(QMainWindow):
         self._read_cache()
         self._init_role_list()   
         self._widget_role_list.show()
-        self.initialised = True        
+        self.initialised= True        
         
         pass
 ################################################################################################################
@@ -94,7 +94,7 @@ class RemoconRole(QMainWindow):
 ################################################################################################################
     def _init_role_list(self):
         
-        if not self.remocon_info._connect(self.concert_name, self.concert_ip):
+        if not self.remocon_info._connect(self.concert_name, self.concert_ip,self.host_name):
             return False
         atexit.register(self.remocon_info._disconnect)
             
@@ -106,7 +106,7 @@ class RemoconRole(QMainWindow):
         print "_uninit_role_list"
         self.remocon_info._shutdown()
 
-        self.cur_selected_role = 0
+        self.cur_selected_role= 0
         
         #self._widget_main.show()
         #self._widget_main.move(self._widget_role_list.pos())
@@ -117,7 +117,7 @@ class RemoconRole(QMainWindow):
      
     def _select_role_list(self,Item):
         print '_select_role_list: '+ Item.text()
-        self.cur_selected_role = str(Item.text())
+        self.cur_selected_role= str(Item.text())
 
         self.remocon_info._select_role(self.cur_selected_role)
         
@@ -133,34 +133,34 @@ class RemoconRole(QMainWindow):
         pass
     
     def _refresh_role_list(self):
-        self.role_list = {}
+        self.role_list= {}
         self._widget_role_list.role_list_widget.clear()
         
         #get role list
-        self.role_list = self.remocon_info._get_role_list()
+        self.role_list= self.remocon_info._get_role_list()
        
         #set list widget item
         
         for k in self.role_list.values():
             self._widget_role_list.role_list_widget.insertItem(0, k['name'])
             #setting the list font
-            font = self._widget_role_list.role_list_widget.item(0).font()        
+            font= self._widget_role_list.role_list_widget.item(0).font()        
             font.setPointSize(25)
             self._widget_role_list.role_list_widget.item(0).setFont(font)
         
         ##get concert info
             
-        concert_info = self.remocon_info._get_concert_info()
+        concert_info= self.remocon_info._get_concert_info()
         
         
         if concert_info.has_key('name'):
-            self.concert_list[self.concert_index]['name'] = concert_info['name']
+            self.concert_list[self.concert_index]['name']= concert_info['name']
         if concert_info.has_key('description'):
-            self.concert_list[self.concert_index]['description'] = concert_info['description']
+            self.concert_list[self.concert_index]['description']= concert_info['description']
         if concert_info.has_key('icon'):
-            self.concert_list[self.concert_index]['icon'] = concert_info['icon']
+            self.concert_list[self.concert_index]['icon']= concert_info['icon']
 
-        self.concert_list[self.concert_index]['flag'] = '1'        
+        self.concert_list[self.concert_index]['flag']= '1'        
         self._write_cache()
  
 ################################################################################################################
@@ -179,38 +179,38 @@ class RemoconRole(QMainWindow):
         pass    
        
     def _refresh_app_list(self):
-        self.app_list = {}
-        self.app_list = self.remocon_info._get_app_list()
+        self.app_list= {}
+        self.app_list= self.remocon_info._get_app_list()
         self._widget_app_list.app_list_widget.clear()
         
-        index = 0
+        index= 0
         for k in self.app_list.values():
-            k['index'] = index
-            index = index+1
+            k['index']= index
+            index= index+1
             
             self._widget_app_list.app_list_widget.insertItem(0, k['display_name'])
             #setting the list font
-            font = self._widget_app_list.app_list_widget.item(0).font()        
+            font= self._widget_app_list.app_list_widget.item(0).font()        
             font.setPointSize(25)
             self._widget_app_list.app_list_widget.item(0).setFont(font)
         pass
      
     def _select_app_list(self,Item):
         
-        list_widget = Item.listWidget()
-        cur_index = list_widget.count()-list_widget.currentRow()-1
+        list_widget= Item.listWidget()
+        cur_index= list_widget.count()-list_widget.currentRow()-1
         
         for k in self.app_list.values():
-            if(k['index'] == cur_index):
-                self.cur_selected_app = k['name']
+            if(k['index']== cur_index):
+                self.cur_selected_app= k['name']
                 break
     
         self._widget_app_list.app_info.clear()
         #self._widget_app_list.app_info.appendPlainText(selected_app_name)
         
 
-        info_text = ""
-        info_text = "<html>"
+        info_text= ""
+        info_text= "<html>"
         info_text += "<p>-------------------------------------------</p>"
         info_text += "<p><b>name: </b>" + self.app_list[self.cur_selected_app]['name']+"</p>"
 
@@ -250,16 +250,16 @@ class RemoconRole(QMainWindow):
     
     def _write_cache(self):
 
-        cache_concert_info_list = open(self.cache_path,'w')
+        cache_concert_info_list= open(self.cache_path,'w')
         for k in self.concert_list.values():
-            concert_index = k['index']
-            concert_name = k['name']
-            concert_ip = k['ip']
-            concert_icon = k['icon']
-            concert_description = k['description']
-            concert_flag = k['flag']
+            concert_index= k['index']
+            concert_name= k['name']
+            concert_ip= k['ip']
+            concert_icon= k['icon']
+            concert_description= k['description']
+            concert_flag= k['flag']
 
-            concert_elem = '['
+            concert_elem= '['
             concert_elem +='index='+str(concert_index)+','
             concert_elem +='name='+str(concert_name) + ','
             concert_elem +='ip='+str(concert_ip) + ','
@@ -275,24 +275,24 @@ class RemoconRole(QMainWindow):
         
     def _read_cache(self):
         #read cache and display the concert list
-        cache_concert_info_list = open(self.cache_path,'r')
-        lines = cache_concert_info_list.readlines()
+        cache_concert_info_list= open(self.cache_path,'r')
+        lines= cache_concert_info_list.readlines()
         
         for line in lines:
-            concert_index = line[string.find(line, "[index=")+len("[index="):string.find(line, ",name=")]
-            concert_name = line[string.find(line, "name=")+len("name="):string.find(line, ",ip=")]
-            concert_ip = line[string.find(line, ",ip=")+len(",ip="):string.find(line, ",description=")]
-            concert_description = line[string.find(line, ",description=")+len(",description="):string.find(line, ",icon=")]
-            concert_icon = line[string.find(line, ",icon=")+len(",icon="):string.find(line, ",flag=")]
-            concert_flag = line[string.find(line, ",flag=")+len(",flag="):string.find(line, "]")]
+            concert_index= line[string.find(line, "[index=")+len("[index="):string.find(line, ",name=")]
+            concert_name= line[string.find(line, "name=")+len("name="):string.find(line, ",ip=")]
+            concert_ip= line[string.find(line, ",ip=")+len(",ip="):string.find(line, ",description=")]
+            concert_description= line[string.find(line, ",description=")+len(",description="):string.find(line, ",icon=")]
+            concert_icon= line[string.find(line, ",icon=")+len(",icon="):string.find(line, ",flag=")]
+            concert_flag= line[string.find(line, ",flag=")+len(",flag="):string.find(line, "]")]
 
-            self.concert_list[concert_index] = {}
-            self.concert_list[concert_index]['index'] = concert_index
-            self.concert_list[concert_index]['name'] = concert_name
-            self.concert_list[concert_index]['ip'] =  concert_ip
-            self.concert_list[concert_index]['icon'] =  concert_icon
-            self.concert_list[concert_index]['description'] =  concert_description
-            self.concert_list[concert_index]['flag'] =  concert_flag
+            self.concert_list[concert_index]= {}
+            self.concert_list[concert_index]['index']= concert_index
+            self.concert_list[concert_index]['name']= concert_name
+            self.concert_list[concert_index]['ip']=  concert_ip
+            self.concert_list[concert_index]['icon']=  concert_icon
+            self.concert_list[concert_index]['description']=  concert_description
+            self.concert_list[concert_index]['flag']=  concert_flag
        
         cache_concert_info_list.close()
         pass
@@ -302,34 +302,34 @@ class RemoconRole(QMainWindow):
 #########################################################################################################         
 class RemoconConcert(QMainWindow):
     
-    def __init__(self, parent, title):
+    def __init__(self, parent, title, host_name):
         
-        self._context = parent
+        self._context= parent
        
         super(RemoconConcert, self).__init__(parent)
-        self.initialised = False
+        self.initialised= False
         self.setObjectName('Remocon')
-       
-        self._widget_main = QWidget()
+        self.host_name= host_name
+        self._widget_main= QWidget()
           
         
-        self.concert_list = {};
-        self.cur_selected_concert = 0
+        self.concert_list= {};
+        self.cur_selected_concert= 0
         
         self.role_list= {}
-        self.cur_selected_role = 0
+        self.cur_selected_role= 0
         
-        self.app_list = {}
-        self.cur_selected_app = 0
+        self.app_list= {}
+        self.cur_selected_app= 0
         
-        self.cache_concert_info_list = 0
+        self.cache_concert_info_list= 0
 
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/remocon.ui")
+        path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/remocon.ui")
         uic.loadUi(path, self._widget_main)
 
-        self.cache_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/cache/concert_info_list.cache")
-        self.icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/")
-        self.scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
+        self.cache_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/cache/concert_info_list.cache")
+        self.icon_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/")
+        self.scripts_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
         
         #main widget
         self._widget_main.list_widget.itemDoubleClicked.connect(self._select_double_concert) #concert item double click event
@@ -348,20 +348,22 @@ class RemoconConcert(QMainWindow):
 
     def _init(self):
         
-        self._connect_dlg_isValid = False
-        self._current_selected_concert = ""
-        self._current_selected_app = ""
+        self._connect_dlg_isValid= False
+        self._current_selected_concert= ""
+        self._current_selected_app= ""
         self._refresh_concert_list()        
         pass
     
     def _check_up(self):
+        host_name=self.host_name
+        print host_name
         for k in self.concert_list.values():
-            concert_ip = k['ip']
-            output = subprocess.Popen([self.scripts_path+"rocon_remocon_check_up", concert_ip],stdout=subprocess.PIPE) 
-            time_out_cnt = 0
+            concert_ip= k['ip']
+            output= subprocess.Popen([self.scripts_path+"rocon_remocon_check_up", concert_ip,host_name],stdout=subprocess.PIPE) 
+            time_out_cnt= 0
             while True:
                 print "checking: "+concert_ip
-                result = output.poll() 
+                result= output.poll() 
                 if time_out_cnt > 10:
                     
                     print "timeout: "+concert_ip
@@ -369,16 +371,20 @@ class RemoconConcert(QMainWindow):
                         os.kill(output.pid, signal.SIGTERM)  
                     except OSError:
                         print "Error: os.kill(output.pid, signal.SIGTERM)"
-                    k['flag'] = '0'
+                    k['flag']= '0'
                     break
-                elif result == 0:
+                
+                elif result== 0:
                     args=output.communicate()[0]
-                    k['name'] = args.split('\n')[0]
-                    k['description'] = args.split('\n')[1]
-                    k['icon'] = args.split('\n')[2]
+                    k['name']= args.split('\n')[0]
+                    k['description']= args.split('\n')[1]
+                    k['icon']= args.split('\n')[2]
                     
-                    if k['name'] == "Unknown":
-                        k['flag'] = '0'
+                    if k['name']=="Unknown":
+                        k['flag']='0'
+                    else:
+                        k['flag']='1'    
+                        
                     break
                     
                 time.sleep(0.1)        
@@ -387,24 +393,24 @@ class RemoconConcert(QMainWindow):
                 
     def _read_cache(self):
         #read cache and display the concert list
-        cache_concert_info_list = open(self.cache_path,'r')
-        lines = cache_concert_info_list.readlines()
+        cache_concert_info_list= open(self.cache_path,'r')
+        lines= cache_concert_info_list.readlines()
         
         for line in lines:
-            concert_index = line[string.find(line, "[index=")+len("[index="):string.find(line, ",name=")]
-            concert_name = line[string.find(line, "name=")+len("name="):string.find(line, ",ip=")]
-            concert_ip = line[string.find(line, ",ip=")+len(",ip="):string.find(line, ",description=")]
-            concert_description = line[string.find(line, ",description=")+len(",description="):string.find(line, ",icon=")]
-            concert_icon = line[string.find(line, ",icon=")+len(",icon="):string.find(line, ",flag=")]
-            concert_flag = line[string.find(line, ",flag=")+len(",flag="):string.find(line, "]")]
+            concert_index= line[string.find(line, "[index=")+len("[index="):string.find(line, ",name=")]
+            concert_name= line[string.find(line, "name=")+len("name="):string.find(line, ",ip=")]
+            concert_ip= line[string.find(line, ",ip=")+len(",ip="):string.find(line, ",description=")]
+            concert_description= line[string.find(line, ",description=")+len(",description="):string.find(line, ",icon=")]
+            concert_icon= line[string.find(line, ",icon=")+len(",icon="):string.find(line, ",flag=")]
+            concert_flag= line[string.find(line, ",flag=")+len(",flag="):string.find(line, "]")]
           
-            self.concert_list[concert_index] = {}
-            self.concert_list[concert_index]['index'] = concert_index
-            self.concert_list[concert_index]['name'] = concert_name
-            self.concert_list[concert_index]['ip'] =  concert_ip
-            self.concert_list[concert_index]['icon'] =  concert_icon
-            self.concert_list[concert_index]['description'] =  concert_description
-            self.concert_list[concert_index]['flag'] =  concert_flag
+            self.concert_list[concert_index]= {}
+            self.concert_list[concert_index]['index']= concert_index
+            self.concert_list[concert_index]['name']= concert_name
+            self.concert_list[concert_index]['ip']=  concert_ip
+            self.concert_list[concert_index]['icon']=  concert_icon
+            self.concert_list[concert_index]['description']=  concert_description
+            self.concert_list[concert_index]['flag']=  concert_flag
        
         cache_concert_info_list.close()
         
@@ -416,7 +422,7 @@ class RemoconConcert(QMainWindow):
             del self.concert_list[k["index"]]
             
         self._update_concert_list()
-        self.cur_selected_role = 0
+        self.cur_selected_role= 0
         pass
     
     def _delete_concert(self):
@@ -425,22 +431,22 @@ class RemoconConcert(QMainWindow):
             del self.concert_list[self.cur_selected_concert]
         
         self._update_concert_list()
-        self.cur_selected_role = 0
+        self.cur_selected_role= 0
         pass
 
     def _add_concert(self, params):
         
-        concert_ip = str(params['param1'].toPlainText())
+        concert_ip= str(params['param1'].toPlainText())
         
-        concert_index = str(uuid.uuid4())
+        concert_index= str(uuid.uuid4())
         print "IP: "+ str(concert_ip)
-        self.concert_list[concert_index] = {}
-        self.concert_list[concert_index]['index'] = concert_index
-        self.concert_list[concert_index]['name'] = "Unknown"
-        self.concert_list[concert_index]['ip'] =  concert_ip
-        self.concert_list[concert_index]['icon'] = "Unknown.jpg" 
-        self.concert_list[concert_index]['description'] = "" 
-        self.concert_list[concert_index]['flag'] = "0"
+        self.concert_list[concert_index]= {}
+        self.concert_list[concert_index]['index']= concert_index
+        self.concert_list[concert_index]['name']= "Unknown"
+        self.concert_list[concert_index]['ip']=  concert_ip
+        self.concert_list[concert_index]['icon']= "Unknown.jpg" 
+        self.concert_list[concert_index]['description']= "" 
+        self.concert_list[concert_index]['flag']= "0"
      
         self._update_concert_list()
 
@@ -453,26 +459,26 @@ class RemoconConcert(QMainWindow):
             self._connect_dlg.done(0)
                 
         #dialog
-        self._connect_dlg = QDialog(self._widget_main)             
+        self._connect_dlg= QDialog(self._widget_main)             
         self._connect_dlg.setWindowTitle("Add Concert")
         self._connect_dlg.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
         self._connect_dlg.setMinimumSize(500,0)
-        dlg_rect = self._connect_dlg.geometry()
+        dlg_rect= self._connect_dlg.geometry()
 
         #dialog layout
-        ver_layout = QVBoxLayout(self._connect_dlg)
+        ver_layout= QVBoxLayout(self._connect_dlg)
         ver_layout.setContentsMargins (9,9,9,9)
         
         #param layout
-        text_grid_sub_widget = QWidget()
-        text_grid_layout = QGridLayout(text_grid_sub_widget)            
+        text_grid_sub_widget= QWidget()
+        text_grid_layout= QGridLayout(text_grid_sub_widget)            
         text_grid_layout.setColumnStretch (1, 0)
         text_grid_layout.setRowStretch (2, 0)
 
         #param 1
-        name =u""
-        title_widget1 = QLabel("IP: ")
-        context_widget1 = QTextEdit()
+        name=u""
+        title_widget1= QLabel("IP: ")
+        context_widget1= QTextEdit()
         context_widget1.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
         context_widget1.setMinimumSize(0,30)
         context_widget1.append("")
@@ -485,15 +491,15 @@ class RemoconConcert(QMainWindow):
         ver_layout.addWidget(text_grid_sub_widget) 
         
         #button layout
-        button_hor_sub_widget = QWidget()
-        button_hor_layout = QHBoxLayout(button_hor_sub_widget)
+        button_hor_sub_widget= QWidget()
+        button_hor_layout= QHBoxLayout(button_hor_sub_widget)
 
-        params = {}
-        params['param1'] = context_widget1
+        params= {}
+        params['param1']= context_widget1
        
         #button
-        btn_call = QPushButton("Add")
-        btn_cancel = QPushButton("Cancel")
+        btn_call= QPushButton("Add")
+        btn_cancel= QPushButton("Cancel")
       
         btn_call.clicked.connect(lambda: self._connect_dlg.done(0))
         btn_call.clicked.connect(lambda: self._add_concert(params))
@@ -508,7 +514,7 @@ class RemoconConcert(QMainWindow):
         ver_layout.addWidget(button_hor_sub_widget)
         self._connect_dlg.setVisible(True)
         self._connect_dlg.finished.connect(self._destroy_connect_dlg)
-        self._connect_dlg_isValid = True
+        self._connect_dlg_isValid= True
 
         pass
 
@@ -523,18 +529,18 @@ class RemoconConcert(QMainWindow):
 
         print '_update_concert_list'
         self._widget_main.list_widget.clear()
-        self.cache_concert_info_list = open(self.cache_path,'w')
+        self.cache_concert_info_list= open(self.cache_path,'w')
         
         for k in self.concert_list.values():
             self._add_concert_list_item(k)
-            concert_index = k['index']
-            concert_name = k['name']
-            concert_ip = k['ip']
-            concert_icon = k['icon']
-            concert_description = k['description']
-            concert_flag = k['flag']
+            concert_index= k['index']
+            concert_name= k['name']
+            concert_ip= k['ip']
+            concert_icon= k['icon']
+            concert_description= k['description']
+            concert_flag= k['flag']
 
-            concert_elem = '['
+            concert_elem= '['
             concert_elem +='index='+str(concert_index)+','
             concert_elem +='name='+str(concert_name) + ','
             concert_elem +='ip='+str(concert_ip) + ','
@@ -548,22 +554,22 @@ class RemoconConcert(QMainWindow):
 
     def _add_concert_list_item(self,concert):
         print '_add_concert_list_item'
-        concert_index = concert['index']
-        concert_name = concert['name']
-        concert_ip = concert['ip']
-        concert_icon = concert['icon']
-        concert_description = concert['description']
-        concert['cur_row'] = str(self._widget_main.list_widget.count())
+        concert_index= concert['index']
+        concert_name= concert['name']
+        concert_ip= concert['ip']
+        concert_icon= concert['icon']
+        concert_description= concert['description']
+        concert['cur_row']= str(self._widget_main.list_widget.count())
         
-        display_name = str(self._widget_main.list_widget.count())+': '+str(concert_name)+"["+str(concert_ip)+"]"   
+        display_name= str(self._widget_main.list_widget.count())+': '+str(concert_name)+"["+str(concert_ip)+"]"   
         
         self._widget_main.list_widget.insertItem(self._widget_main.list_widget.count(),display_name )
         #setting the list font
-        font = self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).font()        
+        font= self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).font()        
         font.setPointSize(25)
         self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).setFont(font)
         #setToolTip
-        concert_info =""
+        concert_info=""
         concert_info +="concert_index: "+str(concert_index)+"\n"
         concert_info +="concert_name: "+str(concert_name)+"\n"
         concert_info +="ip:  "+str(concert_ip)+"\n"
@@ -572,7 +578,7 @@ class RemoconConcert(QMainWindow):
         #set icon
         
         if len(concert_icon):
-            icon = QIcon(self.icon_path+concert_icon)
+            icon= QIcon(self.icon_path+concert_icon)
             self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).setIcon(icon)
         else:
             print concert_name+': No icon'
@@ -580,12 +586,12 @@ class RemoconConcert(QMainWindow):
 
     
     def _select_concert(self , Item):
-        list_widget =  Item.listWidget()
+        list_widget=  Item.listWidget()
         for k in self.concert_list.values():
-            if k["cur_row"] == str(list_widget.currentRow()):
+            if k["cur_row"]== str(list_widget.currentRow()):
                 #delete icon
                 #os.remove(self.icon_path+self.concert_list[str(self.cur_selected_concert)]['icon'])           
-                self.cur_selected_concert = k['index']    
+                self.cur_selected_concert= k['index']    
                 break
         pass
         
@@ -597,34 +603,34 @@ class RemoconConcert(QMainWindow):
             self._connect_dlg.done(0)
         
         #dialog
-        self._connect_dlg = QDialog(self._widget_main)             
+        self._connect_dlg= QDialog(self._widget_main)             
         self._connect_dlg.setWindowTitle("Seting Configuration")
         self._connect_dlg.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
         self._connect_dlg.setMinimumSize(500,0)
-        dlg_rect = self._connect_dlg.geometry()
+        dlg_rect= self._connect_dlg.geometry()
 
         #dialog layout
-        ver_layout = QVBoxLayout(self._connect_dlg)
+        ver_layout= QVBoxLayout(self._connect_dlg)
         ver_layout.setContentsMargins (9,9,9,9)
         
         #param layout
-        text_grid_sub_widget = QWidget()
-        text_grid_layout = QGridLayout(text_grid_sub_widget)            
+        text_grid_sub_widget= QWidget()
+        text_grid_layout= QGridLayout(text_grid_sub_widget)            
         text_grid_layout.setColumnStretch (1, 0)
         text_grid_layout.setRowStretch (2, 0)
         
         #param 1
-        name =u""
-        title_widget1 = QLabel("Name: ")
-        context_widget1 = QTextEdit()
+        name=u""
+        title_widget1= QLabel("Name: ")
+        context_widget1= QTextEdit()
         context_widget1.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
         context_widget1.setMinimumSize(0,30)
         context_widget1.append(self.concert_list[self.cur_selected_concert]['name'])
         
         #param 2
         cancel=False
-        title_widget2 = QLabel("IP: ")           
-        context_widget2 = QTextEdit()
+        title_widget2= QLabel("IP: ")           
+        context_widget2= QTextEdit()
         context_widget2.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
         context_widget2.setMinimumSize(0,30)
         context_widget2.append(self.concert_list[self.cur_selected_concert]['ip'])
@@ -640,16 +646,16 @@ class RemoconConcert(QMainWindow):
         ver_layout.addWidget(text_grid_sub_widget) 
         
         #button layout
-        button_hor_sub_widget = QWidget()
-        button_hor_layout = QHBoxLayout(button_hor_sub_widget)
+        button_hor_sub_widget= QWidget()
+        button_hor_layout= QHBoxLayout(button_hor_sub_widget)
 
-        params = {}
-        params['param1'] = context_widget1
-        params['param2'] = context_widget2
+        params= {}
+        params['param1']= context_widget1
+        params['param2']= context_widget2
  
         #button
-        btn_call = QPushButton("Connect")
-        btn_cancel = QPushButton("Cancel")
+        btn_call= QPushButton("Connect")
+        btn_cancel= QPushButton("Cancel")
       
         btn_call.clicked.connect(lambda: self._connect_dlg.done(0))
         btn_call.clicked.connect(lambda: self._connect_concert(params))
@@ -664,38 +670,39 @@ class RemoconConcert(QMainWindow):
         ver_layout.addWidget(button_hor_sub_widget)
         self._connect_dlg.setVisible(True)
         self._connect_dlg.finished.connect(self._destroy_connect_dlg)
-        self._connect_dlg_isValid = True
+        self._connect_dlg_isValid= True
         pass
         
     def _destroy_connect_dlg(self):
         print "[Dialog] Distory!!!"
-        self._connect_dlg_isValid = False
+        self._connect_dlg_isValid= False
         pass
     
 
     def _connect_concert(self, params):
 
-        concert_name = str(params['param1'].toPlainText())
-        concert_ip = str(params['param2'].toPlainText())
-        concert_index = str(self.cur_selected_concert)
+        concert_name= str(params['param1'].toPlainText())
+        concert_ip= str(params['param2'].toPlainText())
+        concert_index= str(self.cur_selected_concert)
+        concert_host_name= str(self.host_name)
 
-        if self.concert_list[concert_index]['flag'] == '0':    
+        if self.concert_list[concert_index]['flag']== '0':    
             #dialog
-            connect_dlg = QDialog(self._widget_main)             
+            connect_dlg= QDialog(self._widget_main)             
             connect_dlg.setWindowTitle("ERROR")
             connect_dlg.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
             connect_dlg.setMinimumSize(150,0)
-            dlg_rect = connect_dlg.geometry()
+            dlg_rect= connect_dlg.geometry()
             #dialog layout
-            ver_layout = QVBoxLayout(connect_dlg)
+            ver_layout= QVBoxLayout(connect_dlg)
             ver_layout.setContentsMargins (9,9,9,9)
             
             #error label
-            error_label = QLabel("YOU SELECT NO CONCERT")
+            error_label= QLabel("YOU SELECT NO CONCERT")
             ver_layout.addWidget(error_label)
             
             #button widget
-            btn_ok = QPushButton("ok")
+            btn_ok= QPushButton("ok")
             btn_ok.clicked.connect(lambda: connect_dlg.done(0))
             ver_layout.addWidget(btn_ok)
             #add param layout
@@ -703,19 +710,20 @@ class RemoconConcert(QMainWindow):
             print "NO CONCERT"
             return
 
-        execute_path = self.scripts_path+'rocon_remocon_sub' ##command
+        execute_path= self.scripts_path+'rocon_remocon_sub' ##command
         execute_path += " "+"'"+concert_index+"'" ##arg1
         execute_path += " "+"'"+concert_name+"'" ##arg2
         execute_path += " "+"'"+concert_ip+"'" ##arg3
+        execute_path += " "+"'"+concert_host_name+"'" ##arg4
 
         self._widget_main.hide()
         print "create new process: "+execute_path
 
         os.system(execute_path) #todo
-        #output = subprocess.Popen([execute_path,concert_index,concert_name,concert_ip])
-        #pid_id = output.pid
+        #output= subprocess.Popen([execute_path,concert_index,concert_name,concert_ip])
+        #pid_id= output.pid
         
-        #while output.poll() == None:
+        #while output.poll()== None:
         #    print "live: "+str(output.pid)
         #    time.sleep(0.2)
         #print "died: "+str(output.pid)

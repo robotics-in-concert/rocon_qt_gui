@@ -53,7 +53,7 @@ class RemoconInfo():
         
         print "[remocon_info] init complete"
     
-    def _connect(self,concert_name = "", concert_ip="127.0.0.1",concert_port = "11311"):
+    def _connect(self,concert_name = "", concert_ip="127.0.0.1",host_name='127.0.0.1',concert_port = "11311"):
         # remocon name would be good as a persistant configuration variable by the user
         # so they can set something like 'Bob'.
         remocon_name = 'rqt_remocon'
@@ -63,7 +63,7 @@ class RemoconInfo():
         os.environ["ROS_MASTER_URI"] = 'http://'+str(concert_ip)+':'+str(concert_port)
         ## get host name
         #Todo
-        os.environ["ROS_HOSTNAME"] = '192.168.10.109'
+        os.environ["ROS_HOSTNAME"] = host_name
         
         print "[remocon_info] connect RemoconInfo "
         print "[remocon_info] ROS_MASTER_URI: "+str(os.environ["ROS_MASTER_URI"])
@@ -76,8 +76,8 @@ class RemoconInfo():
         if not self._check_valid_concert():
             return False
 
-        self.role_sub = rospy.Subscriber("/concert/roles",Roles, self._roles_callback)
-        self.info_sub = rospy.Subscriber("/info", ConcertInfo , self._info_callback)
+        self.role_sub = rospy.Subscriber("/concert/interactions/roles",Roles, self._roles_callback)
+        self.info_sub = rospy.Subscriber("/concert/info", ConcertInfo , self._info_callback)
         
         self.remocon_status_pub = rospy.Publisher("remocons/"+unique_name,RemoconStatus)
         self._pub_remocon_status("",False)
@@ -95,9 +95,9 @@ class RemoconInfo():
         topic_cnt = 0
         topic_list = rospy.get_published_topics()
         for k in topic_list:
-            if k[0] == '/concert/roles':
+            if k[0] == '/concert/interactions/roles':
                 topic_cnt += 1
-            if k[0] == '/info':
+            if k[0] == '/concert/info':
                 topic_cnt += 1
             if topic_cnt >= 2:
                 ret_value = True
@@ -184,7 +184,7 @@ class RemoconInfo():
         #icon 
         # Todo     
         
-        service_handle = rospy.ServiceProxy("/concert/get_roles_and_apps", GetRolesAndApps)
+        service_handle = rospy.ServiceProxy("/concert/interactions/get_roles_and_apps", GetRolesAndApps)
         call_result = service_handle(roles,platform_info)
         print "[remocon_info]: call result"
         self.app_list = {}
@@ -260,7 +260,7 @@ class RemoconInfo():
             
             
         #get the permission
-        service_handle = rospy.ServiceProxy("/concert/request_interaction", RequestInteraction)
+        service_handle = rospy.ServiceProxy("/concert/interactions/request_interaction", RequestInteraction)
         
         service_name = self.app_list[app_name]['service_name']
         platform_info = self.platform_info

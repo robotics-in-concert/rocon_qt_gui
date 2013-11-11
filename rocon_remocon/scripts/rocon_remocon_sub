@@ -32,6 +32,7 @@ if __name__ == "__main__":
     index = sys.argv[1] #name
     name = sys.argv[2] #ip
     ip = sys.argv[3] #ip
+    host_name = sys.argv[4] #ip
 
     app = QApplication(sys.argv)
     # Let the interpreter run each 200 ms.
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     timer.start(200)  
     timer.timeout.connect(lambda: None)
     
-    myapp = remocon.RemoconRole(None, "My System Tray App",index,name,ip)
+    myapp = remocon.RemoconRole(None, "My System Tray App",index,name,ip,host_name)
     atexit.register(myapp._uninit_role_list)
     app.exec_()
 

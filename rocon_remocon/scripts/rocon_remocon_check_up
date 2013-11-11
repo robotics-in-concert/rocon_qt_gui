@@ -25,22 +25,25 @@ def _check_valid_concert():
     ret_value = False
     topic_list = rospy.get_published_topics()
     for k in topic_list:
-        if k[0] == '/info':
+        if k[0] == '/concert/info':
             ret_value = True
             break                        
     return ret_value   
 
 if __name__ == "__main__":
+     
+    host_name=sys.argv[1]
     concert_ip = sys.argv[1] #ip
     os.environ["ROS_MASTER_URI"] = 'http://'+concert_ip+':'+"11311"
-    os.environ["ROS_HOSTNAME"] = '192.168.10.109'
+    os.environ["ROS_HOSTNAME"] = host_name
+    
     rospy.init_node("check_up",anonymous = True, disable_signals=True)
     if not _check_valid_concert():
         print "Unknown"
         print "Unknown."
         print "Unknown.jpg"
         sys.exit()
-    info_sub = rospy.Subscriber("/info", ConcertInfo , _info_callback)
+    info_sub = rospy.Subscriber("/concert/info", ConcertInfo , _info_callback)
     while not rospy.is_shutdown():
         pass
     
