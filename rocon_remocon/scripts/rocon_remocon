@@ -15,26 +15,26 @@ from PyQt4.QtCore import QTimer
 import rocon_remocon
 
 def signal_handler(signum, f): 
-    if signum == signal.SIGINT:
+    if signum ==signal.SIGINT:
         sys.exit()
 
 ##############################################################################
 # Main
 ##############################################################################.
-if __name__ == "__main__":
+if __name__ =="__main__":
     host_name='127.0.0.1'
     
     if len(sys.argv) > 1:
-        host_name = sys.argv[1] #name
+        host_name =sys.argv[1] #name
 
     signal.signal(signal.SIGINT, signal_handler)
     
-    app = QApplication(sys.argv)
+    app =QApplication(sys.argv)
     # Let the interpreter run each 200 ms.
-    timer = QTimer()
+    timer =QTimer()
     timer.start(200)  
     timer.timeout.connect(lambda: None)  
-    myapp = rocon_remocon.remocon.RemoconConcert(None, "My System Tray App",host_name)
+    myapp =rocon_remocon.remocon.RemoconConcert(None, "My System Tray App",host_name)
     
     app.exec_()
 

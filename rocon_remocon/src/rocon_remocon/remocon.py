@@ -35,8 +35,7 @@ class RemoconRole(QMainWindow):
         self.concert_name= concert_name    
         self.host_name= host_name    
         self._context= parent
-      
-        
+
         super(RemoconRole, self).__init__(parent)
         self.initialised= False
         
@@ -59,8 +58,6 @@ class RemoconRole(QMainWindow):
         path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/rolelist.ui")
         uic.loadUi(path, self._widget_role_list)
        
-        path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/rolelist.ui")
-       
         self.cache_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/cache/concert_info_list.cache")
         self.scripts_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
         
@@ -75,11 +72,12 @@ class RemoconRole(QMainWindow):
         self._widget_app_list.start_app_btn.pressed.connect(self._start_app)
         self._widget_app_list.stop_app_btn.pressed.connect(self._stop_app)
         self._widget_app_list.refresh_btn.pressed.connect(self._refresh_app_list)
+
+        #init
         self._init()     
         
     def __del__(self):
         print "[RemoconRole]: destory!!!"
-        #self.remocon_info._shutdown()    
         
     def _init(self):
 
@@ -92,28 +90,22 @@ class RemoconRole(QMainWindow):
 ################################################################################################################
 ##role list widget
 ################################################################################################################
-    def _init_role_list(self):
-        
+    def _init_role_list(self):        
+
         if not self.remocon_info._connect(self.concert_name, self.concert_ip,self.host_name):
             return False
         atexit.register(self.remocon_info._disconnect)
             
         self._refresh_role_list()    
         return True
-        pass
         
     def _uninit_role_list(self):
         print "_uninit_role_list"
         self.remocon_info._shutdown()
-
         self.cur_selected_role= 0
-        
-        #self._widget_main.show()
-        #self._widget_main.move(self._widget_role_list.pos())
         
         self._widget_role_list.hide()
         sys.exit()
-        pass 
      
     def _select_role_list(self,Item):
         print '_select_role_list: '+ Item.text()
@@ -125,7 +117,6 @@ class RemoconRole(QMainWindow):
         self._widget_app_list.move(self._widget_role_list.pos())
         self._widget_role_list.hide()
         self._init_app_list()
-        
         pass   
         
     def _back_role_list(self):
@@ -140,7 +131,6 @@ class RemoconRole(QMainWindow):
         self.role_list= self.remocon_info._get_role_list()
        
         #set list widget item
-        
         for k in self.role_list.values():
             self._widget_role_list.role_list_widget.insertItem(0, k['name'])
             #setting the list font
@@ -149,7 +139,6 @@ class RemoconRole(QMainWindow):
             self._widget_role_list.role_list_widget.item(0).setFont(font)
         
         ##get concert info
-            
         concert_info= self.remocon_info._get_concert_info()
         
         
@@ -206,8 +195,6 @@ class RemoconRole(QMainWindow):
                 break
     
         self._widget_app_list.app_info.clear()
-        #self._widget_app_list.app_info.appendPlainText(selected_app_name)
-        
 
         info_text= ""
         info_text= "<html>"
@@ -311,16 +298,9 @@ class RemoconConcert(QMainWindow):
         self.setObjectName('Remocon')
         self.host_name= host_name
         self._widget_main= QWidget()
-          
         
         self.concert_list= {};
         self.cur_selected_concert= 0
-        
-        self.role_list= {}
-        self.cur_selected_role= 0
-        
-        self.app_list= {}
-        self.cur_selected_app= 0
         
         self.cache_concert_info_list= 0
 
@@ -350,7 +330,6 @@ class RemoconConcert(QMainWindow):
         
         self._connect_dlg_isValid= False
         self._current_selected_concert= ""
-        self._current_selected_app= ""
         self._refresh_concert_list()        
         pass
     
@@ -422,7 +401,6 @@ class RemoconConcert(QMainWindow):
             del self.concert_list[k["index"]]
             
         self._update_concert_list()
-        self.cur_selected_role= 0
         pass
     
     def _delete_concert(self):
@@ -431,7 +409,6 @@ class RemoconConcert(QMainWindow):
             del self.concert_list[self.cur_selected_concert]
         
         self._update_concert_list()
-        self.cur_selected_role= 0
         pass
 
     def _add_concert(self, params):
