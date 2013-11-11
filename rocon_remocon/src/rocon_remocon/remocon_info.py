@@ -169,8 +169,8 @@ class RemoconInfo():
             else:
                 rospy.sleep(rospy.Duration(0.2))
             time_out_cnt+=1
-            if time_out_cnt>25:
-                print "[remocon_info] get role list: time out 5s"
+            if time_out_cnt>5:
+                print "[remocon_info] get role list: time out 1s"
                 break
         return self.role_list
  
@@ -229,8 +229,8 @@ class RemoconInfo():
             else:
                 rospy.sleep(rospy.Duration(0.2))
             time_out_cnt+=1
-            if time_out_cnt>25:
-                print "[remocon_info] get role list: time out 5s"
+            if time_out_cnt>5:
+                print "[remocon_info] get role list: time out 1s"
                 break
 
         return self.concert_info
