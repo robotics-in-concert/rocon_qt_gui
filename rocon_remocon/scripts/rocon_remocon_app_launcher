@@ -52,12 +52,7 @@ if __name__ == "__main__":
             key = k.split(":")[0]
             value = k.split(":")[1]
             parameters.append(KeyValue(key,value))
-
-    print pkg_name
-    print launch_name
-    print parameters    
-    print remappings
-    
+  
     full_path =  rocon_utilities.find_resource(pkg_name,launch_name)
     launch_path =full_path[string.find(full_path, pkg_name)+len(pkg_name):string.find(full_path, launch_name)]   
 
@@ -82,6 +77,6 @@ if __name__ == "__main__":
             print dir(N)
             N.remap_args.append([k.remap_from, k.remap_to])
             print N.to_xml()
-    
+
     _launch.start()
     _launch.spin()

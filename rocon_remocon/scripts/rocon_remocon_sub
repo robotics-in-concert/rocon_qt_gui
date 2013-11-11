@@ -12,11 +12,7 @@ import sys, signal, string, atexit
 from PyQt4.QtGui import QAction, QApplication, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
 from PyQt4.QtCore import QTimer
 
-from os import path
-src_dir = path.join(path.dirname(__file__), '../src/rocon_remocon')
-sys.path.append(src_dir)
-
-import remocon
+import rocon_remocon
 
 ##############################################################################
 # Main
@@ -40,10 +36,8 @@ if __name__ == "__main__":
     timer.start(200)  
     timer.timeout.connect(lambda: None)
     
-    myapp = remocon.RemoconRole(None, "My System Tray App",index,name,ip,host_name)
+    myapp = rocon_remocon.RemoconRole(None, "My System Tray App",index,name,ip,host_name)
     atexit.register(myapp._uninit_role_list)
     app.exec_()
-
-sys.path.remove(src_dir)
 
 
