@@ -162,11 +162,16 @@ class RemoconInfo():
   
     def _get_role_list(self):
         print "[remocon_info] get role list"
+        time_out_cnt = 0;
         while not rospy.is_shutdown():
             if len(self.role_list) != 0:
                 break
             else:
                 rospy.sleep(rospy.Duration(0.2))
+            time_out_cnt+=1
+            if time_out_cnt>25:
+                print "[remocon_info] get role list: time out 5s"
+                break
         return self.role_list
  
     def _select_role(self,role_name):
@@ -217,11 +222,17 @@ class RemoconInfo():
     
     def _get_concert_info(self):
         print "[remocon_info] get concert info"
+        time_out_cnt = 0
         while not rospy.is_shutdown():
             if len(self.concert_info) != 0:
                 break
             else:
                 rospy.sleep(rospy.Duration(0.2))
+            time_out_cnt+=1
+            if time_out_cnt>25:
+                print "[remocon_info] get role list: time out 5s"
+                break
+
         return self.concert_info
         pass    
     
