@@ -49,16 +49,14 @@ if __name__=="__main__":
             remappings.append(Remapping(remap_from,remap_to))
 
     full_path=rocon_utilities.find_resource(pkg_name,launch_name)
-    launch_path=full_path[string.find(full_path, pkg_name)+len(pkg_name):string.find(full_path, launch_name)]   
 
     temp=tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-    data='$(find '+pkg_name+')'+launch_path+launch_name
     #add parameters
     launch_text=""
     launch_text+='<launch>\n'
     launch_text+='    <group ns="%s">\n'%(name_space)
     launch_text+='        <rosparam>%s</rosparam>\n'%(parameters)
-    launch_text+='        <include file="%s"/>\n'%(data)
+    launch_text+='        <include file="%s"/>\n'%(full_path)
     launch_text+='    </group>\n'
     launch_text+='</launch>\n'    
     temp.write(launch_text)
