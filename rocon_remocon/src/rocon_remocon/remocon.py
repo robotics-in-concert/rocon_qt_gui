@@ -1,12 +1,8 @@
 #!/usr/bin/env python
-#
-# License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_multimaster/master/rocon_remocon/LICENSE
-#
 ##############################################################################
 # Imports
 ##############################################################################
-
+#system
 from __future__ import division
 import sys
 import os
@@ -17,6 +13,7 @@ import string
 import uuid
 import time
 
+#pyqt
 from PyQt4 import uic
 from PyQt4.QtCore import QFile, QIODevice, Qt, QAbstractListModel, pyqtSignal, pyqtSlot,SIGNAL,SLOT, QPoint
 from PyQt4.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
@@ -27,6 +24,10 @@ from PyQt4.QtSvg import QSvgGenerator
 
 ##ros
 from remocon_info import RemoconInfo
+
+##############################################################################
+# Remocon Role
+##############################################################################
 
 class RemoconRole(QMainWindow):
     def __init__(self, parent, title,concert_index="", concert_name="", concert_ip='127.0.0.1', host_name='127.0.0.1'):
@@ -141,7 +142,6 @@ class RemoconRole(QMainWindow):
         ##get concert info
         concert_info= self.remocon_info._get_concert_info()
         
-        
         if concert_info.has_key('name'):
             self.concert_list[self.concert_index]['name']= concert_info['name']
         if concert_info.has_key('description'):
@@ -231,7 +231,7 @@ class RemoconRole(QMainWindow):
         pass
           
     def _start_app(self):
-        print "Start app: "+ self.cur_selected_app
+        print "Start app: "+ str(self.cur_selected_app)
         self.remocon_info._start_app(self.cur_selected_role,self.cur_selected_app)
         pass
     
@@ -421,7 +421,7 @@ class RemoconConcert(QMainWindow):
         self.concert_list[concert_index]['index']= concert_index
         self.concert_list[concert_index]['name']= "Unknown"
         self.concert_list[concert_index]['ip']=  concert_ip
-        self.concert_list[concert_index]['icon']= "Unknown.jpg" 
+        self.concert_list[concert_index]['icon']= "Unknown.png" 
         self.concert_list[concert_index]['description']= "" 
         self.concert_list[concert_index]['flag']= "0"
      
@@ -713,9 +713,4 @@ class RemoconConcert(QMainWindow):
 
         
         
-
-
-
-
-
 

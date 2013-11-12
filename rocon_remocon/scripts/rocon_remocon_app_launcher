@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-#
+##############################################################################
+# Imports
+##############################################################################
+#system
 import sys
 import os
 import subprocess
@@ -8,12 +11,11 @@ import uuid
 import signal
 import string
 import tempfile
-
-
+#ros
 import rospy
 import rocon_utilities
 import roslaunch.parent
-
+#rocon message and service
 from rocon_std_msgs.msg import Remapping
 from rocon_std_msgs.msg import KeyValue
 
@@ -61,11 +63,10 @@ if __name__ =="__main__":
     temp.write(launch_text)
     temp.close()  # unlink it later
     print launch_text
-
     _launch =roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
+
                                                     [temp.name],
                                                     is_core=False,)    
-    
     _launch._load_config()
     remap_size =len(remappings)
     for N in _launch.config.nodes:

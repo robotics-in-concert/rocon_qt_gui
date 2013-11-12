@@ -1,26 +1,32 @@
 #!/usr/bin/env python
+
+##############################################################################
+# Imports
+##############################################################################
+#system
 import os
 import uuid
 import string
 import subprocess
 import signal
 import tempfile
-
+#ros
 import rospy
 import rosservice
 import rocon_utilities
 import roslaunch.parent
-
+#ros message and service
+from uuid_msgs.msg import UniqueID
+#rocon message and service
 from rocon_std_msgs.msg import PlatformInfo
 from rocon_std_msgs.msg import Icon
 from rocon_app_manager_msgs.msg import ErrorCodes
-
+#concert message and service
 from concert_msgs.msg import ConcertInfo
 from concert_msgs.msg import Roles
 from concert_msgs.msg import RemoconStatus
 from concert_msgs.srv import GetRolesAndApps
 from concert_msgs.srv import RequestInteraction
-from uuid_msgs.msg import UniqueID
 
 ##############################################################################
 # Remocon Info
@@ -140,7 +146,7 @@ class RemoconInfo():
         remocon_status.platform_info.system=PlatformInfo().SYSTEM_RQT
         remocon_status.platform_info.name="rqt_remocon"
         
-        remocon_status.uuid.uuid=self.key.hex
+        remocon_status.uuid=str(self.key.hex)
         remocon_status.running_app=running_app
         remocon_status.app_name=app_name  
         

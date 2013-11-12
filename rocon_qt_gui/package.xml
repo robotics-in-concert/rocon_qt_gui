@@ -3,7 +3,7 @@
   <name>rocon_qt_gui</name>
   <version>0.5.4</version>
   <description>
-    Rqt plugins for monitoring and interacting with the rocon framework.
+    qt gui application for monitoring and interacting with the rocon framework.
   </description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <license>BSD</license>
