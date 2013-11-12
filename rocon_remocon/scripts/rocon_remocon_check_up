@@ -11,12 +11,14 @@ import rospy
 #concert message and service
 from concert_msgs.msg import ConcertInfo
 
-icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../resources/images/")
+temp_icon_path = "%s/.ros/rocon/remocon/image/"%(os.getenv("HOME"))
+if not os.path.isdir(temp_icon_path):
+    os.makedirs(temp_icon_path)
 
 def _info_callback(data):
     concert_name=data.name       
     icon_name = concert_name+'.'+data.icon.format
-    icon = open(icon_path+icon_name,'w')
+    icon = open(temp_icon_path+icon_name,'w')
     icon.write(data.icon.data)
     icon.close()  
     
@@ -49,7 +51,11 @@ if __name__ == "__main__":
         print "Unknown.png"
         sys.exit()
     info_sub = rospy.Subscriber("/concert/info", ConcertInfo , _info_callback)
+
     while not rospy.is_shutdown():
-        rospy.sleep(rospy.Duration(0.2))
+        rospy.sleep(rospy.Duration(0.1))
         pass
+        
+        
+        
     

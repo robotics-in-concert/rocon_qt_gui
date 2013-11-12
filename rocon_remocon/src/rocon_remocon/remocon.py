@@ -61,7 +61,7 @@ class RemoconRole(QMainWindow):
        
         self.cache_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/cache/concert_info_list.cache")
         self.scripts_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
-        
+
         #role list widget
         self._widget_role_list.back_btn.pressed.connect(self._back_role_list) 
         self._widget_role_list.refresh_btn.pressed.connect(self._refresh_role_list)  
@@ -284,9 +284,9 @@ class RemoconRole(QMainWindow):
         cache_concert_info_list.close()
         pass
 
-#########################################################################################################         
-#########################################################################################################                 
-#########################################################################################################         
+#################################################################        
+##Remocon Concert
+#################################################################
 class RemoconConcert(QMainWindow):
     
     def __init__(self, parent, title, host_name):
@@ -309,6 +309,7 @@ class RemoconConcert(QMainWindow):
 
         self.cache_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/cache/concert_info_list.cache")
         self.icon_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/")
+        self.temp_icon_path= "%s/.ros/rocon/remocon/image/"%(os.getenv("HOME"))
         self.scripts_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
         
         #main widget
@@ -344,15 +345,17 @@ class RemoconConcert(QMainWindow):
                 print "checking: "+concert_ip
                 result= output.poll() 
                 if time_out_cnt > 10:
-                    
                     print "timeout: "+concert_ip
                     try:
                         os.kill(output.pid, signal.SIGTERM)  
                     except OSError:
                         print "Error: os.kill(output.pid, signal.SIGTERM)"
-                    k['flag']= '0'
+                    
+                    k['name']= "Unknown"
+                    k['description']="Unknown."
+                    k['icon']= "Unknown.png"
                     break
-                
+
                 elif result== 0:
                     args=output.communicate()[0]
                     k['name']= args.split('\n')[0]
@@ -553,9 +556,12 @@ class RemoconConcert(QMainWindow):
         concert_info +="description:  "+str(concert_description)
         self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).setToolTip(concert_info)
         #set icon
-        
-        if len(concert_icon):
+
+        if len(concert_icon) and concert_icon == "Unknown.png":
             icon= QIcon(self.icon_path+concert_icon)
+            self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).setIcon(icon)
+        elif len(concert_icon):
+            icon= QIcon(self.temp_icon_path+concert_icon)
             self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).setIcon(icon)
         else:
             print concert_name+': No icon'

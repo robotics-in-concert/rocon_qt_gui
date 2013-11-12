@@ -40,7 +40,7 @@ class RemoconInfo():
         self.is_connect=False
         self.is_app_running=False    
         self.key=uuid.uuid4()
-        self.icon_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/")
+        self.temp_icon_path= "%s/.ros/rocon/remocon/image/"%(os.getenv("HOME"))
         self.scripts_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
         
         self.app_pid=0
@@ -238,7 +238,7 @@ class RemoconInfo():
         
         icon_name=concert_name+'.png'
         # delete concert info in cache
-        icon=open(self.icon_path+icon_name,'w')
+        icon=open(self.temp_icon_path+icon_name,'w')
         icon.write(data.icon.data)
         icon.close()  
 

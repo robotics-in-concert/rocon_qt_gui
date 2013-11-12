@@ -19,8 +19,6 @@ import roslaunch.parent
 from rocon_std_msgs.msg import Remapping
 from rocon_std_msgs.msg import KeyValue
 
-launch_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"../resources/launch/")
-
 if __name__=="__main__":
 
     print len(sys.argv)
@@ -43,7 +41,6 @@ if __name__=="__main__":
         for k in remappings_roles.split(","):
             if k.find(':')==-1:
                 continue
-                
             remap_from=k.split(":")[0]
             remap_to=k.split(":")[1]
             remappings.append(Remapping(remap_from,remap_to))
