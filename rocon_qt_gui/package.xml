@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <package>
-  <name>rocon_rqt_plugins</name>
+  <name>rocon_qt_gui</name>
   <version>0.5.4</version>
   <description>
     Rqt plugins for monitoring and interacting with the rocon framework.
   </description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <license>BSD</license>
-  <url type="website">http://www.ros.org/wiki/rocon_rqt_plugins</url>
-  <url type="repository">https://github.com/robotics-in-concert/rocon_rqt_plugins</url>
-  <url type="bugtracker">https://github.com/robotics-in-concert/rocon_rqt_plugins/issues</url>
+  <url type="website">http://www.ros.org/wiki/rocon_qt_gui</url>
+  <url type="repository">https://github.com/robotics-in-concert/rocon_qt_qui</url>
+  <url type="bugtracker">https://github.com/robotics-in-concert/rocon_qt_qui/issues</url>
   <author email="d.stonier@gmail.com">Daniel Stonier</author>
 
   <buildtool_depend>catkin</buildtool_depend>
