@@ -6,8 +6,9 @@ import rospy
 import rosgraph
 from rosgraph.impl.graph import Edge, EdgeList
 from concert_msgs.msg import ConcertClients
-from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
-from rocon_app_manager_msgs.msg import PlatformInfo
+#from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
+from rocon_app_manager_msgs.srv import Status, Invite, StartApp, StopApp
+#from rocon_app_manager_msgs.msg import PlatformInfo
 
 import random
 from std_msgs.msg import String
@@ -57,39 +58,65 @@ class ConductorGraphInfo(object):
             connection_strength = "very_strong"
             
             #uuid
-            service = k.gateway_name+'/'+'platform_info'
-            service_handle = rospy.ServiceProxy(service, GetPlatformInfo)
-            call_result = service_handle()
-            if k.gateway_name.count(call_result.platform_info.name)>0:                    
-                uuid = k.gateway_name.replace(call_result.platform_info.name,'')
+            uuid='None'
+            
+            client_name = k.name            
+            
+            if self._client_info_list.has_key(client_name):
+                self._client_info_list[client_name]["isNew"] = False
             else:
-                uuid ="None"
-                
+                self._client_info_list[client_name]={}
+                self._client_info_list[client_name]["isNew"] = True
+            self._client_info_list[client_name]["isCheck"]=True
+            
+            self._client_info_list[client_name]["name"]=k.name
+            self._client_info_list[client_name]["gateway_name"]=k.gateway_name
+            self._client_info_list[client_name]["os"]=k.os
+            self._client_info_list[client_name]["version"]=k.version
+            self._client_info_list[client_name]["system"]=k.system
+            self._client_info_list[client_name]["platform"]=k.platform
+            self._client_info_list[client_name]["client_status"]=k.client_status
+            
+            self._client_info_list[client_name]["last_connection_timestamp"]=k.last_connection_timestamp
+            self._client_info_list[client_name]["apps"]={}
+            
+            for L in self._client_info_list[client_name]["apps"].values():
+                print L
+                self._client_info_list[client_name]["apps"]['name'] = L.name
+                self._client_info_list[client_name]["apps"]['display_name'] = L.display_name
+                self._client_info_list[client_name]["apps"]['description'] = L.description
+                self._client_info_list[client_name]["apps"]['platform'] = L.platform
+                self._client_info_list[client_name]["apps"]['status'] = L.status
+
+            self._client_info_list[client_name]["uuid"]= uuid
+           
             #html
             app_context = "<html>"
             app_context += "<p>-------------------------------------------</p>"
             app_context += "<p><b>name: </b>" +k.name+"</p>"
             app_context += "<p><b>gateway_name: </b>" +k.gateway_name+"</p>"
-            app_context += "<p><b>platform: </b>" +k.platform+"</p>"
+            app_context += "<p>-------------------------------------------</p>"
+            app_context += "<p><b>os: </b>" +k.os+"</p>"
+            app_context += "<p><b>version: </b>" +k.version+"</p>"
             app_context += "<p><b>system: </b>" +k.system+"</p>"
-            app_context += "<p><b>robot: </b>" +k.robot+"</p>"
+            app_context += "<p><b>platform: </b>" +k.platform+"</p>"
+            app_context += "<p>-------------------------------------------</p>"
             app_context += "<p><b>client_status: </b>" +k.client_status+"</p>"
-            app_context += "<p><b>connection_strengh: </b>" +connection_strength+"</p>"
+            app_context += "<p><b>app_status: </b>" +k.app_status+"</p>"
+            #app_context += "<p><b>last_connection_timestamp: </b>" +str(k.last_connection_timestamp.time)+"</p>"
+            
+            for L in self._client_info_list[client_name]["apps"].values():
+                app_context += "<p>-------------------------------------------</p>"
+                app_context += "<p><b>app_name: </b>" +L['name']+"</p>"
+                app_context += "<p><b>app_display_name: </b>" +L['display_name']+"</p>"
+                app_context += "<p><b>app_description: </b>" +L['description']+"</p>"
+                app_context += "<p><b>app_platform: </b>" +L['platform']+"</p>"
+                app_context += "<p><b>app_status: </b>" +L['status']+"</p>"
+                             
             app_context +="</html>"
-            app_name = k.name            
-           
-            if self._client_info_list.has_key(app_name):
-                self._client_info_list[app_name]["isNew"] = False
-            else:
-                self._client_info_list[app_name]={}
-                self._client_info_list[app_name]["isNew"] = True
-
-            self._client_info_list[app_name]["isCheck"]=True
-            self._client_info_list[app_name]["app_name"]=app_name
-            self._client_info_list[app_name]["gateway_name"]=k.gateway_name
-            self._client_info_list[app_name]["app_context"]=app_context
-            self._client_info_list[app_name]["connection_strength"]=connection_strength  
-            self._client_info_list[app_name]["uuid"]= uuid
+            
+            self._client_info_list[client_name]["connection_strength"]=connection_strength
+            self._client_info_list[client_name]["app_context"]=app_context
   
         for k in self._client_info_list.keys():
             if self._client_info_list[k]["isCheck"] == True:

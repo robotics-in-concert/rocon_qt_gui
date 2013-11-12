@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-#
-# License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_multimaster/master/rocon_gateway_graph/LICENSE
-#
+
 ##############################################################################
 # Imports
 ##############################################################################
@@ -26,8 +23,9 @@ import rosnode
 import roslib
 import rospy
 from concert_msgs.msg import ConcertClients
-from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
-from rocon_app_manager_msgs.msg import PlatformInfo
+#from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
+from rocon_app_manager_msgs.srv import Status, Invite, StartApp, StopApp
+#from rocon_std_msgs.msg import PlatformInfo
 ###########################
 
 from .dotcode import RosGraphDotcodeGenerator
@@ -253,7 +251,8 @@ class ConductorGraph(Plugin):
             info_text +="</html>"
             
         elif service_name == 'platform_info':
-        
+            
+            """           
             service_handle = rospy.ServiceProxy(service, GetPlatformInfo)
             call_result = service_handle()
             
@@ -264,7 +263,8 @@ class ConductorGraph(Plugin):
             info_text += "<p><b>robot: </b>" +call_result.platform_info.robot+"</p>"
             info_text += "<p><b>name: </b>" +call_result.platform_info.name+"</p>"
             info_text +="</html>"
-
+            """
+            
         elif service_name == 'invite':
             #sesrvice
             service_handle = rospy.ServiceProxy(service, Invite)            
@@ -470,14 +470,14 @@ class ConductorGraph(Plugin):
             ver_layout.addWidget(sub_widget)            
             
             app_context_widget = QPlainTextEdit()
-            app_context_widget.setObjectName(k["app_name"]+'_'+'app_context_widget')
+            app_context_widget.setObjectName(k["name"]+'_'+'app_context_widget')
             app_context_widget.setAccessibleName('app_context_widget')
             app_context_widget.appendHtml(k["app_context"])
             
             ver_layout.addWidget(app_context_widget)
             
             services_text_widget = QPlainTextEdit()
-            services_text_widget.setObjectName(k["app_name"]+'_'+'services_text_widget')
+            services_text_widget.setObjectName(k["name"]+'_'+'services_text_widget')
             ver_layout.addWidget(services_text_widget)
             
             # new icon
@@ -486,7 +486,7 @@ class ConductorGraph(Plugin):
                 path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/new.gif")            
             
             #add tab
-            self._widget.tabWidget.addTab(main_widget,QIcon(path), k["app_name"]);
+            self._widget.tabWidget.addTab(main_widget,QIcon(path), k["name"]);
         
     def _redraw_graph_view(self):
         self._scene.clear()

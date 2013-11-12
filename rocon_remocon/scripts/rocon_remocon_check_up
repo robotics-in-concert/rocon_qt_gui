@@ -24,7 +24,7 @@ def _info_callback(data):
     print data.description
     print icon_name
     
-    rospy.signal_shutdown("shut down check_up")
+    rospy.signal_shutdown("shut down check_up")       
 
 def _check_valid_concert():
     ret_value = False
@@ -47,6 +47,7 @@ if __name__ == "__main__":
         print "Unknown"
         print "Unknown."
         print "Unknown.jpg"
+        rospy.signal_shutdown("shut down check_up")       
         sys.exit()
     info_sub = rospy.Subscriber("/concert/info", ConcertInfo , _info_callback)
     while not rospy.is_shutdown():
