@@ -277,9 +277,12 @@ class RemoconInfo():
 
         if call_result.error_code==ErrorCodes.SUCCESS:
             print "permisson ok"
-            self._start_app_launch(app_name,service_name,remappings,parameters)
-            self.is_app_running=True
-            self._pub_remocon_status("app_name",True)
+            if self._start_app_launch(app_name,service_name,remappings,parameters):
+                self.is_app_running=True
+                self._pub_remocon_status("app_name",True)
+            else:
+                self.is_app_running=False
+           
         
             pass
         
@@ -301,6 +304,13 @@ class RemoconInfo():
         pkg_name=name.split('/')[0]
         launch_name=name.split('/')[1]+'.launch'
         remappings_role=""
+        #check the launch file validation
+        
+        try:
+            full_path=rocon_utilities.find_resource(pkg_name,launch_name)
+        except:
+            print "FAULT [%s] PACKAGE OR [%s] LAUNCH FILE"%(pkg_name,launch_name)
+            return False
         
         for k in remappings:
             remappings_role+=k.remap_from+':'
@@ -308,5 +318,6 @@ class RemoconInfo():
 
         output=subprocess.Popen([execute_path,pkg_name,launch_name,service_name,remappings_role,parameters])
         self.app_pid=output.pid
+        return True
         pass
 
