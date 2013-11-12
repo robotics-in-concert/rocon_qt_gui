@@ -161,7 +161,7 @@
         <widget class="QPlainTextEdit" name="service_info_text"/>
        </item>
        <item>
-        <widget class="QTabWidget" name="client_list_widget">
+        <widget class="QTabWidget" name="client_tab_widget">
          <property name="tabPosition">
           <enum>QTabWidget::North</enum>
          </property>
@@ -175,7 +175,6 @@
           <attribute name="title">
            <string>TaskCoodinator</string>
           </attribute>
-          <zorder>service_info_text</zorder>
          </widget>
          <widget class="QWidget" name="tab">
           <attribute name="title">
