@@ -3,35 +3,36 @@
 
 
 import rospy
-import rosgraph
-from rosgraph.impl.graph import Edge, EdgeList
-from concert_msgs.msg import ConcertClients
-from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
-from rocon_app_manager_msgs.msg import PlatformInfo
+#import rosgraph
+#from rosgraph.impl.graph import Edge, EdgeList
+#from concert_msgs.msg import ConcertClients
+#from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
+#from rocon_app_manager_msgs.msg import PlatformInfo
 
-import random
+#import random
 from std_msgs.msg import String
 ##############################################################################
 # Graph
 ##############################################################################
 
-class ConductorGraphInfo(object):
+class AdminAppInfo(object):
 
     def __init__(self):
+
         '''
         Creates the polling topics necessary for updating statistics
         about the running gateway-hub network.
         '''
-        self._last_update = 0
-        self._gateway_namespace = None
-        self._concert_conductor_name = "concert_conductor"
-        self.gateway_nodes = []  # Gateway nodes
-        self.gateway_edges = []  # Gateway-Gateway edges
+        #self._last_update = 0
+        #self._gateway_namespace = None
+        #self._concert_conductor_name = "concert_conductor"
+        #self.gateway_nodes = []  # Gateway nodes
+        #self.gateway_edges = []  # Gateway-Gateway edges
         
         # Rubbish to clear out once rocon_gateway_graph is integrated
-        self.bad_nodes = []
+        #self.bad_nodes = []
         
-        rospy.Subscriber("/concert/list_concert_clients", ConcertClients, self.update_client_list)
+        #rospy.Subscriber("/concert/list_concert_clients", ConcertClients, self.update_client_list)
         self._client_info_list = {}
         
        
@@ -39,7 +40,7 @@ class ConductorGraphInfo(object):
     def update_client_list(self, data):
     
         print "update_client_list"
-        
+        """
         #update dotgraph info
         self.gateway_nodes = []
         self.gateway_nodes.append(self._concert_conductor_name)
@@ -53,8 +54,7 @@ class ConductorGraphInfo(object):
         #update app widget info
         for k in data.clients:
             #temp function for assigning connection strength
-            #connection_strength = self.set_random_connection_strength()
-            connection_strength = "very_strong"
+            connection_strength = self.set_random_connection_strength()
             
             #uuid
             service = k.gateway_name+'/'+'platform_info'
@@ -96,22 +96,9 @@ class ConductorGraphInfo(object):
                 self._client_info_list[k]["isCheck"] = False
             else:
                 del self._client_info_list[k]
+        """
+        pass
 
-
-    def set_random_connection_strength(self):
-        connection_strength = random.randrange(1,6)
-        if connection_strength == 1:
-            return 'very_strong'
-        elif connection_strength == 2:
-            return 'strong'
-        elif connection_strength == 3:
-            return 'normal'
-        elif connection_strength == 4:
-            return 'weak'
-        elif connection_strength == 5:
-            return 'very_weak'
-        
-        
         
         
         

@@ -249,7 +249,7 @@ class ConductorGraph(Plugin):
             info_text += "<p>-------------------------------------------</p>"
             info_text += "<p><b>application_namespace: </b>" +call_result.application_namespace+"</p>"
             info_text += "<p><b>remote_controller: </b>" +call_result.remote_controller+"</p>"
-            info_text += "<p><b>app_status: </b>" +call_result.app_status+"</p>"
+            info_text += "<p><b>application_status: </b>" +call_result.application_status+"</p>"
             info_text +="</html>"
             
         elif service_name == 'platform_info':
@@ -529,6 +529,7 @@ class ConductorGraph(Plugin):
                  #set the color of node as connection strength one of red, yellow, green
                 edge_dst_name = edge_item.to_node._label.text()
                 if self._graph._client_info_list.has_key(edge_dst_name):   
+                  
                   connection_strength = self._graph._client_info_list[edge_dst_name]['connection_strength']
                   if connection_strength == 'very_strong':
                       green = QColor(0, 255, 0)
