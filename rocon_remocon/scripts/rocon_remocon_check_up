@@ -46,7 +46,7 @@ if __name__ == "__main__":
     if not _check_valid_concert():
         print "Unknown"
         print "Unknown."
-        print "Unknown.jpg"
+        print "Unknown.png"
         rospy.signal_shutdown("shut down check_up")       
         sys.exit()
     info_sub = rospy.Subscriber("/concert/info", ConcertInfo , _info_callback)
