@@ -175,7 +175,7 @@ class RemoconInfo():
         roles.append(role_name)
         
         platform_info=PlatformInfo()
-        platform_info.os='linux'
+        platform_info.os='*'
         platform_info.version='*'
         platform_info.platform='pc'
         platform_info.system='ros'
