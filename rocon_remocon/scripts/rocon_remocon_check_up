@@ -39,8 +39,9 @@ def _check_valid_concert():
 
 if __name__ == "__main__":
      
-    host_name=sys.argv[1]
     concert_ip = sys.argv[1] #ip
+    host_name=sys.argv[2]
+
     os.environ["ROS_MASTER_URI"] = 'http://'+concert_ip+':'+"11311"
     os.environ["ROS_HOSTNAME"] = host_name
     
@@ -49,13 +50,10 @@ if __name__ == "__main__":
         print "Unknown"
         print "Unknown."
         print "Unknown.png"
-        sys.exit()
+        rospy.signal_shutdown("shut down check_up")
     info_sub = rospy.Subscriber("/concert/info", ConcertInfo , _info_callback)
 
     while not rospy.is_shutdown():
         rospy.sleep(rospy.Duration(0.1))
         pass
-        
-        
-        
     

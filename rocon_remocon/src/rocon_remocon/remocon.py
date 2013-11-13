@@ -347,9 +347,9 @@ class RemoconConcert(QMainWindow):
                 if time_out_cnt > 10:
                     print "timeout: "+concert_ip
                     try:
-                        os.kill(output.pid, signal.SIGTERM)  
-                    except OSError:
-                        print "Error: os.kill(output.pid, signal.SIGTERM)"
+                        output.terminate()
+                    except:
+                        print "Error: output.terminate()"
                     
                     k['name']= "Unknown"
                     k['description']="Unknown."
