@@ -15,7 +15,7 @@ import time
 
 #pyqt
 from PyQt4 import uic
-from PyQt4.QtCore import QFile, QIODevice, Qt, QAbstractListModel, pyqtSignal, pyqtSlot,SIGNAL,SLOT, QPoint
+from PyQt4.QtCore import QFile, QIODevice, Qt, QAbstractListModel, pyqtSignal, pyqtSlot,SIGNAL,SLOT, QPoint, QString
 from PyQt4.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
 from PyQt4.QtGui import QSizePolicy,QTextEdit ,QCompleter, QBrush,QDialog, QColor, QPen, QPushButton
 from PyQt4.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
@@ -59,7 +59,11 @@ class RemoconRole(QMainWindow):
         path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/rolelist.ui")
         uic.loadUi(path, self._widget_role_list)
        
-        self.cache_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/cache/concert_info_list.cache")
+        self.temp_cache_path="%s/.ros/rocon/remocon/cache/"%(os.getenv("HOME"))
+        if not os.path.isdir(self.temp_cache_path):
+            os.makedirs(self.temp_cache_path)
+        self.temp_cache_path+="concert_info_list.cache"
+        
         self.scripts_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
 
         #role list widget
@@ -226,8 +230,8 @@ class RemoconRole(QMainWindow):
         self._widget_app_list.app_info.appendHtml(info_text)
         
     def _stop_app(self):
-        print "Stop app: "+ self.cur_selected_app
-        self.remocon_info._stop_app()
+        print "Stop app: "+ str(self.cur_selected_app)
+        self.remocon_info._stop_app(self.cur_selected_app)
         pass
           
     def _start_app(self):
@@ -236,8 +240,13 @@ class RemoconRole(QMainWindow):
         pass
     
     def _write_cache(self):
+        
+        try:
+            cache_concert_info_list= open(self.temp_cache_path,'w')
+        except:
+            print "No directory or file: %s"%(self.temp_cache_path)
+            return
 
-        cache_concert_info_list= open(self.cache_path,'w')
         for k in self.concert_list.values():
             concert_index= k['index']
             concert_name= k['name']
@@ -262,7 +271,11 @@ class RemoconRole(QMainWindow):
         
     def _read_cache(self):
         #read cache and display the concert list
-        cache_concert_info_list= open(self.cache_path,'r')
+        try:
+            cache_concert_info_list= open(self.temp_cache_path,'r')
+        except:
+            print "No directory or file: %s"%(self.temp_cache_path)
+            return
         lines= cache_concert_info_list.readlines()
         
         for line in lines:
@@ -301,13 +314,15 @@ class RemoconConcert(QMainWindow):
         
         self.concert_list= {};
         self.cur_selected_concert= 0
-        
-        self.cache_concert_info_list= 0
 
         path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/remocon.ui")
         uic.loadUi(path, self._widget_main)
 
-        self.cache_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/cache/concert_info_list.cache")
+        self.temp_cache_path="%s/.ros/rocon/remocon/cache/"%(os.getenv("HOME"))
+        if not os.path.isdir(self.temp_cache_path):
+            os.makedirs(self.temp_cache_path)
+        self.temp_cache_path+="concert_info_list.cache"
+        
         self.icon_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/")
         self.temp_icon_path= "%s/.ros/rocon/remocon/image/"%(os.getenv("HOME"))
         self.scripts_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
@@ -375,7 +390,12 @@ class RemoconConcert(QMainWindow):
                 
     def _read_cache(self):
         #read cache and display the concert list
-        cache_concert_info_list= open(self.cache_path,'r')
+        try:
+            cache_concert_info_list= open(self.temp_cache_path,'r')
+        except:
+            print "No directory or file: %s"%(self.temp_cache_path)
+            return 
+            
         lines= cache_concert_info_list.readlines()
         
         for line in lines:
@@ -509,8 +529,12 @@ class RemoconConcert(QMainWindow):
 
         print '_update_concert_list'
         self._widget_main.list_widget.clear()
-        self.cache_concert_info_list= open(self.cache_path,'w')
-        
+        try:
+            cache_concert_info_list= open(self.temp_cache_path,'w')
+        except:
+            print "No directory or file: %s"%(self.temp_cache_path)
+            return 
+            
         for k in self.concert_list.values():
             self._add_concert_list_item(k)
             concert_index= k['index']
@@ -529,8 +553,8 @@ class RemoconConcert(QMainWindow):
             concert_elem +='flag='+concert_flag
             concert_elem +=']\n'
             
-            self.cache_concert_info_list.write(concert_elem)
-        self.cache_concert_info_list.close()
+            cache_concert_info_list.write(concert_elem)
+        cache_concert_info_list.close()
 
     def _add_concert_list_item(self,concert):
         print '_add_concert_list_item'
@@ -541,13 +565,14 @@ class RemoconConcert(QMainWindow):
         concert_description= concert['description']
         concert['cur_row']= str(self._widget_main.list_widget.count())
         
-        display_name= str(self._widget_main.list_widget.count())+': '+str(concert_name)+"["+str(concert_ip)+"]"   
-        
+        display_name=str(self._widget_main.list_widget.count())+': '+str(concert_name)+"["+str(concert_ip)+"]"   
         self._widget_main.list_widget.insertItem(self._widget_main.list_widget.count(),display_name )
+
         #setting the list font
         font= self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).font()        
         font.setPointSize(25)
         self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).setFont(font)
+
         #setToolTip
         concert_info=""
         concert_info +="concert_index: "+str(concert_index)+"\n"
@@ -555,8 +580,8 @@ class RemoconConcert(QMainWindow):
         concert_info +="ip:  "+str(concert_ip)+"\n"
         concert_info +="description:  "+str(concert_description)
         self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).setToolTip(concert_info)
+        
         #set icon
-
         if len(concert_icon) and concert_icon == "Unknown.png":
             icon= QIcon(self.icon_path+concert_icon)
             self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).setIcon(icon)
@@ -577,7 +602,18 @@ class RemoconConcert(QMainWindow):
                 self.cur_selected_concert= k['index']    
                 break
         pass
-        
+   
+        self._widget_main.list_info_widget.clear()
+        info_text= ""
+        info_text= "<html>"
+        info_text += "<p>-------------------------------------------</p>"
+        info_text += "<p><b>name: </b>" +str(self.concert_list[self.cur_selected_concert]['name'])+"</p>"
+        info_text += "<p><b>ip: </b>" +str(self.concert_list[self.cur_selected_concert]['ip'])+"</p>"
+        info_text += "<p><b>description: </b>" +str(self.concert_list[self.cur_selected_concert]['description'])+"</p>"
+        info_text += "<p>-------------------------------------------</p>"
+        info_text +="</html>"
+        self._widget_main.list_info_widget.appendHtml(info_text)
+
     def _select_double_concert(self, Item):
         print '_select_double_concert: '+ Item.text()
         

@@ -203,6 +203,8 @@ class RemoconInfo():
                     self.app_list[app_name]['max']=l.max
                     self.app_list[app_name]['remappings']=l.remappings
                     self.app_list[app_name]['parameters']=l.parameters
+                    self.app_list[app_name]['launch']=None
+                    self.app_list[app_name]['running']=str(False)
         pass
        
     def _roles_callback(self,data):
@@ -278,31 +280,37 @@ class RemoconInfo():
         if call_result.error_code==ErrorCodes.SUCCESS:
             print "permisson ok"
             if self._start_app_launch(app_name,service_name,remappings,parameters):
-                self.is_app_running=True
-                self._pub_remocon_status("app_name",True)
+                #start launcher
+                self._pub_remocon_status(app_name,True)
             else:
-                self.is_app_running=False
-           
-        
+                self._pub_remocon_status(app_name,False)
             pass
         
-        #start launcher
-       
+    def _stop_app(self,app_name):
+        is_app_running = self.app_list[app_name]["running"]
+
+        if is_app_running == "True":
+            self.app_list[app_name]["launch"].shutdown()    
+            #os.kill(self.app_pid, signal.SIGTERM)
+            self.app_list[app_name]["running"] = "False"
+            print "%s APP STOP"%(app_name)
         
-    def _stop_app(self):
-        if self.is_app_running==True:
-            os.kill(self.app_pid, signal.SIGTERM)
-            print "APP STOP"
-            self.is_app_running=False
+        elif self.app_list[app_name]["launch"] == None:
+            self.app_list[app_name]["running"] = "False"
+            print "%s APP LAUNCH IS NONE"%(app_name)
         else:
-            print "APP IS ALREADY STOP"
+            print "%s APP IS ALREADY STOP"%(app_name)
         pass    
     
-    def _start_app_launch(self,name,service_name,remappings,parameters):
+    def _start_app_launch(self,app_name,service_name,remappings,parameters):
+        if self.app_list[app_name]['running'] == 'True':
+            return False
+            
+            
         #start launch file
         execute_path=self.scripts_path+'rocon_remocon_app_launcher'
-        pkg_name=name.split('/')[0]
-        launch_name=name.split('/')[1]+'.launch'
+        pkg_name=app_name.split('/')[0]
+        launch_name=app_name.split('/')[1]+'.launch'
         remappings_role=""
         #check the launch file validation
         
@@ -311,7 +319,44 @@ class RemoconInfo():
         except:
             print "FAULT [%s] PACKAGE OR [%s] LAUNCH FILE"%(pkg_name,launch_name)
             return False
-        
+
+        name_space=""
+        name_space+='/service/'+service_name
+        full_path=rocon_utilities.find_resource(pkg_name,launch_name)
+
+        temp=tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+        #add parameters
+        launch_text=""
+        launch_text+='<launch>\n'
+        launch_text+='    <group ns="%s">\n'%(name_space)
+        launch_text+='        <rosparam>%s</rosparam>\n'%(parameters)
+        launch_text+='        <include file="%s"/>\n'%(full_path)
+        launch_text+='    </group>\n'
+        launch_text+='</launch>\n'    
+        temp.write(launch_text)
+        temp.close()  # unlink it later
+        print launch_text
+
+        try:
+            _launch=roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
+                                                            [temp.name],
+                                                            is_core=False,)    
+            _launch._load_config()
+            remap_size=len(remappings)
+            for N in _launch.config.nodes:
+                for k in remappings:
+                    N.remap_args.append([(name_space+'/'+k.remap_from).replace('//','/'),k.remap_to])
+            _launch.start()
+            self.app_list[app_name]['launch'] = _launch
+            self.app_list[app_name]['running'] = str(True)
+            return True
+        except:
+            self.app_list[app_name]['running'] = str(False)
+            print "Fail to launch: %s"%(app_name)
+            return False
+        #launch the same app the one app terminate but the other app is out of control because using same key
+
+        """
         for k in remappings:
             remappings_role+=k.remap_from+':'
             remappings_role+=k.remap_to+','
@@ -320,4 +365,4 @@ class RemoconInfo():
         self.app_pid=output.pid
         return True
         pass
-
+        """
