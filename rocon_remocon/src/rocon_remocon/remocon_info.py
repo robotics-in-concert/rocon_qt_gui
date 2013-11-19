@@ -150,7 +150,7 @@ class RemoconInfo():
         remocon_status.running_app=running_app
         remocon_status.app_name=app_name  
         
-        print "[remocon_info] pugetblish remocon status"
+        print "[remocon_info] publish remocon status"
         self.remocon_status_pub.publish(remocon_status)
         
         pass
@@ -257,15 +257,13 @@ class RemoconInfo():
         pass
         
     def _start_app(self,role_name,app_name):
-        
         if not self.app_list.has_key(app_name):
-            print "HAS NO KEY"
+            print "[remocon_info] HAS NO KEY"
             return
         
         if self.is_app_running==True:
-            print "APP ALREADY RUNNING NOW "
+            print "[remocon_info] APP ALREADY RUNNING NOW "
             return  
-            
             
         #get the permission
         service_handle=rospy.ServiceProxy("/concert/interactions/request_interaction", RequestInteraction)
@@ -278,7 +276,7 @@ class RemoconInfo():
         call_result=service_handle(platform_info,role_name,service_name,app_name)
 
         if call_result.error_code==ErrorCodes.SUCCESS:
-            print "permisson ok"
+            print "[remocon_info] permisson ok"
             if self._start_app_launch(app_name,service_name,remappings,parameters):
                 #start launcher
                 self._pub_remocon_status(app_name,True)
@@ -293,19 +291,19 @@ class RemoconInfo():
             self.app_list[app_name]["launch"].shutdown()    
             #os.kill(self.app_pid, signal.SIGTERM)
             self.app_list[app_name]["running"] = "False"
-            print "%s APP STOP"%(app_name)
+            print "[remocon_info] %s APP STOP"%(app_name)
         
         elif self.app_list[app_name]["launch"] == None:
             self.app_list[app_name]["running"] = "False"
-            print "%s APP LAUNCH IS NONE"%(app_name)
+            print "[remocon_info] %s APP LAUNCH IS NONE"%(app_name)
         else:
-            print "%s APP IS ALREADY STOP"%(app_name)
+            print "[remocon_info] %s APP IS ALREADY STOP"%(app_name)
         pass    
     
     def _start_app_launch(self,app_name,service_name,remappings,parameters):
         if self.app_list[app_name]['running'] == 'True':
-            return False
-            
+            print "[remocon_info] %s APP IS ALREADY START"%(app_name)
+            return True
             
         #start launch file
         execute_path=self.scripts_path+'rocon_remocon_app_launcher'
@@ -317,14 +315,14 @@ class RemoconInfo():
         try:
             full_path=rocon_utilities.find_resource(pkg_name,launch_name)
         except:
-            print "FAULT [%s] PACKAGE OR [%s] LAUNCH FILE"%(pkg_name,launch_name)
+            print "[remocon_info] FAULT [%s] PACKAGE OR [%s] LAUNCH FILE"%(pkg_name,launch_name)
             return False
 
         name_space=""
         name_space+='/service/'+service_name
         full_path=rocon_utilities.find_resource(pkg_name,launch_name)
-
         temp=tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+        
         #add parameters
         launch_text=""
         launch_text+='<launch>\n'
@@ -335,7 +333,6 @@ class RemoconInfo():
         launch_text+='</launch>\n'    
         temp.write(launch_text)
         temp.close()  # unlink it later
-        print launch_text
 
         try:
             _launch=roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
@@ -354,15 +351,5 @@ class RemoconInfo():
             self.app_list[app_name]['running'] = str(False)
             print "Fail to launch: %s"%(app_name)
             return False
-        #launch the same app the one app terminate but the other app is out of control because using same key
+        
 
-        """
-        for k in remappings:
-            remappings_role+=k.remap_from+':'
-            remappings_role+=k.remap_to+','
-
-        output=subprocess.Popen([execute_path,pkg_name,launch_name,service_name,remappings_role,parameters])
-        self.app_pid=output.pid
-        return True
-        pass
-        """
