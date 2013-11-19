@@ -58,7 +58,8 @@ class RemoconRole(QMainWindow):
         
         path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/rolelist.ui")
         uic.loadUi(path, self._widget_role_list)
-       
+
+        self.temp_icon_path= "%s/.ros/rocon/remocon/image/"%(os.getenv("HOME"))   
         self.temp_cache_path="%s/.ros/rocon/remocon/cache/"%(os.getenv("HOME"))
         if not os.path.isdir(self.temp_cache_path):
             os.makedirs(self.temp_cache_path)
@@ -72,6 +73,9 @@ class RemoconRole(QMainWindow):
         self._widget_role_list.role_list_widget.itemDoubleClicked.connect(self._select_role_list) 
       
         #app list widget
+        
+        self._widget_app_list.app_list_widget.itemDoubleClicked.connect(self._start_app) 
+               
         self._widget_app_list.exit_btn.pressed.connect(self._uninit_app_list)
         self._widget_app_list.app_list_widget.itemClicked.connect(self._select_app_list) #concert item click event
         self._widget_app_list.start_app_btn.pressed.connect(self._start_app)
@@ -177,6 +181,7 @@ class RemoconRole(QMainWindow):
         self._widget_app_list.app_list_widget.clear()
         
         index= 0
+        
         for k in self.app_list.values():
             k['index']= index
             index= index+1
@@ -186,6 +191,19 @@ class RemoconRole(QMainWindow):
             font= self._widget_app_list.app_list_widget.item(0).font()        
             font.setPointSize(25)
             self._widget_app_list.app_list_widget.item(0).setFont(font)
+            #setting the icon
+            
+            app_icon = k['icon']
+            if len(app_icon) and app_icon == "Unknown.png":
+                icon= QIcon(self.icon_path+app_icon)
+                self._widget_app_list.app_list_widget.item(0).setIcon(icon)
+            elif len(app_icon):
+                icon= QIcon(self.temp_icon_path+app_icon)
+                self._widget_app_list.app_list_widget.item(0).setIcon(icon)
+            else:
+                print concert_name+': No icon'
+            pass
+        
         pass
      
     def _select_app_list(self,Item):
@@ -328,7 +346,7 @@ class RemoconConcert(QMainWindow):
         self.scripts_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
         
         #main widget
-        self._widget_main.list_widget.itemDoubleClicked.connect(self._select_double_concert) #concert item double click event
+        self._widget_main.list_widget.itemDoubleClicked.connect(self._connect_concert) #concert item double click event
         self._widget_main.list_widget.itemClicked.connect(self._select_concert) #concert item double click event
 
         self._widget_main.add_concert_btn.pressed.connect(self._set_add_concert) #add button event
@@ -614,83 +632,6 @@ class RemoconConcert(QMainWindow):
         info_text +="</html>"
         self._widget_main.list_info_widget.appendHtml(info_text)
 
-    def _select_double_concert(self, Item):
-        print '_select_double_concert: '+ Item.text()
-        
-        if self._connect_dlg_isValid:
-            print "Dialog is live!!"
-            self._connect_dlg.done(0)
-        
-        #dialog
-        self._connect_dlg= QDialog(self._widget_main)             
-        self._connect_dlg.setWindowTitle("Seting Configuration")
-        self._connect_dlg.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
-        self._connect_dlg.setMinimumSize(500,0)
-        dlg_rect= self._connect_dlg.geometry()
-
-        #dialog layout
-        ver_layout= QVBoxLayout(self._connect_dlg)
-        ver_layout.setContentsMargins (9,9,9,9)
-        
-        #param layout
-        text_grid_sub_widget= QWidget()
-        text_grid_layout= QGridLayout(text_grid_sub_widget)            
-        text_grid_layout.setColumnStretch (1, 0)
-        text_grid_layout.setRowStretch (2, 0)
-        
-        #param 1
-        name=u""
-        title_widget1= QLabel("Name: ")
-        context_widget1= QTextEdit()
-        context_widget1.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
-        context_widget1.setMinimumSize(0,30)
-        context_widget1.append(self.concert_list[self.cur_selected_concert]['name'])
-        
-        #param 2
-        cancel=False
-        title_widget2= QLabel("IP: ")           
-        context_widget2= QTextEdit()
-        context_widget2.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
-        context_widget2.setMinimumSize(0,30)
-        context_widget2.append(self.concert_list[self.cur_selected_concert]['ip'])
-        
-        #add param
-        text_grid_layout.addWidget(title_widget1)
-        text_grid_layout.addWidget(context_widget1)
-        
-        text_grid_layout.addWidget(title_widget2)
-        text_grid_layout.addWidget(context_widget2)
-
-        #add param layout
-        ver_layout.addWidget(text_grid_sub_widget) 
-        
-        #button layout
-        button_hor_sub_widget= QWidget()
-        button_hor_layout= QHBoxLayout(button_hor_sub_widget)
-
-        params= {}
-        params['param1']= context_widget1
-        params['param2']= context_widget2
- 
-        #button
-        btn_call= QPushButton("Connect")
-        btn_cancel= QPushButton("Cancel")
-      
-        btn_call.clicked.connect(lambda: self._connect_dlg.done(0))
-        btn_call.clicked.connect(lambda: self._connect_concert(params))
-
-        btn_cancel.clicked.connect(lambda: self._connect_dlg.done(0))
-        
-        #add button
-        button_hor_layout.addWidget(btn_call)            
-        button_hor_layout.addWidget(btn_cancel)
-
-        #add button layout            
-        ver_layout.addWidget(button_hor_sub_widget)
-        self._connect_dlg.setVisible(True)
-        self._connect_dlg.finished.connect(self._destroy_connect_dlg)
-        self._connect_dlg_isValid= True
-        pass
         
     def _destroy_connect_dlg(self):
         print "[Dialog] Distory!!!"
@@ -698,10 +639,11 @@ class RemoconConcert(QMainWindow):
         pass
     
 
-    def _connect_concert(self, params):
+    def _connect_concert(self):
 
-        concert_name= str(params['param1'].toPlainText())
-        concert_ip= str(params['param2'].toPlainText())
+        concert_name= str(self.concert_list[self.cur_selected_concert]['name'])
+        concert_ip= str(self.concert_list[self.cur_selected_concert]['ip'])
+        
         concert_index= str(self.cur_selected_concert)
         concert_host_name= str(self.host_name)
 

@@ -41,7 +41,6 @@ class RemoconInfo():
         self.is_app_running=False    
         self.key=uuid.uuid4()
         self.temp_icon_path= "%s/.ros/rocon/remocon/image/"%(os.getenv("HOME"))
-        self.scripts_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
         
         self.app_pid=0
         
@@ -196,7 +195,11 @@ class RemoconInfo():
                     self.app_list[app_name]['name']=l.name
                     self.app_list[app_name]['platform_info']=l.platform_info
                     #todo icon
-                    #self.app_list[app_name]['os']=l.platform_info.os
+                    icon_name = l.icon.resource_name.split('/').pop()
+                    icon = open(self.temp_icon_path+icon_name,'w')
+                    icon.write(l.icon.data)
+                    icon.close()  
+                    self.app_list[app_name]['icon']=icon_name
                     self.app_list[app_name]['display_name']=l.display_name
                     self.app_list[app_name]['description']=l.description
                     self.app_list[app_name]['service_name']=l.service_name
@@ -238,7 +241,7 @@ class RemoconInfo():
         self.is_valid_info=False
         concert_name=data.name 
         
-        icon_name=concert_name+'.png'
+        icon_name=data.icon.resource_name.split('/').pop()
         # delete concert info in cache
         icon=open(self.temp_icon_path+icon_name,'w')
         icon.write(data.icon.data)
@@ -306,7 +309,6 @@ class RemoconInfo():
             return True
             
         #start launch file
-        execute_path=self.scripts_path+'rocon_remocon_app_launcher'
         pkg_name=app_name.split('/')[0]
         launch_name=app_name.split('/')[1]+'.launch'
         remappings_role=""
