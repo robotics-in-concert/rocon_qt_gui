@@ -76,7 +76,7 @@ class RemoconRole(QMainWindow):
         
         self._widget_app_list.app_list_widget.itemDoubleClicked.connect(self._start_app) 
                
-        self._widget_app_list.exit_btn.pressed.connect(self._uninit_app_list)
+        self._widget_app_list.back_btn.pressed.connect(self._uninit_app_list)
         self._widget_app_list.app_list_widget.itemClicked.connect(self._select_app_list) #concert item click event
         self._widget_app_list.start_app_btn.pressed.connect(self._start_app)
         self._widget_app_list.stop_app_btn.pressed.connect(self._stop_app)
@@ -538,6 +538,7 @@ class RemoconConcert(QMainWindow):
 
     def _refresh_concert_list(self):
         print '_refresh_concert_list'
+        self._widget_main.list_info_widget.clear()
         self._read_cache()
         self._check_up()
         self._update_concert_list()
@@ -678,10 +679,13 @@ class RemoconConcert(QMainWindow):
         execute_path += " "+"'"+concert_host_name+"'" ##arg4
 
         self._widget_main.hide()
+        
         print "create new process: "+execute_path
 
         os.system(execute_path) #todo
-        #output= subprocess.Popen([execute_path,concert_index,concert_name,concert_ip])
+        
+        #output= subprocess.Popen([self.scripts_path+'rocon_remocon_sub',concert_index,concert_name,concert_ip,concert_host_name])
+        #sys.exit(1)
         #pid_id= output.pid
         
         #while output.poll()== None:

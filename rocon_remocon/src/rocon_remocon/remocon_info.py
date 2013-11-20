@@ -206,8 +206,10 @@ class RemoconInfo():
                     self.app_list[app_name]['max']=l.max
                     self.app_list[app_name]['remappings']=l.remappings
                     self.app_list[app_name]['parameters']=l.parameters
-                    self.app_list[app_name]['launch']=None
-                    self.app_list[app_name]['running']=str(False)
+                    self.app_list[app_name]['launch_list'] ={}
+                    #self.app_list[app_name]['launch']=None
+                    #self.app_list[app_name]['running']=str(False)
+                    
         pass
        
     def _roles_callback(self,data):
@@ -288,26 +290,29 @@ class RemoconInfo():
             pass
         
     def _stop_app(self,app_name):
-        is_app_running = self.app_list[app_name]["running"]
-
-        if is_app_running == "True":
-            self.app_list[app_name]["launch"].shutdown()    
-            #os.kill(self.app_pid, signal.SIGTERM)
-            self.app_list[app_name]["running"] = "False"
-            print "[remocon_info] %s APP STOP"%(app_name)
+        print self.app_list[app_name]["launch_list"]    
         
-        elif self.app_list[app_name]["launch"] == None:
-            self.app_list[app_name]["running"] = "False"
-            print "[remocon_info] %s APP LAUNCH IS NONE"%(app_name)
-        else:
-            print "[remocon_info] %s APP IS ALREADY STOP"%(app_name)
-        pass    
+        for k in self.app_list[app_name]["launch_list"].values():
+            process_name = k["name"]
+            is_app_running = k["running"]
+            
+            if is_app_running == "True":
+                k["launch"].shutdown()    
+                del self.app_list[app_name]["launch_list"][k["name"]]
+                print "[remocon_info] %s APP STOP"%(process_name)        
+            elif k["launch"] == None:
+                k["running"] = "False"
+                del self.app_list[app_name]["launch_list"][k["name"]]
+                print "[remocon_info] %s APP LAUNCH IS NONE"%(process_name)
+            else:
+                del self.app_list[app_name]["launch_list"][k["name"]]
+                print "[remocon_info] %s APP IS ALREADY STOP"%(process_name)
+        pass 
+        
+        print self.app_list[app_name]["launch_list"]    
     
     def _start_app_launch(self,app_name,service_name,remappings,parameters):
-        if self.app_list[app_name]['running'] == 'True':
-            print "[remocon_info] %s APP IS ALREADY START"%(app_name)
-            return True
-            
+      
         #start launch file
         pkg_name=app_name.split('/')[0]
         launch_name=app_name.split('/')[1]+'.launch'
@@ -335,23 +340,38 @@ class RemoconInfo():
         launch_text+='</launch>\n'    
         temp.write(launch_text)
         temp.close()  # unlink it later
-
+        self.listener = roslaunch.pmon.ProcessListener()
+        self.listener.process_died = self.process_listeners
         try:
             _launch=roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
                                                             [temp.name],
-                                                            is_core=False,)    
+                                                            is_core=False,
+                                                            process_listeners=[self.listener])    
             _launch._load_config()
             remap_size=len(remappings)
             for N in _launch.config.nodes:
                 for k in remappings:
                     N.remap_args.append([(name_space+'/'+k.remap_from).replace('//','/'),k.remap_to])
             _launch.start()
-            self.app_list[app_name]['launch'] = _launch
-            self.app_list[app_name]['running'] = str(True)
+
+            process_name = str(_launch.pm.get_process_names_with_spawn_count()[0][0][0])
+            self.app_list[app_name]['launch_list'][process_name] = {}
+            self.app_list[app_name]['launch_list'][process_name]['name'] = process_name
+            self.app_list[app_name]['launch_list'][process_name]['running'] = str(True)
+            self.app_list[app_name]['launch_list'][process_name]['launch'] = _launch
             return True
-        except:
+            
+        except Exception, inst:
+            print inst
             self.app_list[app_name]['running'] = str(False)
             print "Fail to launch: %s"%(app_name)
             return False
         
-
+    def process_listeners(self,name,exit_code):
+        print "call process_listeners"
+        for k in self.app_list.values():
+            if k['launch_list'].has_key(name):                
+                del k['launch_list'][name]       
+        pass
+        
+        
