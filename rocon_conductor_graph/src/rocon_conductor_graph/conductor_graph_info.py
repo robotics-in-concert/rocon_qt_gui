@@ -6,7 +6,7 @@ import rospy
 import rosgraph
 from rosgraph.impl.graph import Edge, EdgeList
 from concert_msgs.msg import ConcertClients
-#from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
+from rocon_std_msgs.srv import GetPlatformInfo
 from rocon_app_manager_msgs.srv import Status, Invite, StartApp, StopApp
 #from rocon_app_manager_msgs.msg import PlatformInfo
 

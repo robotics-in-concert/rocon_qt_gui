@@ -23,7 +23,7 @@ import rosnode
 import roslib
 import rospy
 from concert_msgs.msg import ConcertClients
-#from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
+from rocon_std_msgs.srv import GetPlatformInfo
 from rocon_app_manager_msgs.srv import Status, Invite, StartApp, StopApp
 #from rocon_std_msgs.msg import PlatformInfo
 ###########################
@@ -251,19 +251,16 @@ class ConductorGraph(Plugin):
             info_text +="</html>"
             
         elif service_name == 'platform_info':
-            
-            """           
             service_handle = rospy.ServiceProxy(service, GetPlatformInfo)
             call_result = service_handle()
             
             info_text = "<html>"
             info_text += "<p>-------------------------------------------</p>"
-            info_text += "<p><b>platform: </b>" +call_result.platform_info.platform+"</p>"
+            info_text += "<p><b>os: </b>" +call_result.platform_info.os+"</p>"
+            info_text += "<p><b>version: </b>" +call_result.platform_info.version+"</p>"
             info_text += "<p><b>system: </b>" +call_result.platform_info.system+"</p>"
-            info_text += "<p><b>robot: </b>" +call_result.platform_info.robot+"</p>"
             info_text += "<p><b>name: </b>" +call_result.platform_info.name+"</p>"
             info_text +="</html>"
-            """
             
         elif service_name == 'invite':
             #sesrvice
@@ -428,8 +425,16 @@ class ConductorGraph(Plugin):
             print 'has no service'
 
         service_text_widget.appendHtml(info_text)
+
         
-        
+    def _call_invite_service(self):
+        pass
+    
+    def _call_start_app_service(self):
+        pass
+
+
+    
     def _update_client_tab(self):
         self._widget.tabWidget.clear()    
         for k in self._graph._client_info_list.values(): 
@@ -449,23 +454,25 @@ class ConductorGraph(Plugin):
             btn_grid_layout.setColumnStretch (1, 0)
             btn_grid_layout.setRowStretch (2, 0)
 
-            btn_invite = QPushButton("invite")
-            btn_platform_info = QPushButton("platform_info")
-            btn_status = QPushButton("status")
-            btn_start_app = QPushButton("start_app")
-            btn_stop_app = QPushButton("stop_app")            
+            invite_btn = QPushButton("invite")
+            platform_info_btn = QPushButton("platform_info")
+            status_btn = QPushButton("status")
+            start_app_btn = QPushButton("start_app")
+            stop_app_btn = QPushButton("stop_app")
+            get_app_list_app_btn = QPushButton("get_app_list")                        
 
-            btn_invite.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"invite"))
-            btn_platform_info.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"platform_info"))  
-            btn_status.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"status"))  
-            btn_start_app.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"start_app"))  
-            btn_stop_app.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"stop_app"))  
+            invite_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"invite"))
+            platform_info_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"platform_info"))  
+            status_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"status"))  
+            start_app_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"start_app"))  
+            stop_app_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"stop_app"))
+            get_app_list_app_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"get_app_list_app"))    
                     
-            btn_grid_layout.addWidget(btn_invite)
-            btn_grid_layout.addWidget(btn_platform_info)
-            btn_grid_layout.addWidget(btn_status)
-            btn_grid_layout.addWidget(btn_start_app)
-            btn_grid_layout.addWidget(btn_stop_app)
+            btn_grid_layout.addWidget(invite_btn)
+            btn_grid_layout.addWidget(platform_info_btn)
+            btn_grid_layout.addWidget(status_btn)
+            btn_grid_layout.addWidget(start_app_btn)
+            btn_grid_layout.addWidget(stop_app_btn)
              
             ver_layout.addWidget(sub_widget)            
             
