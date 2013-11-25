@@ -2,18 +2,19 @@
 ##############################################################################
 # Imports
 ##############################################################################
-
+#system
 import sys, signal, string, atexit
-#from rqt_gui.main import Main
+#pyqt
 from PyQt4.QtGui import QAction, QApplication, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
 from PyQt4.QtCore import QTimer
-
+#rocon
 import rocon_remocon
 
+app = None
+myapp = None
 def signal_handler(signum, f): 
     if signum ==signal.SIGINT:
-        sys.exit()
-
+        app.exit(0)
 ##############################################################################
 # Main
 ##############################################################################.
@@ -30,7 +31,7 @@ if __name__ =="__main__":
     timer =QTimer()
     timer.start(200)  
     timer.timeout.connect(lambda: None)  
-    myapp =rocon_remocon.remocon.RemoconConcert(None, "My System Tray App",host_name)
-    
+    myapp =rocon_remocon.remocon.RemoconMain(None, "My System Tray App",app,host_name)
     app.exec_()
+    print "rocon_remocon: Main end"
 

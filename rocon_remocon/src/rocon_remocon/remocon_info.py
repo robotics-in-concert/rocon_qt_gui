@@ -53,6 +53,9 @@ class RemoconInfo():
         
         print "[remocon_info] init complete"
     
+    def __del__(self):
+        print "[remocon_info] Destory!!!"
+        
     def _connect(self,concert_name="", concert_ip="127.0.0.1",host_name='127.0.0.1',concert_port="11311"):
         # remocon name would be good as a persistant configuration variable by the user
         # so they can set something like 'Bob'.

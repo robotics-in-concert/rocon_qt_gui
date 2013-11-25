@@ -3,7 +3,6 @@
 # Imports
 ##############################################################################
 #system
-from __future__ import division
 import sys
 import os
 import subprocess
@@ -15,7 +14,8 @@ import time
 
 #pyqt
 from PyQt4 import uic
-from PyQt4.QtCore import QFile, QIODevice, Qt, QAbstractListModel, pyqtSignal, pyqtSlot,SIGNAL,SLOT, QPoint, QString
+from PyQt4.QtCore import pyqtSlot,SIGNAL,SLOT, QPoint, QString,QEvent
+from PyQt4.QtCore import QFile, QIODevice, Qt, QAbstractListModel, pyqtSignal
 from PyQt4.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
 from PyQt4.QtGui import QSizePolicy,QTextEdit ,QCompleter, QBrush,QDialog, QColor, QPen, QPushButton
 from PyQt4.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
@@ -30,12 +30,13 @@ from remocon_info import RemoconInfo
 ##############################################################################
 
 class RemoconRole(QMainWindow):
-    def __init__(self, parent, title,concert_index="", concert_name="", concert_ip='127.0.0.1', host_name='127.0.0.1'):
+    def __init__(self, parent, title,application,concert_index="", concert_name="", concert_ip='127.0.0.1', host_name='127.0.0.1'):
         self.concert_index= concert_index
         self.concert_ip= concert_ip
         self.concert_name= concert_name    
         self.host_name= host_name    
         self._context= parent
+        self.application = application
 
         super(RemoconRole, self).__init__(parent)
         self.initialised= False
@@ -84,10 +85,7 @@ class RemoconRole(QMainWindow):
 
         #init
         self._init()     
-        
-    def __del__(self):
-        print "[RemoconRole]: destory!!!"
-        
+
     def _init(self):
 
         self._read_cache()
@@ -103,18 +101,13 @@ class RemoconRole(QMainWindow):
 
         if not self.remocon_info._connect(self.concert_name, self.concert_ip,self.host_name):
             return False
-        atexit.register(self.remocon_info._disconnect)
-            
         self._refresh_role_list()    
         return True
         
     def _uninit_role_list(self):
         print "_uninit_role_list"
         self.remocon_info._shutdown()
-        self.cur_selected_role= 0
-        
-        self._widget_role_list.hide()
-        sys.exit()
+        self.cur_selected_role= 0    
      
     def _select_role_list(self,Item):
         print '_select_role_list: '+ Item.text()
@@ -130,8 +123,9 @@ class RemoconRole(QMainWindow):
         
     def _back_role_list(self):
         self._uninit_role_list()
+        sys.exit()
         pass
-    
+
     def _refresh_role_list(self):
         self.role_list= {}
         self._widget_role_list.role_list_widget.clear()
@@ -316,20 +310,23 @@ class RemoconRole(QMainWindow):
         pass
 
 #################################################################        
-##Remocon Concert
+##Remocon Main
 #################################################################
-class RemoconConcert(QMainWindow):
+class RemoconMain(QMainWindow):
     
-    def __init__(self, parent, title, host_name):
+    def __init__(self, parent, title, application, host_name):
         
         self._context= parent
        
-        super(RemoconConcert, self).__init__(parent)
+        super(RemoconMain, self).__init__()
         self.initialised= False
         self.setObjectName('Remocon')
         self.host_name= host_name
-        self._widget_main= QWidget()
+        self.application = application
         
+        
+        self._widget_main= QWidget()
+      
         self.concert_list= {};
         self.cur_selected_concert= 0
 
@@ -353,13 +350,16 @@ class RemoconConcert(QMainWindow):
         self._widget_main.delete_btn.pressed.connect(self._delete_concert) #delete button event
         self._widget_main.delete_all_btn.pressed.connect(self._delete_all_concert) #delete all button event
         self._widget_main.refresh_btn.pressed.connect(self._refresh_concert_list) #refresh all button event
-        
+             
         #init  
-        self._widget_main.show()     
         self._init()
-    
+        
+        self._widget_main.show()     
+        
+        
+    def __del__(self):
+        print '[RemoconMain]: Destory'
 ########################################################################        
-
     def _init(self):
         
         self._connect_dlg_isValid= False
@@ -611,7 +611,6 @@ class RemoconConcert(QMainWindow):
             print concert_name+': No icon'
         pass
 
-    
     def _select_concert(self , Item):
         list_widget=  Item.listWidget()
         for k in self.concert_list.values():
@@ -633,13 +632,11 @@ class RemoconConcert(QMainWindow):
         info_text +="</html>"
         self._widget_main.list_info_widget.appendHtml(info_text)
 
-        
     def _destroy_connect_dlg(self):
         print "[Dialog] Distory!!!"
         self._connect_dlg_isValid= False
         pass
-    
-
+  
     def _connect_concert(self):
 
         concert_name= str(self.concert_list[self.cur_selected_concert]['name'])
@@ -666,7 +663,7 @@ class RemoconConcert(QMainWindow):
             #button widget
             btn_ok= QPushButton("ok")
             btn_ok.clicked.connect(lambda: connect_dlg.done(0))
-            ver_layout.addWidget(btn_ok)
+            verc_layout.addWidget(btn_ok)
             #add param layout
             connect_dlg.setVisible(True)
             print "NO CONCERT"
@@ -679,26 +676,8 @@ class RemoconConcert(QMainWindow):
         execute_path += " "+"'"+concert_host_name+"'" ##arg4
 
         self._widget_main.hide()
-        
-        print "create new process: "+execute_path
-
-        os.system(execute_path) #todo
-        
-        #output= subprocess.Popen([self.scripts_path+'rocon_remocon_sub',concert_index,concert_name,concert_ip,concert_host_name])
-        #sys.exit(1)
-        #pid_id= output.pid
-        
-        #while output.poll()== None:
-        #    print "live: "+str(output.pid)
-        #    time.sleep(0.2)
-        #print "died: "+str(output.pid)
-        #os.kill(pid_id, signal.SIGTERM)
-            
-        self._widget_main.show()
-        self._refresh_concert_list()
+        subprocess.call(execute_path, shell=True)
+        self._widget_main.show()  
         
         pass
-
-        
-        
 
