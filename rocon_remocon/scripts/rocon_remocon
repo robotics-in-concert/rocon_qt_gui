@@ -13,6 +13,7 @@ import rocon_remocon
 app = None
 myapp = None
 def signal_handler(signum, f): 
+    print "[main] Interrupt"
     if signum ==signal.SIGINT:
         app.exit(0)
 ##############################################################################

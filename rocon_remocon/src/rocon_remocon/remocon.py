@@ -105,7 +105,7 @@ class RemoconRole(QMainWindow):
         return True
         
     def _uninit_role_list(self):
-        print "_uninit_role_list"
+        print "[RemoconRole]_uninit_role_list"
         self.remocon_info._shutdown()
         self.cur_selected_role= 0    
      
@@ -123,7 +123,12 @@ class RemoconRole(QMainWindow):
         
     def _back_role_list(self):
         self._uninit_role_list()
-        sys.exit()
+        execute_path= self.scripts_path+'rocon_remocon' ##command
+        execute_path += " "+"'"+self.host_name+"'" ##arg1
+        
+        os.execv(self.scripts_path+'rocon_remocon',['',self.host_name])
+        
+        print "Spawning: %s"%(execute_path)
         pass
 
     def _refresh_role_list(self):
@@ -646,27 +651,8 @@ class RemoconMain(QMainWindow):
         concert_host_name= str(self.host_name)
 
         if self.concert_list[concert_index]['flag']== '0':    
-            #dialog
-            connect_dlg= QDialog(self._widget_main)             
-            connect_dlg.setWindowTitle("ERROR")
-            connect_dlg.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
-            connect_dlg.setMinimumSize(150,0)
-            dlg_rect= connect_dlg.geometry()
-            #dialog layout
-            ver_layout= QVBoxLayout(connect_dlg)
-            ver_layout.setContentsMargins (9,9,9,9)
-            
-            #error label
-            error_label= QLabel("YOU SELECT NO CONCERT")
-            ver_layout.addWidget(error_label)
-            
-            #button widget
-            btn_ok= QPushButton("ok")
-            btn_ok.clicked.connect(lambda: connect_dlg.done(0))
-            verc_layout.addWidget(btn_ok)
-            #add param layout
-            connect_dlg.setVisible(True)
-            print "NO CONCERT"
+            reply = QMessageBox.warning(self, 'ERROR',
+            "YOU SELECT NO CONCERT", QMessageBox.Ok|QMessageBox.Ok)
             return
 
         execute_path= self.scripts_path+'rocon_remocon_sub' ##command
@@ -676,8 +662,8 @@ class RemoconMain(QMainWindow):
         execute_path += " "+"'"+concert_host_name+"'" ##arg4
 
         self._widget_main.hide()
-        subprocess.call(execute_path, shell=True)
-        self._widget_main.show()  
-        
+        os.execv(self.scripts_path+'rocon_remocon_sub',["",concert_index,concert_name,concert_ip,concert_host_name])
+        print "Spawning: %s"%(execute_path)
+
         pass
 
