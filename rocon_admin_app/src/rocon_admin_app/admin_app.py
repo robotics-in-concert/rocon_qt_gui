@@ -53,7 +53,7 @@ class AdminApp(Plugin):
         self._widget.enable_btn.pressed.connect(self._enable_service)
         self._widget.disable_btn.pressed.connect(self._disable_service)
         self._widget.setting_btn.pressed.connect(self._setting_service)
-        self._widget.service_tree_widget.itemClicked.connect(self._select_tree_item) #concert item click event
+        self._widget.service_tree_widget.itemClicked.connect(self._select_service_tree_item) #concert item click event
 
         context.add_widget(self._widget)
 
@@ -66,15 +66,22 @@ class AdminApp(Plugin):
         self.service_list={}
         
         #get service list
-        service_name="Delivery Service"
-        self.service_list[service_name ]={}      
-        self.service_list[service_name ]["name"]=service_name 
-        self.service_list[service_name ]["client_list"]=self._get_client_list(service_name)
-        
-        service_name="Clean Service"
-        self.service_list[service_name ]={}      
-        self.service_list[service_name ]["name"]=service_name 
-        self.service_list[service_name ]["client_list"]=self._get_client_list(service_name)
+        service_name_list=["Delivery Service","Clean Service"]
+        for l in service_name_list:
+            service_name = l
+            self.service_list[service_name ]={}      
+            self.service_list[service_name ]["name"]=service_name 
+            self.service_list[service_name ]["client_list"] = {}
+            for k in self._get_client_list(service_name):    
+                self.service_list[service_name ]["client_list"][k]={}
+                self.service_list[service_name ]["client_list"][k]["name"]=k
+
+            self.service_list[service_name ]={}      
+            self.service_list[service_name ]["name"]=service_name 
+            self.service_list[service_name ]["client_list"] = {}
+            for k in self._get_client_list(service_name):    
+                self.service_list[service_name ]["client_list"][k]={}
+                self.service_list[service_name ]["client_list"][k]["name"]=k
         
         for k in self.service_list.values():
             #Top service
@@ -86,8 +93,8 @@ class AdminApp(Plugin):
             font.setPointSize(20)
             font.setBold(True)
             service_item.setFont(0,font)
-            #set client item
             
+            #set client item
             for l in k["client_list"]:
                 client_item=QTreeWidgetItem()
                 client_item.setText (0, l)
@@ -100,11 +107,13 @@ class AdminApp(Plugin):
         
 
     def _update_client_list(self,service_name):
+        
         client_list=self.service_list[service_name ]["client_list"]
         self._widget.client_tab_widget.clear()
         
-        for k in client_list: 
-            
+        for k in client_list.values(): 
+            client_name = k["name"]
+            k["index"] = self._widget.client_tab_widget.count()
             main_widget=QWidget()
            
             ver_layout=QVBoxLayout(main_widget)
@@ -118,15 +127,14 @@ class AdminApp(Plugin):
             ver_layout.addWidget(sub_widget)            
             
             client_context_widget=QPlainTextEdit()
-            client_context_widget.setObjectName(k+'_'+'app_context_widget')
+            client_context_widget.setObjectName(client_name+'_'+'app_context_widget')
             client_context_widget.setAccessibleName('app_context_widget')
-            client_context_widget.appendPlainText("client name is "+k)
+            client_context_widget.appendPlainText("client name is "+client_name)
             #app_context_widget.appendHtml(k["app_context"])
-
             ver_layout.addWidget(client_context_widget)
             
             #add tab
-            self._widget.client_tab_widget.addTab(main_widget, k);
+            self._widget.client_tab_widget.addTab(main_widget, client_name)
         pass
     
     def _set_service_info(self,service_name):
@@ -134,30 +142,49 @@ class AdminApp(Plugin):
         self._widget.service_info_text.appendPlainText(service_name)
         pass
     
-    def _set_client_info(self.client_name):
+    
+    def _set_client_info(self,client_name):
         #self._widget.service_info_text.clear()
         #self._widget.service_info_text.appendPlainText(client_name)
         
         pass  
         
-    def _select_tree_item(self,Item):
-        if(Item.text(0) in self.service_list):
+    def _select_service_tree_item(self,Item):
+        
+        if Item.parent() == None:
             print '_select_service: '+ Item.text(0)
             self._set_service_info(Item.text(0))
             self.current_service=Item.text(0)
             self._update_client_list(self.current_service)
+        
         else:
+            print '_select_service: '+Item.parent().text(0)
             print '_select_client: '+ Item.text(0)
+
+            self._set_service_info(Item.parent().text(0))
             self._set_client_info(Item.text(0))
+            
+            for k in range(self._widget.client_tab_widget.count()):
+                tab_text = self._widget.client_tab_widget.tabText (k)
+                if tab_text == Item.text(0):
+                    self._widget.client_tab_widget.setCurrentIndex (k)
+                    break;
+            
         pass
     
     def _get_client_list(self,service_name):
         ##function call
         client_list=[]
         ##function call
-        client_list.append("client1");
-        client_list.append("client2");
-        client_list.append("client3");
+        if service_name == "Delivery Service":
+            client_list.append("client1");
+            client_list.append("client2");
+            client_list.append("client3");
+        elif service_name == "Clean Service":
+            client_list.append("client4");
+            client_list.append("client5");
+            client_list.append("client6");
+        
         print client_list
         return client_list
         pass
