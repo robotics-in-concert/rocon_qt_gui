@@ -6,6 +6,7 @@ import rospy
 #import rosgraph
 #from rosgraph.impl.graph import Edge, EdgeList
 #from concert_msgs.msg import ConcertClients
+#import concert_msgs.msg as concert_msgs
 #from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
 #from rocon_app_manager_msgs.msg import PlatformInfo
 
@@ -32,7 +33,7 @@ class AdminAppInfo(object):
         # Rubbish to clear out once rocon_gateway_graph is integrated
         #self.bad_nodes = []
         
-        #rospy.Subscriber("/concert/list_concert_clients", ConcertClients, self.update_client_list)
+        #rospy.Subscriber(concert_msgs.Strings.CONCERT_CLIENT_CHANGES, ConcertClients, self.update_client_list)
         self._client_info_list = {}
         
        
