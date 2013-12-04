@@ -11,13 +11,12 @@ from rocon_app_manager_msgs.srv import Status, Invite, StartApp, StopApp
 #from rocon_app_manager_msgs.msg import PlatformInfo
 
 import random
+import copy
 from std_msgs.msg import String
 ##############################################################################
 # Graph
 ##############################################################################
-
 class ConductorGraphInfo(object):
-
     def __init__(self):
         '''
         Creates the polling topics necessary for updating statistics
@@ -28,18 +27,24 @@ class ConductorGraphInfo(object):
         self._concert_conductor_name = "concert_conductor"
         self.gateway_nodes = []  # Gateway nodes
         self.gateway_edges = []  # Gateway-Gateway edges
-        
-        # Rubbish to clear out once rocon_gateway_graph is integrated
+        self._callback=None
+        #Rubbish to clear out once rocon_gateway_graph is integrated
         self.bad_nodes = []
         
-        rospy.Subscriber("/concert/list_concert_clients", ConcertClients, self.update_client_list)
-        self._client_info_list = {}
+        rospy.Subscriber("/concert/conductor/list_concert_clients", ConcertClients, self.update_client_list)
+        rospy.Subscriber("/concert/list_concert_clients", ConcertClients, self._update_callback)
         
-       
+        self._client_info_list = {}
+        self._pre_client_info_list = {}
 
+    def _update_callback(self, data):
+        if self._callback != None:
+            self._callback()
+        pass
+            
     def update_client_list(self, data):
-    
-        print "update_client_list"
+        
+        print "[conductor_graph_info]: update_client_list"
         
         #update dotgraph info
         self.gateway_nodes = []
@@ -76,20 +81,19 @@ class ConductorGraphInfo(object):
             self._client_info_list[client_name]["system"]=k.system
             self._client_info_list[client_name]["platform"]=k.platform
             self._client_info_list[client_name]["client_status"]=k.client_status
+            self._client_info_list[client_name]["app_status"]=k.app_status
             
-            self._client_info_list[client_name]["last_connection_timestamp"]=k.last_connection_timestamp
             self._client_info_list[client_name]["apps"]={}
             
-            for L in self._client_info_list[client_name]["apps"].values():
-                print L
-                self._client_info_list[client_name]["apps"]['name'] = L.name
-                self._client_info_list[client_name]["apps"]['display_name'] = L.display_name
-                self._client_info_list[client_name]["apps"]['description'] = L.description
-                self._client_info_list[client_name]["apps"]['platform'] = L.platform
-                self._client_info_list[client_name]["apps"]['status'] = L.status
+            for l in k.apps: 
+                app_name = l.name
+                self._client_info_list[client_name]["apps"][app_name] = {}
+                self._client_info_list[client_name]["apps"][app_name]['name'] = l.name
+                self._client_info_list[client_name]["apps"][app_name]['display_name'] = l.display_name
+                self._client_info_list[client_name]["apps"][app_name]['description'] = l.description
+                self._client_info_list[client_name]["apps"][app_name]['platform'] = l.platform
+                self._client_info_list[client_name]["apps"][app_name]['status'] = l.status
 
-            self._client_info_list[client_name]["uuid"]= uuid
-           
             #html
             app_context = "<html>"
             app_context += "<p>-------------------------------------------</p>"
@@ -103,15 +107,14 @@ class ConductorGraphInfo(object):
             app_context += "<p>-------------------------------------------</p>"
             app_context += "<p><b>client_status: </b>" +k.client_status+"</p>"
             app_context += "<p><b>app_status: </b>" +k.app_status+"</p>"
-            #app_context += "<p><b>last_connection_timestamp: </b>" +str(k.last_connection_timestamp.time)+"</p>"
-            
-            for L in self._client_info_list[client_name]["apps"].values():
+           
+            for l in self._client_info_list[client_name]["apps"].values():
                 app_context += "<p>-------------------------------------------</p>"
-                app_context += "<p><b>app_name: </b>" +L['name']+"</p>"
-                app_context += "<p><b>app_display_name: </b>" +L['display_name']+"</p>"
-                app_context += "<p><b>app_description: </b>" +L['description']+"</p>"
-                app_context += "<p><b>app_platform: </b>" +L['platform']+"</p>"
-                app_context += "<p><b>app_status: </b>" +L['status']+"</p>"
+                app_context += "<p><b>app_name: </b>" +l['name']+"</p>"
+                app_context += "<p><b>app_display_name: </b>" +l['display_name']+"</p>"
+                app_context += "<p><b>app_description: </b>" +l['description']+"</p>"
+                app_context += "<p><b>app_platform: </b>" +l['platform']+"</p>"
+                app_context += "<p><b>app_status: </b>" +l['status']+"</p>"
                              
             app_context +="</html>"
             
@@ -124,7 +127,32 @@ class ConductorGraphInfo(object):
             else:
                 del self._client_info_list[k]
 
+        if self._compare_client_info_list():
+            pass
+        else:
+            self._callback()    
 
+        self._pre_client_info_list = copy.deepcopy(self._client_info_list)
+    def _add_callback(self,func):
+        self._callback = func
+        pass
+        
+        
+    def _compare_client_info_list(self):
+        result=True
+        pre=self._pre_client_info_list
+        cur=self._client_info_list
+        for k in cur.values():
+            client_name = k["name"]
+            if not pre.has_key(client_name):
+                 continue
+            if pre[client_name]["client_status"] != cur[client_name]["client_status"]:
+                result=False
+            elif pre[client_name]["app_status"] != cur[client_name]["app_status"]:
+                result=False
+        return result
+        pass
+        
     def set_random_connection_strength(self):
         connection_strength = random.randrange(1,6)
         if connection_strength == 1:

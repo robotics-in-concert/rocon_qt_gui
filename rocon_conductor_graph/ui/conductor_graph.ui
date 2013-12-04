@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>751</width>
-    <height>444</height>
+    <height>436</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -130,20 +130,6 @@
      </item>
     </layout>
    </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="graph_viewer">
-     <property name="text">
-      <string>Graph Viewer</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QLabel" name="client_list">
-     <property name="text">
-      <string>Client List</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="1">
     <widget class="QTabWidget" name="tabWidget">
      <property name="sizePolicy">
@@ -220,7 +206,14 @@
         </layout>
        </item>
        <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit"/>
+        <widget class="QPlainTextEdit" name="plainTextEdit">
+         <property name="plainText">
+          <string/>
+         </property>
+         <property name="cursorWidth">
+          <number>4</number>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -229,6 +222,13 @@
        <string>Page</string>
       </attribute>
      </widget>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="client_list">
+     <property name="text">
+      <string>Client List</string>
+     </property>
     </widget>
    </item>
   </layout>
