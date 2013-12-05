@@ -275,7 +275,7 @@ class ConductorGraph(Plugin):
         self._widget.tabWidget.currentChanged.connect(self._change_client_tab)
         self._client_list_update_signal.connect(self._update_conductor_graph)
         
-        #rospy.Subscriber("/concert/list_concert_clients", ConcertClients, self._update_client_list)
+        #rospy.Subscriber(concert_msgs.Strings.CONCERT_CLIENT_CHANGES, ConcertClients, self._update_client_list)
         
         context.add_widget(self._widget)
     
