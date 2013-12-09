@@ -10,8 +10,9 @@ import os
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot,SIGNAL,SLOT,QSize
 from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
-from python_qt_binding.QtGui import QSizePolicy,QTextEdit ,QCompleter, QBrush,QDialog, QColor, QPen, QPushButton
-from python_qt_binding.QtGui import QVBoxLayout, QHBoxLayout, QMessageBox,QTabWidget, QPlainTextEdit,QGridLayout,QTextCursor
+from python_qt_binding.QtGui import QSizePolicy,QTextEdit ,QCompleter, QBrush, QColor, QPen, QPushButton
+from python_qt_binding.QtGui import QVBoxLayout, QHBoxLayout, QMessageBox,QTabWidget, QPlainTextEdit
+from python_qt_binding.QtGui import QGridLayout,QTextCursor,QToolTip, QDialog,QGraphicsItem
 from python_qt_binding.QtSvg import QSvgGenerator
 
 import rosgraph.impl.graph
@@ -67,18 +68,19 @@ class RepeatedWordCompleter(QCompleter):
         return [path]
 
 
-class NodeEventHandler():
-    def __init__(self,tabWidget,node_item,callback_func):
+class GraphEventHandler():
+    def __init__(self,tabWidget,item,callback_func):
         self._tabWidget=tabWidget
         self._callback_func=callback_func
-        self._node_item=node_item
-
-
+        self._item=item
     def NodeEvent(self,event):
+        self._callback_func(event)
         for k in range(self._tabWidget.count()):
-             if self._tabWidget.tabText(k)==self._node_item._label.text():
+             if self._tabWidget.tabText(k)==self._item._label.text():
                 self._tabWidget.setCurrentIndex (k)
- 
+    def EdgeEvent(self,event):
+        self._callback_func(event)
+        self._item.set_color(QColor(0,0,255))
         
 class NamespaceCompletionModel(QAbstractListModel):
     """Ros package and stacknames"""
@@ -176,15 +178,12 @@ class DynamicArgumentLayer():
             for k in l:        
                 param_name=k[0]
                 param_type=k[2]
-                
                 name_widget=QLabel(param_name+": ")
-                
                 if param_type == 'string' or param_type == 'int':
                     k[1]=QTextEdit()
                     k[1].setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
                     k[1].setMinimumSize(0,30)
                     k[1].append("")
-                    
                 elif param_type == 'bool':
                     k[1]=QTextEdit()
                     k[1] = QComboBox() 
@@ -196,7 +195,6 @@ class DynamicArgumentLayer():
 
                 params_hor_layout.addWidget(name_widget)
                 params_hor_layout.addWidget(k[1])
-
             widget_layout.addWidget(params_hor_sub_widget)
         
     def _push_param(self):
@@ -232,8 +230,10 @@ class ConductorGraph(Plugin):
         self.initialised=False
         self.setObjectName('Conductor Graph')
         self._current_dotcode=None
-        
+        self._node_items=None
+        self._edge_items=None
         self._node_item_events={}
+        self._edge_item_events={}
         self._client_info_list={}
         self._widget=QWidget()
         self.cur_selected_client_name = ""
@@ -246,8 +246,9 @@ class ConductorGraph(Plugin):
         self.dot_to_qt=DotToQtGenerator()
         
         self._graph=ConductorGraphInfo()
-        self._graph._add_callback(self._update_client_list)
-         
+        self._graph._reg_event_callback(self._update_client_list)
+        self._graph._reg_period_callback(self._set_network_statisics)
+        
         rospack=rospkg.RosPack()
         ui_file=os.path.join(rospack.get_path('rocon_conductor_graph'), 'ui', 'conductor_graph.ui')
         loadUi(ui_file, self._widget, {'InteractiveGraphicsView': InteractiveGraphicsView})
@@ -608,7 +609,7 @@ class ConductorGraph(Plugin):
             
             # new icon
             path=""
-            if k["isNew"]==True:
+            if k["is_new"]==True:
                 path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/new.gif")            
 
             #add tab
@@ -628,10 +629,22 @@ class ConductorGraph(Plugin):
                 if k.objectName().count("services_text_widget"):
                     k.clear()
         pass    
-
+        
+    def _set_network_statisics(self):
+        if self._edge_items == None:
+            return
+        else:
+            for edge_items in self._edge_items.itervalues():
+                for edge_item in edge_items:
+                     edge_dst_name=edge_item.to_node._label.text()
+                     edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name]['conn_stats']))
+                     
     def _redraw_graph_view(self):
         self._scene.clear()
         self._node_item_events={}
+        self._edge_item_events={}
+        self._node_items=None
+        self._edge_items=None
 
         if self._widget.highlight_connections_check_box.isChecked():
             highlight_level=3
@@ -644,6 +657,9 @@ class ConductorGraph(Plugin):
         (nodes, edges)=self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
                                                             highlight_level=highlight_level,
                                                             same_label_siblings=True)
+        self._node_items=nodes
+        self._edge_items=edges
+
         # if we wish to make special nodes, do that here (maybe subclass GraphItem, just like NodeItem does)
         #node
         for node_item in nodes.itervalues():
@@ -654,19 +670,27 @@ class ConductorGraph(Plugin):
                 node_item.set_color(royal_blue)
 
             # redefine mouse event
-            self._node_item_events[node_item._label.text()]=NodeEventHandler(self._widget.tabWidget,node_item,node_item.mousePressEvent);
-            node_item.mousePressEvent=self._node_item_events[node_item._label.text()].NodeEvent;
+            self._node_item_events[node_item._label.text()]=GraphEventHandler(self._widget.tabWidget,node_item,node_item.mouseDoubleClickEvent);
+            node_item.mouseDoubleClickEvent=self._node_item_events[node_item._label.text()].NodeEvent;
             
             self._scene.addItem(node_item)
             
         #edge
         for edge_items in edges.itervalues():
             for edge_item in edge_items:
+                #redefine the edge hover event
+                
+                self._edge_item_events[edge_item._label.text()]=GraphEventHandler(self._widget.tabWidget,edge_item,edge_item._label.hoverEnterEvent);
+                edge_item._label.hoverEnterEvent =self._edge_item_events[edge_item._label.text()].EdgeEvent;
+                
+                #self._edge_item_events[edge_item._label.text()]=GraphEventHandler(self._widget.tabWidget,edge_item,edge_item.mouseDoubleClickEvent);
+                #edge_item.mouseDoubleClickEvent=self._edge_item_events[edge_item._label.text()].EdgeEvent;
+
                 edge_item.add_to_scene(self._scene)
-                 #set the color of node as connection strength one of red, yellow, green
+
+                #set the color of node as connection strength one of red, yellow, green
                 edge_dst_name=edge_item.to_node._label.text()
                 if self._graph._client_info_list.has_key(edge_dst_name):   
-                  
                   connection_strength=self._graph._client_info_list[edge_dst_name]['connection_strength']
                   if connection_strength=='very_strong':
                       green=QColor(0, 255, 0)
@@ -692,7 +716,9 @@ class ConductorGraph(Plugin):
                       red=QColor(255, 0,0)
                       edge_item._default_color=red
                       edge_item.set_color(red)
-    
+                #set the tooltip about network information
+                edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name]['conn_stats']))    
+
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
   
         if self._widget.auto_fit_graph_check_box.isChecked():
