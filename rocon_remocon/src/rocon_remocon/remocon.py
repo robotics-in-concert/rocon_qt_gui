@@ -318,9 +318,7 @@ class RemoconRole(QMainWindow):
 ##Remocon Main
 #################################################################
 class RemoconMain(QMainWindow):
-    
     def __init__(self, parent, title, application, host_name):
-        
         self._context= parent
        
         super(RemoconMain, self).__init__()
@@ -328,7 +326,6 @@ class RemoconMain(QMainWindow):
         self.setObjectName('Remocon')
         self.host_name= host_name
         self.application = application
-        
         
         self._widget_main= QWidget()
       
@@ -358,10 +355,7 @@ class RemoconMain(QMainWindow):
              
         #init  
         self._init()
-        
         self._widget_main.show()     
-        
-        
     def __del__(self):
         print '[RemoconMain]: Destory'
 ########################################################################        
@@ -404,7 +398,6 @@ class RemoconMain(QMainWindow):
                         k['flag']='0'
                     else:
                         k['flag']='1'    
-                        
                     break
                     
                 time.sleep(0.1)        
@@ -438,27 +431,20 @@ class RemoconMain(QMainWindow):
             self.concert_list[concert_index]['flag']=  concert_flag
        
         cache_concert_info_list.close()
-        
         pass
-    
     def _delete_all_concert(self):
-        
         for k in self.concert_list.values():
             del self.concert_list[k["index"]]
             
         self._update_concert_list()
         pass
-    
     def _delete_concert(self):
-      
         if self.concert_list.has_key(self.cur_selected_concert):      
             del self.concert_list[self.cur_selected_concert]
         
         self._update_concert_list()
         pass
-
     def _add_concert(self, params):
-        
         concert_ip= str(params['param1'].toPlainText())
         
         concert_index= str(uuid.uuid4())
@@ -589,7 +575,7 @@ class RemoconMain(QMainWindow):
         concert_description= concert['description']
         concert['cur_row']= str(self._widget_main.list_widget.count())
         
-        display_name=str(self._widget_main.list_widget.count())+': '+str(concert_name)+"["+str(concert_ip)+"]"   
+        display_name=str(concert_name)+"["+str(concert_ip)+"]"   
         self._widget_main.list_widget.insertItem(self._widget_main.list_widget.count(),display_name )
 
         #setting the list font
