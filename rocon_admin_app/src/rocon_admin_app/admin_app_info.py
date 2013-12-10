@@ -3,104 +3,61 @@
 
 
 import rospy
-#import rosgraph
-#from rosgraph.impl.graph import Edge, EdgeList
-#from concert_msgs.msg import ConcertClients
-#import concert_msgs.msg as concert_msgs
-#from rocon_app_manager_msgs.srv import GetPlatformInfo, Status, Invite, StartApp, StopApp
-#from rocon_app_manager_msgs.msg import PlatformInfo
 
-#import random
-from std_msgs.msg import String
+from concert_msgs.msg import ConcertServices
+#from concert_msgs.msg import ConcertClients
+
 ##############################################################################
 # Graph
 ##############################################################################
 
 class AdminAppInfo(object):
-
     def __init__(self):
-
-        '''
-        Creates the polling topics necessary for updating statistics
-        about the running gateway-hub network.
-        '''
-        #self._last_update = 0
-        #self._gateway_namespace = None
-        #self._concert_conductor_name = "concert_conductor"
-        #self.gateway_nodes = []  # Gateway nodes
-        #self.gateway_edges = []  # Gateway-Gateway edges
+        self._event_callback = None
         
-        # Rubbish to clear out once rocon_gateway_graph is integrated
-        #self.bad_nodes = []
-        
-        #rospy.Subscriber(concert_msgs.Strings.CONCERT_CLIENT_CHANGES, ConcertClients, self.update_client_list)
-        self._client_info_list = {}
-        
-       
-
-    def update_client_list(self, data):
+        self.service_list = {}
+        rospy.Subscriber("/concert/list_concert_services", ConcertServices, self.update_service_list)
     
-        print "update_client_list"
-        """
-        #update dotgraph info
-        self.gateway_nodes = []
-        self.gateway_nodes.append(self._concert_conductor_name)
-        self.gateway_edges = EdgeList()
-        
-        for k in data.clients:
-            self.gateway_nodes.append(k.name)
-            if k.client_status == 'connected':
-                self.gateway_edges.add(Edge(self._concert_conductor_name,k.name,k.client_status))
-        
-        #update app widget info
-        for k in data.clients:
-            #temp function for assigning connection strength
-            connection_strength = self.set_random_connection_strength()
+    def _reg_event_callback(self,func):
+        self._event_callback = func
+
+
+    def update_service_list(self, data):   
+        print "update_service_list"
+        for k in data.services:
+            service_name = k.name
+            self.service_list[service_name] = {}
+            self.service_list[service_name]['name'] = service_name
+            self.service_list[service_name]['description'] = k.description
             
-            #uuid
-            service = k.gateway_name+'/'+'platform_info'
-            service_handle = rospy.ServiceProxy(service, GetPlatformInfo)
-            call_result = service_handle()
-            if k.gateway_name.count(call_result.platform_info.name)>0:                    
-                uuid = k.gateway_name.replace(call_result.platform_info.name,'')
-            else:
-                uuid ="None"
+            self.service_list[service_name]['author'] = k.author
+            self.service_list[service_name]['priority'] = k.priority
+            self.service_list[service_name]['launcher_type'] = k.launcher_type
+            self.service_list[service_name]['launcher'] = k.launcher
+            self.service_list[service_name]['uuid'] = k.uuid
+            self.service_list[service_name]['status'] = k.status
+            self.service_list[service_name]['enabled'] = k.enabled
+            # not implementation
+            self.service_list[service_name]['client_list'] = {}
                 
             #html
-            app_context = "<html>"
-            app_context += "<p>-------------------------------------------</p>"
-            app_context += "<p><b>name: </b>" +k.name+"</p>"
-            app_context += "<p><b>gateway_name: </b>" +k.gateway_name+"</p>"
-            app_context += "<p><b>platform: </b>" +k.platform+"</p>"
-            app_context += "<p><b>system: </b>" +k.system+"</p>"
-            app_context += "<p><b>robot: </b>" +k.robot+"</p>"
-            app_context += "<p><b>client_status: </b>" +k.client_status+"</p>"
-            app_context += "<p><b>connection_strengh: </b>" +connection_strength+"</p>"
-            app_context +="</html>"
-            app_name = k.name            
-           
-            if self._client_info_list.has_key(app_name):
-                self._client_info_list[app_name]["isNew"] = False
-            else:
-                self._client_info_list[app_name]={}
-                self._client_info_list[app_name]["isNew"] = True
-
-            self._client_info_list[app_name]["isCheck"]=True
-            self._client_info_list[app_name]["app_name"]=app_name
-            self._client_info_list[app_name]["gateway_name"]=k.gateway_name
-            self._client_info_list[app_name]["app_context"]=app_context
-            self._client_info_list[app_name]["connection_strength"]=connection_strength  
-            self._client_info_list[app_name]["uuid"]= uuid
-  
-        for k in self._client_info_list.keys():
-            if self._client_info_list[k]["isCheck"] == True:
-                self._client_info_list[k]["isCheck"] = False
-            else:
-                del self._client_info_list[k]
-        """
-        pass
-
-        
+            service_context = "<html>"
+            service_context += "<p>-------------------------------------------</p>"
+            service_context += "<p><b>name: </b>" +k.name+"</p>"
+            service_context += "<p><b>description: </b>" +k.description+"</p>"
+            service_context += "<p><b>author: </b>" +k.author+"</p>"
+            service_context += "<p><b>launcher_type: </b>" +k.launcher_type+"</p>"
+            service_context += "<p><b>launcher: </b>" +k.launcher+"</p>"
+            service_context += "<p><b>uuid: </b>" +str(k.uuid)+"</p>"
+            service_context += "<p><b>status: </b>" +str(k.status)+"</p>"
+            service_context += "<p><b>enabled: </b>" +str(k.enabled)+"</p>"
+            service_context +="</html>"
+            
+            self.service_list[service_name]['context'] = service_context
+            
+        if self._event_callback != None:
+            self._event_callback()          
+     
         
         
         

@@ -24,6 +24,9 @@ import rospkg
 import rosnode
 import roslib
 import rospy
+from admin_app_info import AdminAppInfo
+
+from concert_msgs.srv import EnableConcertService
 
 ##############################################################################
 # Admin App
@@ -34,12 +37,9 @@ class AdminApp(Plugin):
         super(AdminApp, self).__init__(context)
         self.initialised=False
         self.setObjectName('Admin App')
-        self._current_dotcode=None
 
         self.service_list={}
-        self.current_service=""
         self.is_setting_dlg_live=False;
-        
         self._widget=QWidget()
         
         rospack=rospkg.RosPack()
@@ -52,40 +52,49 @@ class AdminApp(Plugin):
 
         self._widget.enable_btn.pressed.connect(self._enable_service)
         self._widget.disable_btn.pressed.connect(self._disable_service)
-        self._widget.setting_btn.pressed.connect(self._setting_service)
+        self._widget.setting_btn.pressed.connect(self._setting_service) 
+        self._widget.refresh_btn.pressed.connect(self._refresh_service)
+        self._widget.clear_btn.pressed.connect(self._clear_service_list)
+        
         self._widget.service_tree_widget.itemClicked.connect(self._select_service_tree_item) #concert item click event
 
         context.add_widget(self._widget)
 
         #init
+        self.admin_app_info = AdminAppInfo()
+        self.admin_app_info._reg_event_callback(self._update_service_list)
+        self.current_service=""
+
         self._widget.client_tab_widget.clear()
         self._update_service_list()
-   
-    def _update_service_list(self):
-        self._widget.service_tree_widget.clear()
+    def _refresh_service(self):
+        self._update_service_list()
+        pass
+    
+    def _clear_service_list(self):
+    
+        print "[_clear_service_list]: widget clear start"
         self.service_list={}
+        self._widget.service_tree_widget.clear()
+        pass    
+    
+    def _update_service_list(self):
+        print "[_update_service_list]: call"
         
-        #get service list
-        service_name_list=["Delivery Service","Clean Service"]
-        for l in service_name_list:
-            service_name = l
-            self.service_list[service_name ]={}      
-            self.service_list[service_name ]["name"]=service_name 
-            self.service_list[service_name ]["client_list"] = {}
-            for k in self._get_client_list(service_name):    
-                self.service_list[service_name ]["client_list"][k]={}
-                self.service_list[service_name ]["client_list"][k]["name"]=k
-
-            self.service_list[service_name ]={}      
-            self.service_list[service_name ]["name"]=service_name 
-            self.service_list[service_name ]["client_list"] = {}
-            for k in self._get_client_list(service_name):    
-                self.service_list[service_name ]["client_list"][k]={}
-                self.service_list[service_name ]["client_list"][k]["name"]=k
+        print "[_update_service_list]: widget clear start"
+        #self._widget.service_tree_widget.clear()
+        self._widget.service_info_text.clear()
+        print "[_update_service_list]: widget clear end"
         
+        print "[_update_service_list]: get service list"
+        self.service_list = self.admin_app_info.service_list
+        print self.service_list
+        
+        print "[_update_service_list]: add widget start"
+       
         for k in self.service_list.values():
             #Top service
-            service_item=QTreeWidgetItem()
+            service_item=QTreeWidgetItem(self._widget.service_tree_widget)
             service_item.setText (0, k['name'])
             
             #set Top Level Font
@@ -102,15 +111,15 @@ class AdminApp(Plugin):
                 font.setPointSize(15)
                 client_item.setFont(0,font)
                 service_item.addChild (client_item)
+            
             self._widget.service_tree_widget.addTopLevelItem(service_item)
+        print "[_update_service_list]: add widget end"
+       
         pass    
         
-
     def _update_client_list(self,service_name):
-        
-        client_list=self.service_list[service_name ]["client_list"]
+        client_list=self.service_list[service_name]["client_list"]
         self._widget.client_tab_widget.clear()
-        
         for k in client_list.values(): 
             client_name = k["name"]
             k["index"] = self._widget.client_tab_widget.count()
@@ -139,10 +148,9 @@ class AdminApp(Plugin):
     
     def _set_service_info(self,service_name):
         self._widget.service_info_text.clear()
-        self._widget.service_info_text.appendPlainText(service_name)
+        self._widget.service_info_text.appendHtml(self.service_list[service_name]['context'])
         pass
-    
-    
+        
     def _set_client_info(self,client_name):
         #self._widget.service_info_text.clear()
         #self._widget.service_info_text.appendPlainText(client_name)
@@ -284,11 +292,19 @@ class AdminApp(Plugin):
         pass
     
     def _enable_service(self):
-        print "enable service: "+ self.current_service
+        print "Enable Service: %s"%self.current_service
+        service = "/concert/services/enable"
+        service_handle=rospy.ServiceProxy(service, EnableConcertService)
+        call_result=service_handle(self.current_service,True)
+        print call_result
         pass
         
     def _disable_service(self):
-        print "disable service: "+ self.current_service
+        print "Disable Service: %s"%self.current_service
+        service = "/concert/services/enable"
+        service_handle=rospy.ServiceProxy(service, EnableConcertService)
+        call_result=service_handle(self.current_service,False)
+        print call_result
         pass
         
     def _destroy_setting_dlg(self):
