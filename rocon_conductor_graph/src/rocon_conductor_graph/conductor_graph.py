@@ -175,7 +175,8 @@ class DynamicArgumentLayer():
             params_hor_sub_widget=QWidget()
             params_hor_layout=QHBoxLayout(params_hor_sub_widget)   
             
-            for k in l:        
+            for k in l:
+                print k        
                 param_name=k[0]
                 param_type=k[2]
                 name_widget=QLabel(param_name+": ")
@@ -303,8 +304,8 @@ class ConductorGraph(Plugin):
                                                        orientation='LR'
                                                        )
     def _update_graph_view(self, dotcode): 
-        if dotcode==self._current_dotcode:
-            return
+        #if dotcode==self._current_dotcode:
+        #    return
         self._current_dotcode=dotcode
         self._redraw_graph_view()
    
@@ -423,7 +424,6 @@ class ConductorGraph(Plugin):
             info_text +="<p><b>message: </b>" +call_result.message+"</p>"
             info_text +="</html>"
 
-            print 'stop app'
             self._update_client_tab()
         else:
             print 'has no service'
@@ -449,7 +449,6 @@ class ConductorGraph(Plugin):
         service_text_widget.appendHtml(info_text)
 
     def _call_invite_service(self,service,service_handle,dynamic_arg):        
-        print "Invite Service: %s"%service
         remote_target_name=""
         application_namespace=""
         cancel=False
@@ -472,7 +471,6 @@ class ConductorGraph(Plugin):
         self._client_list_update_signal.emit()
         # display the result of calling service  
 
-        print "-------call_result-------"
         info_text="<html>"
         info_text +="<p>-------------------------------------------</p>"
         info_text +="<p><b>result: </b>" +str(call_result.result)+"</p>"
@@ -496,11 +494,9 @@ class ConductorGraph(Plugin):
         service_text_widget.clear()
         service_text_widget.appendHtml(info_text)
 
-        print call_result
         pass
     
     def _call_start_app_service(self,service,service_handle,dynamic_arg):
-        print "Start App Service: %s"%service
         name=""
         remappings=[]
         for k in dynamic_arg:
@@ -517,7 +513,6 @@ class ConductorGraph(Plugin):
         self._client_list_update_signal.emit()
 
         # display the result of calling service          
-        print "-------call_result-------"
         info_text = ''
         info_text="<html>"
         info_text +="<p>-------------------------------------------</p>"
@@ -616,7 +611,6 @@ class ConductorGraph(Plugin):
             self._widget.tabWidget.addTab(main_widget,QIcon(path), k["name"]);
 
         #set previous selected tab
-        print "update item [%s]"%self.pre_selected_client_name
         for k in range(self._widget.tabWidget.count()):
             tab_text=self._widget.tabWidget.tabText(k)
             if tab_text == self.pre_selected_client_name:

@@ -132,15 +132,21 @@ class ConductorGraphInfo(object):
             app_context +="</html>"
             self._client_info_list[client_name]["app_context"]=app_context
             #How to set the strength range???
-            connection_strength = "very_strong"
+            connection_strength = self.get_connection_strength(k.conn_stats.wireless_link_quality)
             self._client_info_list[client_name]["connection_strength"]=connection_strength
 
             #graph info
             self.gateway_nodes.append(k.name)
-            if k.conn_stats.network_type == ConnectionStatistics.WIRED:
-                self.gateway_edges.add(Edge(self._concert_conductor_name,k.name,"wired"))
-            elif k.conn_stats.network_type == ConnectionStatistics.WIRELESS: 
-                self.gateway_edges.add(Edge(self._concert_conductor_name,k.name,"wireless"))
+            
+            if k.conn_stats.gateway_available == True:            
+                if k.conn_stats.network_type == ConnectionStatistics.WIRED:
+                    self.gateway_edges.add(Edge(self._concert_conductor_name,k.name,"wired"))
+                elif k.conn_stats.network_type == ConnectionStatistics.WIRELESS: 
+                    self.gateway_edges.add(Edge(self._concert_conductor_name,k.name,"wireless"))
+                else:
+                    print "[conductor_graph_info]: Unknown network type"
+            else:
+                print "[conductor_graph_info]:No network connection"
 
         #new node check
         for k in self._client_info_list.keys():
@@ -178,18 +184,26 @@ class ConductorGraphInfo(object):
                 result=False
             elif pre[client_name]["app_status"] != cur[client_name]["app_status"]:
                 result=False
+            elif pre[client_name]["connection_strength"] != cur[client_name]["connection_strength"]:
+                result=False
+            elif pre[client_name]["gateway_available"] != cur[client_name]["gateway_available"]:
+                result=False
+             
         return result
         pass
         
-    def set_random_connection_strength(self):
-        connection_strength = random.randrange(1,6)
-        if connection_strength == 1:
+    def get_connection_strength(self,link_quality):
+        link_quality_percent = (float(link_quality)/70)*100
+        if 80<link_quality_percent and 100>= link_quality_percent:
             return 'very_strong'
-        elif connection_strength == 2:
+        elif 60<link_quality_percent and 80>= link_quality_percent:
             return 'strong'
-        elif connection_strength == 3:
+        elif 40<link_quality_percent and 60>= link_quality_percent:
             return 'normal'
-        elif connection_strength == 4:
+        elif 20<link_quality_percent and 40>= link_quality_percent:
             return 'weak'
-        elif connection_strength == 5:
+        elif 0<=link_quality_percent and 20>= link_quality_percent:
             return 'very_weak'
+        else:
+            return None
+      
