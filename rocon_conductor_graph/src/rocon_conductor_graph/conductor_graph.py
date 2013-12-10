@@ -170,13 +170,10 @@ class DynamicArgumentLayer():
         #resize
         dialog_widget=widget_layout.parentWidget().parentWidget()             
         dialog_widget.resize(dialog_widget.minimumSize())        
-      
         for l in item_list:
             params_hor_sub_widget=QWidget()
             params_hor_layout=QHBoxLayout(params_hor_sub_widget)   
-            
             for k in l:
-                print k        
                 param_name=k[0]
                 param_type=k[2]
                 name_widget=QLabel(param_name+": ")
@@ -201,9 +198,10 @@ class DynamicArgumentLayer():
     def _push_param(self):
         params_item=[]
         for k in self.params:
-            param_name=k
+            param_name=k[0]
+            param_type=k[1]
             param_widget=None
-            params_item.append([param_name,param_widget])
+            params_item.append([param_name,param_widget,param_type])
         self.params_list.append(params_item)
 
     def _pop_param(self):
