@@ -15,7 +15,7 @@ import time
 #pyqt
 from PyQt4 import uic
 from PyQt4.QtCore import pyqtSlot,SIGNAL,SLOT, QPoint, QString,QEvent
-from PyQt4.QtCore import QFile, QIODevice, Qt, QAbstractListModel, pyqtSignal
+from PyQt4.QtCore import QFile, QIODevice, Qt, QAbstractListModel, pyqtSignal, QSize
 from PyQt4.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
 from PyQt4.QtGui import QSizePolicy,QTextEdit ,QCompleter, QBrush,QDialog, QColor, QPen, QPushButton
 from PyQt4.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
@@ -65,24 +65,21 @@ class RemoconRole(QMainWindow):
         if not os.path.isdir(self.temp_cache_path):
             os.makedirs(self.temp_cache_path)
         self.temp_cache_path+="concert_info_list.cache"
-        
         self.scripts_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
 
         #role list widget
+        self._widget_role_list.role_list_widget.setIconSize(QSize(50,50))
+        self._widget_role_list.role_list_widget.itemDoubleClicked.connect(self._select_role_list) 
         self._widget_role_list.back_btn.pressed.connect(self._back_role_list) 
         self._widget_role_list.refresh_btn.pressed.connect(self._refresh_role_list)  
-        self._widget_role_list.role_list_widget.itemDoubleClicked.connect(self._select_role_list) 
-      
         #app list widget
-        
-        self._widget_app_list.app_list_widget.itemDoubleClicked.connect(self._start_app) 
-               
+        self._widget_app_list.app_list_widget.setIconSize(QSize(50,50))
+        self._widget_app_list.app_list_widget.itemDoubleClicked.connect(self._start_app)                
         self._widget_app_list.back_btn.pressed.connect(self._uninit_app_list)
         self._widget_app_list.app_list_widget.itemClicked.connect(self._select_app_list) #concert item click event
         self._widget_app_list.start_app_btn.pressed.connect(self._start_app)
         self._widget_app_list.stop_app_btn.pressed.connect(self._stop_app)
         self._widget_app_list.refresh_btn.pressed.connect(self._refresh_app_list)
-
         #init
         self._init()     
 
@@ -143,7 +140,7 @@ class RemoconRole(QMainWindow):
             self._widget_role_list.role_list_widget.insertItem(0, k['name'])
             #setting the list font
             font= self._widget_role_list.role_list_widget.item(0).font()        
-            font.setPointSize(25)
+            font.setPointSize(13)
             self._widget_role_list.role_list_widget.item(0).setFont(font)
         
         ##get concert info
@@ -188,7 +185,7 @@ class RemoconRole(QMainWindow):
             self._widget_app_list.app_list_widget.insertItem(0, k['display_name'])
             #setting the list font
             font= self._widget_app_list.app_list_widget.item(0).font()        
-            font.setPointSize(25)
+            font.setPointSize(13)
             self._widget_app_list.app_list_widget.item(0).setFont(font)
             #setting the icon
             
@@ -337,7 +334,7 @@ class RemoconMain(QMainWindow):
 
         self.temp_cache_path="%s/.ros/rocon/remocon/cache/"%(os.getenv("HOME"))
         if not os.path.isdir(self.temp_cache_path):
-            os.makedirs(self.temp_cache_path)
+            os.makedirs(self.temp_cache_psath)
         self.temp_cache_path+="concert_info_list.cache"
         
         self.icon_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/")
@@ -345,6 +342,7 @@ class RemoconMain(QMainWindow):
         self.scripts_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../scripts/")
         
         #main widget
+        self._widget_main.list_widget.setIconSize(QSize(50,50))
         self._widget_main.list_widget.itemDoubleClicked.connect(self._connect_concert) #concert item double click event
         self._widget_main.list_widget.itemClicked.connect(self._select_concert) #concert item double click event
 
@@ -353,7 +351,8 @@ class RemoconMain(QMainWindow):
         self._widget_main.delete_all_btn.pressed.connect(self._delete_all_concert) #delete all button event
         self._widget_main.refresh_btn.pressed.connect(self._refresh_concert_list) #refresh all button event
              
-        #init  
+        #init
+          
         self._init()
         self._widget_main.show()     
     def __del__(self):
@@ -579,8 +578,10 @@ class RemoconMain(QMainWindow):
         self._widget_main.list_widget.insertItem(self._widget_main.list_widget.count(),display_name )
 
         #setting the list font
+        
+        
         font= self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).font()        
-        font.setPointSize(25)
+        font.setPointSize(13)
         self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).setFont(font)
 
         #setToolTip
