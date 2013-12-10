@@ -77,19 +77,16 @@ class RemoconRole(QMainWindow):
         self._widget_app_list.app_list_widget.itemDoubleClicked.connect(self._start_app)                
         self._widget_app_list.back_btn.pressed.connect(self._uninit_app_list)
         self._widget_app_list.app_list_widget.itemClicked.connect(self._select_app_list) #concert item click event
-        self._widget_app_list.start_app_btn.pressed.connect(self._start_app)
         self._widget_app_list.stop_app_btn.pressed.connect(self._stop_app)
         self._widget_app_list.refresh_btn.pressed.connect(self._refresh_app_list)
         #init
         self._init()     
 
     def _init(self):
-
         self._read_cache()
         self._init_role_list()   
         self._widget_role_list.show()
         self.initialised= True        
-        
         pass
 ################################################################################################################
 ##role list widget

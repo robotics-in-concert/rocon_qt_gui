@@ -67,31 +67,17 @@
          <property name="margin">
           <number>5</number>
          </property>
+         <item row="0" column="0">
+          <widget class="QPushButton" name="refresh_btn">
+           <property name="text">
+            <string>Refresh App List</string>
+           </property>
+          </widget>
+         </item>
          <item row="0" column="1">
           <widget class="QPushButton" name="stop_app_btn">
            <property name="text">
-            <string>Stop App</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QPushButton" name="start_app_btn">
-           <property name="text">
-            <string>Start App</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QPushButton" name="back_btn">
-           <property name="text">
-            <string>Back</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QPushButton" name="refresh_btn">
-           <property name="text">
-            <string>refresh</string>
+            <string>Stop All Apps</string>
            </property>
           </widget>
          </item>
@@ -99,6 +85,13 @@
        </item>
        <item>
         <widget class="QPlainTextEdit" name="app_info"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="back_btn">
+         <property name="text">
+          <string>Back</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
