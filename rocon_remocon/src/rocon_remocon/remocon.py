@@ -29,7 +29,7 @@ from remocon_info import RemoconInfo
 # Remocon Role
 ##############################################################################
 
-class RemoconRole(QMainWindow):
+class RemoconSub(QMainWindow):
     def __init__(self, parent, title,application,concert_index="", concert_name="", concert_ip='127.0.0.1', host_name='127.0.0.1'):
         self.concert_index= concert_index
         self.concert_ip= concert_ip
@@ -38,7 +38,7 @@ class RemoconRole(QMainWindow):
         self._context= parent
         self.application = application
 
-        super(RemoconRole, self).__init__(parent)
+        super(RemoconSub, self).__init__(parent)
         self.initialised= False
         
         self._widget_app_list= QWidget()                
@@ -99,7 +99,7 @@ class RemoconRole(QMainWindow):
         return True
         
     def _uninit_role_list(self):
-        print "[RemoconRole]_uninit_role_list"
+        print "[RemoconSub]_uninit_role_list"
         self.remocon_info._shutdown()
         self.cur_selected_role= 0    
      
@@ -113,7 +113,7 @@ class RemoconRole(QMainWindow):
         self._widget_app_list.move(self._widget_role_list.pos())
         self._widget_role_list.hide()
         self._init_app_list()
-        pass   
+        pass
         
     def _back_role_list(self):
         self._uninit_role_list()
@@ -174,7 +174,6 @@ class RemoconRole(QMainWindow):
         self._widget_app_list.app_list_widget.clear()
         
         index= 0
-        
         for k in self.app_list.values():
             k['index']= index
             index= index+1
@@ -240,11 +239,13 @@ class RemoconRole(QMainWindow):
         
         self._widget_app_list.app_info.appendHtml(info_text)
         
+    
+    
     def _stop_app(self):
         print "Stop app: "+ str(self.cur_selected_app)
         self.remocon_info._stop_app(self.cur_selected_app)
         pass
-          
+    
     def _start_app(self):
         print "Start app: "+ str(self.cur_selected_app)
         self.remocon_info._start_app(self.cur_selected_role,self.cur_selected_app)
@@ -286,26 +287,36 @@ class RemoconRole(QMainWindow):
             cache_concert_info_list= open(self.temp_cache_path,'r')
         except:
             print "No directory or file: %s"%(self.temp_cache_path)
-            return
+            return 
         lines= cache_concert_info_list.readlines()
         
-        for line in lines:
-            concert_index= line[string.find(line, "[index=")+len("[index="):string.find(line, ",name=")]
-            concert_name= line[string.find(line, "name=")+len("name="):string.find(line, ",ip=")]
-            concert_ip= line[string.find(line, ",ip=")+len(",ip="):string.find(line, ",description=")]
-            concert_description= line[string.find(line, ",description=")+len(",description="):string.find(line, ",icon=")]
-            concert_icon= line[string.find(line, ",icon=")+len(",icon="):string.find(line, ",flag=")]
-            concert_flag= line[string.find(line, ",flag=")+len(",flag="):string.find(line, "]")]
-
-            self.concert_list[concert_index]= {}
-            self.concert_list[concert_index]['index']= concert_index
-            self.concert_list[concert_index]['name']= concert_name
-            self.concert_list[concert_index]['ip']=  concert_ip
-            self.concert_list[concert_index]['icon']=  concert_icon
-            self.concert_list[concert_index]['description']=  concert_description
-            self.concert_list[concert_index]['flag']=  concert_flag
-       
+        for line in lines:   
+            if line.count("[master_uri="):
+                self.master_uri=line[string.find(line, "[master_uri=")+len("[master_uri="):string.find(line, "]")]
+                continue
+            elif line.count("[host_name="):     
+                self.host_name=line[string.find(line, "[host_name=")+len("[host_name="):string.find(line, "]")]
+                continue
+            elif line.count("[index="):
+                concert_index= line[string.find(line, "[index=")+len("[index="):string.find(line, ",name=")]
+                concert_name= line[string.find(line, "name=")+len("name="):string.find(line, ",ip=")]
+                concert_ip= line[string.find(line, ",ip=")+len(",ip="):string.find(line, ",description=")]
+                concert_description= line[string.find(line, ",description=")+len(",description="):string.find(line, ",icon=")]
+                concert_icon= line[string.find(line, ",icon=")+len(",icon="):string.find(line, ",flag=")]
+                concert_flag= line[string.find(line, ",flag=")+len(",flag="):string.find(line, "]")]
+              
+                self.concert_list[concert_index]= {}
+                self.concert_list[concert_index]['index']= concert_index
+                self.concert_list[concert_index]['name']= concert_name
+                self.concert_list[concert_index]['ip']=  concert_ip
+                self.concert_list[concert_index]['icon']=  concert_icon
+                self.concert_list[concert_index]['description']=  concert_description
+                self.concert_list[concert_index]['flag']=  concert_flag
+            else:
+                pass
         cache_concert_info_list.close()
+        print "read_cache: master: %s"%self.master_uri
+        print "read_cache: host: %s"%self.host_name
         pass
 
 #################################################################        
@@ -318,13 +329,22 @@ class RemoconMain(QMainWindow):
         super(RemoconMain, self).__init__()
         self.initialised= False
         self.setObjectName('Remocon')
-        self.host_name= host_name
-        self.application = application
         
+        self.host_name="localhost"
+        self.master_uri="http://%s:11311"%(self.host_name)
+
+        self.env_host_name=os.getenv("ROS_HOSTNAME")
+        self.env_master_uri=os.getenv("ROS_MASTER_URI")
+        
+        print "env host name: %s"%self.env_host_name
+        print "env master uri: %s"%self.env_master_uri
+                
+        self.application = application
         self._widget_main= QWidget()
       
         self.concert_list= {};
         self.cur_selected_concert= 0
+        self.is_init = False
 
         path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../ui/remocon.ui")
         uic.loadUi(path, self._widget_main)
@@ -347,24 +367,43 @@ class RemoconMain(QMainWindow):
         self._widget_main.delete_btn.pressed.connect(self._delete_concert) #delete button event
         self._widget_main.delete_all_btn.pressed.connect(self._delete_all_concert) #delete all button event
         self._widget_main.refresh_btn.pressed.connect(self._refresh_concert_list) #refresh all button event
-             
+
+        self._widget_main.use_env_var_check.stateChanged.connect(self._set_use_env_var)
+        self._widget_main.use_env_var_check.setCheckState(Qt.Unchecked) 
+
         #init
-          
         self._init()
         self._widget_main.show()     
     def __del__(self):
         print '[RemoconMain]: Destory'
-########################################################################        
+
+    def _set_use_env_var(self,data):
+        if data == Qt.Unchecked:
+            print "Uncheck"
+            self._widget_main.host_name_text.setText(self.host_name)
+            self._widget_main.master_uri_text.setText(self.master_uri)
+        elif data == Qt.Checked:
+            self.host_name =str( self._widget_main.host_name_text.toPlainText())
+            self.master_uri =str( self._widget_main.master_uri_text.toPlainText())
+            self._widget_main.host_name_text.setText(self.env_host_name)
+            self._widget_main.master_uri_text.setText(self.env_master_uri)
+            print "Check"
+        else:
+            print "i don't know"
+            
+        pass
+        
     def _init(self):
         
         self._connect_dlg_isValid= False
-        self._current_selected_concert= ""
-        self._refresh_concert_list()        
+        self._current_seleccted_concert= ""
+        self._refresh_concert_list()
+        self.is_init=True        
         pass
     
     def _check_up(self):
         host_name=self.host_name
-        print host_name
+        print "[_check_up]:%s"%host_name
         for k in self.concert_list.values():
             concert_ip= k['ip']
             output= subprocess.Popen([self.scripts_path+"rocon_remocon_check_up", concert_ip,host_name],stdout=subprocess.PIPE) 
@@ -407,27 +446,37 @@ class RemoconMain(QMainWindow):
         except:
             print "No directory or file: %s"%(self.temp_cache_path)
             return 
-            
         lines= cache_concert_info_list.readlines()
         
-        for line in lines:
-            concert_index= line[string.find(line, "[index=")+len("[index="):string.find(line, ",name=")]
-            concert_name= line[string.find(line, "name=")+len("name="):string.find(line, ",ip=")]
-            concert_ip= line[string.find(line, ",ip=")+len(",ip="):string.find(line, ",description=")]
-            concert_description= line[string.find(line, ",description=")+len(",description="):string.find(line, ",icon=")]
-            concert_icon= line[string.find(line, ",icon=")+len(",icon="):string.find(line, ",flag=")]
-            concert_flag= line[string.find(line, ",flag=")+len(",flag="):string.find(line, "]")]
-          
-            self.concert_list[concert_index]= {}
-            self.concert_list[concert_index]['index']= concert_index
-            self.concert_list[concert_index]['name']= concert_name
-            self.concert_list[concert_index]['ip']=  concert_ip
-            self.concert_list[concert_index]['icon']=  concert_icon
-            self.concert_list[concert_index]['description']=  concert_description
-            self.concert_list[concert_index]['flag']=  concert_flag
-       
+        for line in lines:   
+            if line.count("[master_uri="):
+                self.master_uri=line[string.find(line, "[master_uri=")+len("[master_uri="):string.find(line, "]")]
+                continue
+            elif line.count("[host_name="):     
+                self.host_name=line[string.find(line, "[host_name=")+len("[host_name="):string.find(line, "]")]
+                continue
+            elif line.count("[index="):
+                concert_index= line[string.find(line, "[index=")+len("[index="):string.find(line, ",name=")]
+                concert_name= line[string.find(line, "name=")+len("name="):string.find(line, ",ip=")]
+                concert_ip= line[string.find(line, ",ip=")+len(",ip="):string.find(line, ",description=")]
+                concert_description= line[string.find(line, ",description=")+len(",description="):string.find(line, ",icon=")]
+                concert_icon= line[string.find(line, ",icon=")+len(",icon="):string.find(line, ",flag=")]
+                concert_flag= line[string.find(line, ",flag=")+len(",flag="):string.find(line, "]")]
+              
+                self.concert_list[concert_index]= {}
+                self.concert_list[concert_index]['index']= concert_index
+                self.concert_list[concert_index]['name']= concert_name
+                self.concert_list[concert_index]['ip']=  concert_ip
+                self.concert_list[concert_index]['icon']=  concert_icon
+                self.concert_list[concert_index]['description']=  concert_description
+                self.concert_list[concert_index]['flag']=  concert_flag
+            else:
+                pass
         cache_concert_info_list.close()
+        print "read_cache: master: %s"%self.master_uri
+        print "read_cache: host: %s"%self.host_name
         pass
+        
     def _delete_all_concert(self):
         for k in self.concert_list.values():
             del self.concert_list[k["index"]]
@@ -440,11 +489,10 @@ class RemoconMain(QMainWindow):
         
         self._update_concert_list()
         pass
+  
     def _add_concert(self, params):
         concert_ip= str(params['param1'].toPlainText())
-        
         concert_index= str(uuid.uuid4())
-        print "IP: "+ str(concert_ip)
         self.concert_list[concert_index]= {}
         self.concert_list[concert_index]['index']= concert_index
         self.concert_list[concert_index]['name']= "Unknown"
@@ -454,7 +502,6 @@ class RemoconMain(QMainWindow):
         self.concert_list[concert_index]['flag']= "0"
      
         self._update_concert_list()
-
         pass
         
     def _set_add_concert(self):
@@ -521,12 +568,19 @@ class RemoconMain(QMainWindow):
         self._connect_dlg.finished.connect(self._destroy_connect_dlg)
         self._connect_dlg_isValid= True
 
-        pass
+        passinit
 
     def _refresh_concert_list(self):
         print '_refresh_concert_list'
-        self._widget_main.list_info_widget.clear()
+        if self.is_init:
+            self._update_concert_list()
+                
         self._read_cache()
+
+        self._widget_main.list_info_widget.clear()
+        self._widget_main.host_name_text.setText(self.host_name)
+        self._widget_main.master_uri_text.setText(self.master_uri)
+        
         self._check_up()
         self._update_concert_list()
         pass
@@ -540,7 +594,19 @@ class RemoconMain(QMainWindow):
         except:
             print "No directory or file: %s"%(self.temp_cache_path)
             return 
-            
+
+        master_uri = "[master_uri=%s]\n"%str(self._widget_main.master_uri_text.toPlainText())
+        host_name = "[host_name=%s]\n"%str(self._widget_main.host_name_text.toPlainText())
+        
+        print "write cache: master: %s"%str(self._widget_main.master_uri_text.toPlainText())
+        print "write cache: host: %s"%str(self._widget_main.host_name_text.toPlainText())
+                        
+        print "write cache: master: %s"%master_uri
+        print "write cache: host: %s"%host_name
+        
+        cache_concert_info_list.write(master_uri)
+        cache_concert_info_list.write(host_name)
+        
         for k in self.concert_list.values():
             self._add_concert_list_item(k)
             concert_index= k['index']
@@ -630,7 +696,9 @@ class RemoconMain(QMainWindow):
 
         concert_name= str(self.concert_list[self.cur_selected_concert]['name'])
         concert_ip= str(self.concert_list[self.cur_selected_concert]['ip'])
-        
+        reply = QMessageBox.warning(self, 'ERROR',
+            "YOU SELECT NO CONCERT", QMessageBox.Ok|QMessageBox.Ok)
+            return
         concert_index= str(self.cur_selected_concert)
         concert_host_name= str(self.host_name)
 

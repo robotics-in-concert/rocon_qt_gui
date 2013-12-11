@@ -182,10 +182,7 @@ class RemoconInfo():
         platform_info.platform='pc'
         platform_info.system='ros'
         platform_info.name='*'
-        
-        #icon 
-        # Todo     
-        
+
         service_handle=rospy.ServiceProxy("/concert/interactions/get_roles_and_apps", GetRolesAndApps)
         call_result=service_handle(roles,platform_info)
         print "[remocon_info]: call result"
@@ -194,7 +191,14 @@ class RemoconInfo():
             if(k.role==role_name):
                 for l in k.remocon_apps:
                     app_name=l.name
-                    self.app_list[app_name]={}
+                    #if self.app_list.has_key(app_name):
+                    #    pass
+                    #else:
+                    #    self.app_list[app_name]={}                    
+                    #    self.app_list[app_name]['launch_list'] ={}
+                    self.app_list[app_name]={}                    
+                    self.app_list[app_name]['launch_list'] ={}
+                    
                     self.app_list[app_name]['name']=l.name
                     self.app_list[app_name]['platform_info']=l.platform_info
                     #todo icon
@@ -209,10 +213,6 @@ class RemoconInfo():
                     self.app_list[app_name]['max']=l.max
                     self.app_list[app_name]['remappings']=l.remappings
                     self.app_list[app_name]['parameters']=l.parameters
-                    self.app_list[app_name]['launch_list'] ={}
-                    #self.app_list[app_name]['launch']=None
-                    #self.app_list[app_name]['running']=str(False)
-                    
         pass
        
     def _roles_callback(self,data):
@@ -293,8 +293,10 @@ class RemoconInfo():
             pass
         
     def _stop_app(self,app_name):
-        print self.app_list[app_name]["launch_list"]    
-        
+        if not self.app_list.has_key(app_name):
+            print "[remocon_info] HAS NO KEY"
+            return
+        print self.app_list[app_name]["launch_list"]      
         for k in self.app_list[app_name]["launch_list"].values():
             process_name = k["name"]
             is_app_running = k["running"]
@@ -371,7 +373,7 @@ class RemoconInfo():
             return False
         
     def process_listeners(self,name,exit_code):
-        print "call process_listeners"
+        print "call process_listeners: %s"%name
         for k in self.app_list.values():
             if k['launch_list'].has_key(name):                
                 del k['launch_list'][name]       

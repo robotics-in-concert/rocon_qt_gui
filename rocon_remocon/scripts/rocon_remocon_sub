@@ -41,7 +41,7 @@ if __name__ == "__main__":
     timer.start(200)  
     timer.timeout.connect(lambda: None)
 
-    myapp = rocon_remocon.RemoconRole(None,"My System Tray App",app,index,name,ip,host_name)
+    myapp = rocon_remocon.RemoconSub(None,"My System Tray App",app,index,name,ip,host_name)
     app.exec_()
     print "rocon_remocon_sub: Main end"
         
