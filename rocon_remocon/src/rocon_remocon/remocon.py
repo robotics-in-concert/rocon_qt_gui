@@ -79,6 +79,8 @@ class RemoconSub(QMainWindow):
         self._widget_app_list.app_list_widget.itemClicked.connect(self._select_app_list) #concert item click event
         self._widget_app_list.stop_app_btn.pressed.connect(self._stop_app)
         self._widget_app_list.refresh_btn.pressed.connect(self._refresh_app_list)
+        self._widget_app_list.stop_app_btn.setDisabled(True)
+        
         #init
         self._init()     
 
@@ -239,18 +241,25 @@ class RemoconSub(QMainWindow):
         
         self._widget_app_list.app_info.appendHtml(info_text)
         
+        if len(self.app_list[self.cur_selected_app]["launch_list"]):
+            self._widget_app_list.stop_app_btn.setDisabled(False)
+        else:
+            self._widget_app_list.stop_app_btn.setDisabled(True)
+        
     
     
     def _stop_app(self):
         print "Stop app: "+ str(self.cur_selected_app)
-        self.remocon_info._stop_app(self.cur_selected_app)
-        pass
-    
+        if self.remocon_info._stop_app(self.cur_selected_app):
+            self._widget_app_list.stop_app_btn.setDisabled(True)
+        else:
+            pass
     def _start_app(self):
         print "Start app: "+ str(self.cur_selected_app)
-        self.remocon_info._start_app(self.cur_selected_role,self.cur_selected_app)
-        pass
-    
+        if self.remocon_info._start_app(self.cur_selected_role,self.cur_selected_app):
+            self._widget_app_list.stop_app_btn.setDisabled(False)
+        else:
+            pass
     def _write_cache(self):
         
         try:
@@ -315,8 +324,6 @@ class RemoconSub(QMainWindow):
             else:
                 pass
         cache_concert_info_list.close()
-        print "read_cache: master: %s"%self.master_uri
-        print "read_cache: host: %s"%self.host_name
         pass
 
 #################################################################        
@@ -335,9 +342,10 @@ class RemoconMain(QMainWindow):
 
         self.env_host_name=os.getenv("ROS_HOSTNAME")
         self.env_master_uri=os.getenv("ROS_MASTER_URI")
-        
-        print "env host name: %s"%self.env_host_name
-        print "env master uri: %s"%self.env_master_uri
+        if self.env_host_name == None:
+            self.env_host_name = 'localhost'
+        if self.env_master_uri == None:
+            self.env_master_uri = "http://%s:11311"%(self.env_host_name)
                 
         self.application = application
         self._widget_main= QWidget()
@@ -379,7 +387,6 @@ class RemoconMain(QMainWindow):
 
     def _set_use_env_var(self,data):
         if data == Qt.Unchecked:
-            print "Uncheck"
             self._widget_main.host_name_text.setText(self.host_name)
             self._widget_main.master_uri_text.setText(self.master_uri)
         elif data == Qt.Checked:
@@ -387,10 +394,8 @@ class RemoconMain(QMainWindow):
             self.master_uri =str( self._widget_main.master_uri_text.toPlainText())
             self._widget_main.host_name_text.setText(self.env_host_name)
             self._widget_main.master_uri_text.setText(self.env_master_uri)
-            print "Check"
         else:
-            print "i don't know"
-            
+            pass            
         pass
         
     def _init(self):
@@ -473,8 +478,6 @@ class RemoconMain(QMainWindow):
             else:
                 pass
         cache_concert_info_list.close()
-        print "read_cache: master: %s"%self.master_uri
-        print "read_cache: host: %s"%self.host_name
         pass
         
     def _delete_all_concert(self):
@@ -598,12 +601,6 @@ class RemoconMain(QMainWindow):
         master_uri = "[master_uri=%s]\n"%str(self._widget_main.master_uri_text.toPlainText())
         host_name = "[host_name=%s]\n"%str(self._widget_main.host_name_text.toPlainText())
         
-        print "write cache: master: %s"%str(self._widget_main.master_uri_text.toPlainText())
-        print "write cache: host: %s"%str(self._widget_main.host_name_text.toPlainText())
-                        
-        print "write cache: master: %s"%master_uri
-        print "write cache: host: %s"%host_name
-        
         cache_concert_info_list.write(master_uri)
         cache_concert_info_list.write(host_name)
         
@@ -696,9 +693,7 @@ class RemoconMain(QMainWindow):
 
         concert_name= str(self.concert_list[self.cur_selected_concert]['name'])
         concert_ip= str(self.concert_list[self.cur_selected_concert]['ip'])
-        reply = QMessageBox.warning(self, 'ERROR',
-            "YOU SELECT NO CONCERT", QMessageBox.Ok|QMessageBox.Ok)
-            return
+        
         concert_index= str(self.cur_selected_concert)
         concert_host_name= str(self.host_name)
 

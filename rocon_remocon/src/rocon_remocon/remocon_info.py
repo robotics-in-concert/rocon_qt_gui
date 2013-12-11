@@ -267,11 +267,11 @@ class RemoconInfo():
     def _start_app(self,role_name,app_name):
         if not self.app_list.has_key(app_name):
             print "[remocon_info] HAS NO KEY"
-            return
+            return False
         
         if self.is_app_running==True:
             print "[remocon_info] APP ALREADY RUNNING NOW "
-            return  
+            return  False
             
         #get the permission
         service_handle=rospy.ServiceProxy("/concert/interactions/request_interaction", RequestInteraction)
@@ -290,31 +290,42 @@ class RemoconInfo():
                 self._pub_remocon_status(app_name,True)
             else:
                 self._pub_remocon_status(app_name,False)
-            pass
+                return False
+        else:
+            print "[remocon_info] permisson failure"
+            return False
+
+        return True
         
     def _stop_app(self,app_name):
         if not self.app_list.has_key(app_name):
             print "[remocon_info] HAS NO KEY"
-            return
-        print self.app_list[app_name]["launch_list"]      
-        for k in self.app_list[app_name]["launch_list"].values():
-            process_name = k["name"]
-            is_app_running = k["running"]
+            return False
             
-            if is_app_running == "True":
-                k["launch"].shutdown()    
-                del self.app_list[app_name]["launch_list"][k["name"]]
-                print "[remocon_info] %s APP STOP"%(process_name)        
-            elif k["launch"] == None:
-                k["running"] = "False"
-                del self.app_list[app_name]["launch_list"][k["name"]]
-                print "[remocon_info] %s APP LAUNCH IS NONE"%(process_name)
-            else:
-                del self.app_list[app_name]["launch_list"][k["name"]]
-                print "[remocon_info] %s APP IS ALREADY STOP"%(process_name)
-        pass 
+        print "[remocon_info]Launched App List- %s"%str(self.app_list[app_name]["launch_list"])
+        try:
+            for k in self.app_list[app_name]["launch_list"].values():
+                process_name = k["name"]
+                is_app_running = k["running"]
+                
+                if is_app_running == "True":
+                    k["launch"].shutdown()    
+                    del self.app_list[app_name]["launch_list"][k["name"]]
+                    print "[remocon_info] %s APP STOP"%(process_name)        
+                elif k["launch"] == None:
+                    k["running"] = "False"
+                    del self.app_list[app_name]["launch_list"][k["name"]]
+                    print "[remocon_info] %s APP LAUNCH IS NONE"%(process_name)
+                else:
+                    del self.app_list[app_name]["launch_list"][k["name"]]
+                    print "[remocon_info] %s APP IS ALREADY STOP"%(process_name)
+             
+        except Exception, inst:
+            print "[remocon_info] APP STOP PROCESS IS FAILURE"
+            return False
         
-        print self.app_list[app_name]["launch_list"]    
+        print "[remocon_info]Remained App List- %s"%str(self.app_list[app_name]["launch_list"])    
+        return True
     
     def _start_app_launch(self,app_name,service_name,remappings,parameters):
       

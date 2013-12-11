@@ -43,16 +43,16 @@
       <number>5</number>
      </property>
      <item>
-      <widget class="QPushButton" name="back_btn">
+      <widget class="QPushButton" name="refresh_btn">
        <property name="text">
-        <string>Back</string>
+        <string>Refresh</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="refresh_btn">
+      <widget class="QPushButton" name="back_btn">
        <property name="text">
-        <string>Refresh</string>
+        <string>Back</string>
        </property>
       </widget>
      </item>
