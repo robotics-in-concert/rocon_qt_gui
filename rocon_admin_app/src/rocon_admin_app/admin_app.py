@@ -32,13 +32,15 @@ from concert_msgs.srv import EnableConcertService
 # Admin App
 ##############################################################################
 class AdminApp(Plugin):    
+    
+    _refresh_service_list_signal=Signal()
+
     def __init__(self, context):
         self._context=context
         super(AdminApp, self).__init__(context)
         self.initialised=False
         self.setObjectName('Admin App')
 
-        self.service_list={}
         self.is_setting_dlg_live=False;
         self._widget=QWidget()
         
@@ -55,46 +57,36 @@ class AdminApp(Plugin):
         self._widget.setting_btn.pressed.connect(self._setting_service) 
         self._widget.refresh_btn.pressed.connect(self._refresh_service)
         self._widget.clear_btn.pressed.connect(self._clear_service_list)
-        
         self._widget.service_tree_widget.itemClicked.connect(self._select_service_tree_item) #concert item click event
+        self._refresh_service_list_signal.connect(self._update_service_list)
 
         context.add_widget(self._widget)
 
         #init
         self.admin_app_info = AdminAppInfo()
-        self.admin_app_info._reg_event_callback(self._update_service_list)
+        self.admin_app_info._reg_event_callback(self._refresh_service)
         self.current_service=""
-
         self._widget.client_tab_widget.clear()
         self._update_service_list()
+    
     def _refresh_service(self):
-        self._update_service_list()
+        self._refresh_service_list_signal.emit()
         pass
     
     def _clear_service_list(self):
-    
         print "[_clear_service_list]: widget clear start"
-        self.service_list={}
         self._widget.service_tree_widget.clear()
         pass    
     
     def _update_service_list(self):
-        print "[_update_service_list]: call"
-        
-        print "[_update_service_list]: widget clear start"
-        #self._widget.service_tree_widget.clear()
+        self._widget.service_tree_widget.clear()
         self._widget.service_info_text.clear()
-        print "[_update_service_list]: widget clear end"
+        service_list = self.admin_app_info.service_list
         
-        print "[_update_service_list]: get service list"
-        self.service_list = self.admin_app_info.service_list
-        print self.service_list
-        
-        print "[_update_service_list]: add widget start"
-       
-        for k in self.service_list.values():
+        for k in service_list.values():
             #Top service
             service_item=QTreeWidgetItem(self._widget.service_tree_widget)
+            #service_item=QTreeWidgetItem()
             service_item.setText (0, k['name'])
             
             #set Top Level Font
@@ -112,13 +104,12 @@ class AdminApp(Plugin):
                 client_item.setFont(0,font)
                 service_item.addChild (client_item)
             
-            self._widget.service_tree_widget.addTopLevelItem(service_item)
-        print "[_update_service_list]: add widget end"
-       
+            #self._widget.service_tree_widget.addTopLevelItem(service_item)
         pass    
         
     def _update_client_list(self,service_name):
-        client_list=self.service_list[service_name]["client_list"]
+        service_list = self.admin_app_info.service_list
+        client_list=service_list[service_name]["client_list"]
         self._widget.client_tab_widget.clear()
         for k in client_list.values(): 
             client_name = k["name"]
@@ -139,7 +130,7 @@ class AdminApp(Plugin):
             client_context_widget.setObjectName(client_name+'_'+'app_context_widget')
             client_context_widget.setAccessibleName('app_context_widget')
             client_context_widget.appendPlainText("client name is "+client_name)
-            #app_context_widget.appendHtml(k["app_context"])
+            #ap><b>uuidp_context_widget.appendHtml(k["app_context"])
             ver_layout.addWidget(client_context_widget)
             
             #add tab
@@ -147,8 +138,9 @@ class AdminApp(Plugin):
         pass
     
     def _set_service_info(self,service_name):
+        service_list = self.admin_app_info.service_list
         self._widget.service_info_text.clear()
-        self._widget.service_info_text.appendHtml(self.service_list[service_name]['context'])
+        self._widget.service_info_text.appendHtml(service_list[service_name]['context'])
         pass
         
     def _set_client_info(self,client_name):
@@ -192,8 +184,6 @@ class AdminApp(Plugin):
             client_list.append("client4");
             client_list.append("client5");
             client_list.append("client6");
-        
-        print client_list
         return client_list
         pass
 

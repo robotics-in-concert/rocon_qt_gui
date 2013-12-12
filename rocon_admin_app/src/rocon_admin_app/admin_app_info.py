@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 #
-
-
 import rospy
 
 from concert_msgs.msg import ConcertServices
@@ -23,7 +21,8 @@ class AdminAppInfo(object):
 
 
     def update_service_list(self, data):   
-        print "update_service_list"
+        print "update_service_list start"
+        self.service_list = {}
         for k in data.services:
             service_name = k.name
             self.service_list[service_name] = {}
@@ -56,30 +55,5 @@ class AdminAppInfo(object):
             self.service_list[service_name]['context'] = service_context
             
         if self._event_callback != None:
-            self._event_callback()          
+            self._event_callback()
      
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
