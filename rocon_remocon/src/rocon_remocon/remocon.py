@@ -359,7 +359,7 @@ class RemoconMain(QMainWindow):
 
         self.temp_cache_path="%s/.ros/rocon/remocon/cache/"%(os.getenv("HOME"))
         if not os.path.isdir(self.temp_cache_path):
-            os.makedirs(self.temp_cache_psath)
+            os.makedirs(self.temp_cache_path)
         self.temp_cache_path+="concert_info_list.cache"
         
         self.icon_path= os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/")
