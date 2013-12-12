@@ -172,15 +172,15 @@ class RemoconInfo():
         return self.role_list
  
     def _select_role(self,role_name):
-        
         roles=[]
         roles.append(role_name)
         
+        #remocon_platform information
         platform_info=PlatformInfo()
-        platform_info.os='*'
-        platform_info.version='*'
+        platform_info.os=platform_info.OS_UBUNTU
+        platform_info.version=platform_info.VERSION_UBUNTU_PRECISE
         platform_info.platform='pc'
-        platform_info.system='ros'
+        platform_info.system='*'
         platform_info.name='*'
 
         service_handle=rospy.ServiceProxy("/concert/interactions/get_roles_and_apps", GetRolesAndApps)
