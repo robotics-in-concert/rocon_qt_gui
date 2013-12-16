@@ -73,10 +73,7 @@ class ConductorGraphInfo(object):
             
             self._client_info_list[client_name]["name"]=k.name
             self._client_info_list[client_name]["gateway_name"]=k.gateway_name
-            self._client_info_list[client_name]["os"]=k.os
-            self._client_info_list[client_name]["version"]=k.version
-            self._client_info_list[client_name]["system"]=k.system
-            self._client_info_list[client_name]["platform"]=k.platform
+            self._client_info_list[client_name]["platform_info"]=k.platform_info
             self._client_info_list[client_name]["client_status"]=k.client_status
             self._client_info_list[client_name]["app_status"]=k.app_status
             
@@ -114,11 +111,7 @@ class ConductorGraphInfo(object):
             app_context += "<p>-------------------------------------------</p>"
             app_context += "<p><b>name: </b>" +k.name+"</p>"
             app_context += "<p><b>gateway_name: </b>" +k.gateway_name+"</p>"
-            app_context += "<p>-------------------------------------------</p>"
-            app_context += "<p><b>os: </b>" +k.os+"</p>"
-            app_context += "<p><b>version: </b>" +k.version+"</p>"
-            app_context += "<p><b>system: </b>" +k.system+"</p>"
-            app_context += "<p><b>platform: </b>" +k.platform+"</p>"
+            app_context += "<p><b>platform_info: </b>" +k.platform_info+"</p>"
             app_context += "<p>-------------------------------------------</p>"
             app_context += "<p><b>client_status: </b>" +k.client_status+"</p>"
             app_context += "<p><b>app_status: </b>" +k.app_status+"</p>"
