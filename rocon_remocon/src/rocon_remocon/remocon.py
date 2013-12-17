@@ -19,7 +19,7 @@ from PyQt4.QtCore import QFile, QIODevice, Qt, QAbstractListModel, pyqtSignal, Q
 from PyQt4.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
 from PyQt4.QtGui import QSizePolicy,QTextEdit ,QCompleter, QBrush,QDialog, QColor, QPen, QPushButton
 from PyQt4.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
-from PyQt4.QtGui import QMainWindow
+from PyQt4.QtGui import QMainWindow, QCheckBox
 from PyQt4.QtSvg import QSvgGenerator
 
 ##ros
@@ -30,9 +30,9 @@ from remocon_info import RemoconInfo
 ##############################################################################
 
 class RemoconSub(QMainWindow):
-    def __init__(self, parent, title,application,concert_index="", concert_name="", concert_ip='127.0.0.1', host_name='127.0.0.1'):
+    def __init__(self, parent, title,application,concert_index="", concert_name="", concert_master_uri='localhost', host_name='localhost'):
         self.concert_index= concert_index
-        self.concert_ip= concert_ip
+        self.concert_master_uri= concert_master_uri
         self.concert_name= concert_name    
         self.host_name= host_name    
         self._context= parent
@@ -95,7 +95,7 @@ class RemoconSub(QMainWindow):
 ################################################################################################################
     def _init_role_list(self):        
 
-        if not self.remocon_info._connect(self.concert_name, self.concert_ip,self.host_name):
+        if not self.remocon_info._connect(self.concert_name, self.concert_master_uri,self.host_name):
             return False
         self._refresh_role_list()    
         return True
@@ -271,7 +271,8 @@ class RemoconSub(QMainWindow):
         for k in self.concert_list.values():
             concert_index= k['index']
             concert_name= k['name']
-            concert_ip= k['ip']
+            concert_master_uri= k['master_uri']
+            concert_host_name= k['host_name']
             concert_icon= k['icon']
             concert_description= k['description']
             concert_flag= k['flag']
@@ -279,7 +280,8 @@ class RemoconSub(QMainWindow):
             concert_elem= '['
             concert_elem +='index='+str(concert_index)+','
             concert_elem +='name='+str(concert_name) + ','
-            concert_elem +='ip='+str(concert_ip) + ','
+            concert_elem +='master_uri='+str(concert_master_uri) + ','
+            concert_elem +='host_name='+str(concert_host_name) + ','
             concert_elem +='description='+str(concert_description)+ ','
             concert_elem +='icon='+concert_icon+ ','
             concert_elem +='flag='+concert_flag
@@ -300,16 +302,11 @@ class RemoconSub(QMainWindow):
         lines= cache_concert_info_list.readlines()
         
         for line in lines:   
-            if line.count("[master_uri="):
-                self.master_uri=line[string.find(line, "[master_uri=")+len("[master_uri="):string.find(line, "]")]
-                continue
-            elif line.count("[host_name="):     
-                self.host_name=line[string.find(line, "[host_name=")+len("[host_name="):string.find(line, "]")]
-                continue
-            elif line.count("[index="):
+            if line.count("[index="):
                 concert_index= line[string.find(line, "[index=")+len("[index="):string.find(line, ",name=")]
-                concert_name= line[string.find(line, "name=")+len("name="):string.find(line, ",ip=")]
-                concert_ip= line[string.find(line, ",ip=")+len(",ip="):string.find(line, ",description=")]
+                concert_name= line[string.find(line, "name=")+len("name="):string.find(line, ",master_uri=")]
+                concert_master_uri= line[string.find(line, ",master_uri=")+len(",master_uri="):string.find(line, ",host_name")]
+                concert_host_name= line[string.find(line, ",host_name=")+len(",host_name="):string.find(line, ",description=")]
                 concert_description= line[string.find(line, ",description=")+len(",description="):string.find(line, ",icon=")]
                 concert_icon= line[string.find(line, ",icon=")+len(",icon="):string.find(line, ",flag=")]
                 concert_flag= line[string.find(line, ",flag=")+len(",flag="):string.find(line, "]")]
@@ -317,7 +314,8 @@ class RemoconSub(QMainWindow):
                 self.concert_list[concert_index]= {}
                 self.concert_list[concert_index]['index']= concert_index
                 self.concert_list[concert_index]['name']= concert_name
-                self.concert_list[concert_index]['ip']=  concert_ip
+                self.concert_list[concert_index]['master_uri']=  concert_master_uri
+                self.concert_list[concert_index]['host_name']=  concert_host_name
                 self.concert_list[concert_index]['icon']=  concert_icon
                 self.concert_list[concert_index]['description']=  concert_description
                 self.concert_list[concert_index]['flag']=  concert_flag
@@ -330,7 +328,7 @@ class RemoconSub(QMainWindow):
 ##Remocon Main
 #################################################################
 class RemoconMain(QMainWindow):
-    def __init__(self, parent, title, application, host_name):
+    def __init__(self, parent, title, application):
         self._context= parent
        
         super(RemoconMain, self).__init__()
@@ -376,28 +374,13 @@ class RemoconMain(QMainWindow):
         self._widget_main.delete_all_btn.pressed.connect(self._delete_all_concert) #delete all button event
         self._widget_main.refresh_btn.pressed.connect(self._refresh_concert_list) #refresh all button event
 
-        self._widget_main.use_env_var_check.stateChanged.connect(self._set_use_env_var)
-        self._widget_main.use_env_var_check.setCheckState(Qt.Unchecked) 
-
         #init
         self._init()
         self._widget_main.show()     
+  
     def __del__(self):
         print '[RemoconMain]: Destory'
 
-    def _set_use_env_var(self,data):
-        if data == Qt.Unchecked:
-            self._widget_main.host_name_text.setText(self.host_name)
-            self._widget_main.master_uri_text.setText(self.master_uri)
-        elif data == Qt.Checked:
-            self.host_name =str( self._widget_main.host_name_text.toPlainText())
-            self.master_uri =str( self._widget_main.master_uri_text.toPlainText())
-            self._widget_main.host_name_text.setText(self.env_host_name)
-            self._widget_main.master_uri_text.setText(self.env_master_uri)
-        else:
-            pass            
-        pass
-        
     def _init(self):
         
         self._connect_dlg_isValid= False
@@ -407,17 +390,18 @@ class RemoconMain(QMainWindow):
         pass
     
     def _check_up(self):
-        host_name=self.host_name
-        print "[_check_up]:%s"%host_name
         for k in self.concert_list.values():
-            concert_ip= k['ip']
-            output= subprocess.Popen([self.scripts_path+"rocon_remocon_check_up", concert_ip,host_name],stdout=subprocess.PIPE) 
+            concert_master_uri=k['master_uri']
+            host_name=k['host_name']
+            print "[_check_up]:MASTER_URI[%s], HOST_NAME[%s]"%(concert_master_uri,host_name)
+        
+            output= subprocess.Popen([self.scripts_path+"rocon_remocon_check_up", concert_master_uri,host_name],stdout=subprocess.PIPE) 
             time_out_cnt= 0
             while True:
-                print "checking: "+concert_ip
+                print "checking: "+concert_master_uri
                 result= output.poll() 
                 if time_out_cnt > 10:
-                    print "timeout: "+concert_ip
+                    print "timeout: "+concert_master_uri
                     try:
                         output.terminate()
                     except:
@@ -426,6 +410,7 @@ class RemoconMain(QMainWindow):
                     k['name']= "Unknown"
                     k['description']="Unknown."
                     k['icon']= "Unknown.png"
+                    k['flag']='0'
                     break
 
                 elif result== 0:
@@ -452,18 +437,13 @@ class RemoconMain(QMainWindow):
             print "No directory or file: %s"%(self.temp_cache_path)
             return 
         lines= cache_concert_info_list.readlines()
-        
+
         for line in lines:   
-            if line.count("[master_uri="):
-                self.master_uri=line[string.find(line, "[master_uri=")+len("[master_uri="):string.find(line, "]")]
-                continue
-            elif line.count("[host_name="):     
-                self.host_name=line[string.find(line, "[host_name=")+len("[host_name="):string.find(line, "]")]
-                continue
-            elif line.count("[index="):
+            if line.count("[index="):
                 concert_index= line[string.find(line, "[index=")+len("[index="):string.find(line, ",name=")]
-                concert_name= line[string.find(line, "name=")+len("name="):string.find(line, ",ip=")]
-                concert_ip= line[string.find(line, ",ip=")+len(",ip="):string.find(line, ",description=")]
+                concert_name= line[string.find(line, "name=")+len("name="):string.find(line, ",master_uri=")]
+                concert_master_uri= line[string.find(line, ",master_uri=")+len(",master_uri="):string.find(line, ",host_name=")]
+                concert_host_name= line[string.find(line, ",host_name=")+len(",host_name="):string.find(line, ",description=")]
                 concert_description= line[string.find(line, ",description=")+len(",description="):string.find(line, ",icon=")]
                 concert_icon= line[string.find(line, ",icon=")+len(",icon="):string.find(line, ",flag=")]
                 concert_flag= line[string.find(line, ",flag=")+len(",flag="):string.find(line, "]")]
@@ -471,10 +451,11 @@ class RemoconMain(QMainWindow):
                 self.concert_list[concert_index]= {}
                 self.concert_list[concert_index]['index']= concert_index
                 self.concert_list[concert_index]['name']= concert_name
-                self.concert_list[concert_index]['ip']=  concert_ip
-                self.concert_list[concert_index]['icon']=  concert_icon
-                self.concert_list[concert_index]['description']=  concert_description
-                self.concert_list[concert_index]['flag']=  concert_flag
+                self.concert_list[concert_index]['master_uri']= concert_master_uri
+                self.concert_list[concert_index]['host_name']= concert_host_name
+                self.concert_list[concert_index]['icon']= concert_icon
+                self.concert_list[concert_index]['description']= concert_description
+                self.concert_list[concert_index]['flag']= concert_flag
             else:
                 pass
         cache_concert_info_list.close()
@@ -494,17 +475,20 @@ class RemoconMain(QMainWindow):
         pass
   
     def _add_concert(self, params):
-        concert_ip= str(params['param1'].toPlainText())
+        concert_master_uri= str(params['param1'].toPlainText())
+        concert_host_name= str(params['param2'].toPlainText())
         concert_index= str(uuid.uuid4())
         self.concert_list[concert_index]= {}
         self.concert_list[concert_index]['index']= concert_index
         self.concert_list[concert_index]['name']= "Unknown"
-        self.concert_list[concert_index]['ip']=  concert_ip
+        self.concert_list[concert_index]['master_uri']= concert_master_uri
+        self.concert_list[concert_index]['host_name']= concert_host_name
         self.concert_list[concert_index]['icon']= "Unknown.png" 
         self.concert_list[concert_index]['description']= "" 
         self.concert_list[concert_index]['flag']= "0"
      
         self._update_concert_list()
+        self._refresh_concert_list()
         pass
         
     def _set_add_concert(self):
@@ -517,7 +501,7 @@ class RemoconMain(QMainWindow):
         self._connect_dlg= QDialog(self._widget_main)             
         self._connect_dlg.setWindowTitle("Add Concert")
         self._connect_dlg.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
-        self._connect_dlg.setMinimumSize(500,0)
+        self._connect_dlg.setMinimumSize(350,0)
         dlg_rect= self._connect_dlg.geometry()
 
         #dialog layout
@@ -532,15 +516,25 @@ class RemoconMain(QMainWindow):
 
         #param 1
         name=u""
-        title_widget1= QLabel("IP: ")
+        title_widget1= QLabel("MASTER_URI: ")
         context_widget1= QTextEdit()
         context_widget1.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
         context_widget1.setMinimumSize(0,30)
-        context_widget1.append("")
+        context_widget1.append(self.master_uri)
+        
+        #param 2
+        name=u""
+        title_widget2= QLabel("HOST_NAME: ")
+        context_widget2= QTextEdit()
+        context_widget2.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
+        context_widget2.setMinimumSize(0,30)
+        context_widget2.append(self.host_name)
         
         #add param
         text_grid_layout.addWidget(title_widget1)
         text_grid_layout.addWidget(context_widget1)
+        text_grid_layout.addWidget(title_widget2)
+        text_grid_layout.addWidget(context_widget2)
      
         #add param layout
         ver_layout.addWidget(text_grid_sub_widget) 
@@ -551,6 +545,27 @@ class RemoconMain(QMainWindow):
 
         params= {}
         params['param1']= context_widget1
+        params['param2']= context_widget2
+        
+        #check box
+        use_env_var_check=QCheckBox("Use envionment variables")
+        use_env_var_check.setCheckState(Qt.Unchecked) 
+      
+        def set_use_env_var(data,text_widget1,text_widget2):
+            if data == Qt.Unchecked:
+                text_widget1.setText(self.master_uri)
+                text_widget2.setText(self.host_name)
+            elif data == Qt.Checked:
+                self.master_uri=str(text_widget1.toPlainText())
+                self.host_name=str(text_widget2.toPlainText())
+                text_widget1.setText(self.env_master_uri)
+                text_widget2.setText(self.env_host_name)
+                
+        def check_event(data):
+            set_use_env_var(data,context_widget1,context_widget2)
+
+        use_env_var_check.stateChanged.connect(check_event)
+        ver_layout.addWidget(use_env_var_check)
        
         #button
         btn_call= QPushButton("Add")
@@ -571,19 +586,12 @@ class RemoconMain(QMainWindow):
         self._connect_dlg.finished.connect(self._destroy_connect_dlg)
         self._connect_dlg_isValid= True
 
-        passinit
-
     def _refresh_concert_list(self):
         print '_refresh_concert_list'
         if self.is_init:
             self._update_concert_list()
-                
         self._read_cache()
-
         self._widget_main.list_info_widget.clear()
-        self._widget_main.host_name_text.setText(self.host_name)
-        self._widget_main.master_uri_text.setText(self.master_uri)
-        
         self._check_up()
         self._update_concert_list()
         pass
@@ -597,18 +605,12 @@ class RemoconMain(QMainWindow):
         except:
             print "No directory or file: %s"%(self.temp_cache_path)
             return 
-
-        master_uri = "[master_uri=%s]\n"%str(self._widget_main.master_uri_text.toPlainText())
-        host_name = "[host_name=%s]\n"%str(self._widget_main.host_name_text.toPlainText())
-        
-        cache_concert_info_list.write(master_uri)
-        cache_concert_info_list.write(host_name)
-        
         for k in self.concert_list.values():
             self._add_concert_list_item(k)
             concert_index= k['index']
             concert_name= k['name']
-            concert_ip= k['ip']
+            concert_master_uri= k['master_uri']
+            concert_host_name= k['host_name']
             concert_icon= k['icon']
             concert_description= k['description']
             concert_flag= k['flag']
@@ -616,7 +618,8 @@ class RemoconMain(QMainWindow):
             concert_elem= '['
             concert_elem +='index='+str(concert_index)+','
             concert_elem +='name='+str(concert_name) + ','
-            concert_elem +='ip='+str(concert_ip) + ','
+            concert_elem +='master_uri='+str(concert_master_uri) + ','
+            concert_elem +='host_name='+str(concert_host_name) + ','
             concert_elem +='description='+str(concert_description)+ ','
             concert_elem +='icon='+concert_icon+ ','
             concert_elem +='flag='+concert_flag
@@ -629,16 +632,16 @@ class RemoconMain(QMainWindow):
         print '_add_concert_list_item'
         concert_index= concert['index']
         concert_name= concert['name']
-        concert_ip= concert['ip']
+        concert_master_uri= concert['master_uri']
+        concert_host_name= concert['host_name']
         concert_icon= concert['icon']
         concert_description= concert['description']
         concert['cur_row']= str(self._widget_main.list_widget.count())
         
-        display_name=str(concert_name)+"["+str(concert_ip)+"]"   
+        display_name=str(concert_name)+"["+str(concert_master_uri)+"]"   
         self._widget_main.list_widget.insertItem(self._widget_main.list_widget.count(),display_name )
 
         #setting the list font
-        
         
         font= self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).font()        
         font.setPointSize(13)
@@ -648,7 +651,8 @@ class RemoconMain(QMainWindow):
         concert_info=""
         concert_info +="concert_index: "+str(concert_index)+"\n"
         concert_info +="concert_name: "+str(concert_name)+"\n"
-        concert_info +="ip:  "+str(concert_ip)+"\n"
+        concert_info +="master_uri:  "+str(concert_master_uri)+"\n"
+        concert_info +="host_name:  "+str(concert_host_name)+"\n"
         concert_info +="description:  "+str(concert_description)
         self._widget_main.list_widget.item(self._widget_main.list_widget.count()-1).setToolTip(concert_info)
         
@@ -667,18 +671,15 @@ class RemoconMain(QMainWindow):
         list_widget=  Item.listWidget()
         for k in self.concert_list.values():
             if k["cur_row"]== str(list_widget.currentRow()):
-                #delete icon
-                #os.remove(self.icon_path+self.concert_list[str(self.cur_selected_concert)]['icon'])           
                 self.cur_selected_concert= k['index']    
                 break
-        pass
-   
         self._widget_main.list_info_widget.clear()
         info_text= ""
         info_text= "<html>"
         info_text += "<p>-------------------------------------------</p>"
         info_text += "<p><b>name: </b>" +str(self.concert_list[self.cur_selected_concert]['name'])+"</p>"
-        info_text += "<p><b>ip: </b>" +str(self.concert_list[self.cur_selected_concert]['ip'])+"</p>"
+        info_text += "<p><b>master_uri: </b>" +str(self.concert_list[self.cur_selected_concert]['master_uri'])+"</p>"
+        info_text += "<p><b>host_name: </b>" +str(self.concert_list[self.cur_selected_concert]['host_name'])+"</p>"
         info_text += "<p><b>description: </b>" +str(self.concert_list[self.cur_selected_concert]['description'])+"</p>"
         info_text += "<p>-------------------------------------------</p>"
         info_text +="</html>"
@@ -690,12 +691,11 @@ class RemoconMain(QMainWindow):
         pass
   
     def _connect_concert(self):
-
         concert_name= str(self.concert_list[self.cur_selected_concert]['name'])
-        concert_ip= str(self.concert_list[self.cur_selected_concert]['ip'])
+        concert_master_uri= str(self.concert_list[self.cur_selected_concert]['master_uri'])
+        concert_host_name= str(self.concert_list[self.cur_selected_concert]['host_name'])
         
         concert_index= str(self.cur_selected_concert)
-        concert_host_name= str(self.host_name)
 
         if self.concert_list[concert_index]['flag']== '0':    
             reply = QMessageBox.warning(self, 'ERROR',
@@ -705,12 +705,11 @@ class RemoconMain(QMainWindow):
         execute_path= self.scripts_path+'rocon_remocon_sub' ##command
         execute_path += " "+"'"+concert_index+"'" ##arg1
         execute_path += " "+"'"+concert_name+"'" ##arg2
-        execute_path += " "+"'"+concert_ip+"'" ##arg3
+        execute_path += " "+"'"+concert_master_uri+"'" ##arg3
         execute_path += " "+"'"+concert_host_name+"'" ##arg4
 
         self._widget_main.hide()
-        os.execv(self.scripts_path+'rocon_remocon_sub',["",concert_index,concert_name,concert_ip,concert_host_name])
+        os.execv(self.scripts_path+'rocon_remocon_sub',["",concert_index,concert_name,concert_master_uri,concert_host_name])
         print "Spawning: %s"%(execute_path)
-
         pass
 

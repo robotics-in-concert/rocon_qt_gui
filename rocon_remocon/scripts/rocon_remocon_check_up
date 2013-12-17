@@ -42,7 +42,7 @@ if __name__ == "__main__":
     concert_ip = sys.argv[1] #ip
     host_name=sys.argv[2]
 
-    os.environ["ROS_MASTER_URI"] = 'http://'+concert_ip+':'+"11311"
+    os.environ["ROS_MASTER_URI"] = concert_ip
     os.environ["ROS_HOSTNAME"] = host_name
     
     rospy.init_node("check_up",anonymous = True, disable_signals=True)

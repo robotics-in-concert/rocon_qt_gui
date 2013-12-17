@@ -56,16 +56,14 @@ class RemoconInfo():
     def __del__(self):
         print "[remocon_info] Destory!!!"
         
-    def _connect(self,concert_name="", concert_ip="127.0.0.1",host_name='127.0.0.1',concert_port="11311"):
+    def _connect(self,concert_name="", concert_ip="http://localhost:11311",host_name='localhost'):
         # remocon name would be good as a persistant configuration variable by the user
         # so they can set something like 'Bob'.
         remocon_name='rqt_remocon'
         unique_name=remocon_name + "_" + self.key.hex
 
         # uri is obtained from the user, stored in ros_master_uri
-        os.environ["ROS_MASTER_URI"]='http://'+str(concert_ip)+':'+str(concert_port)
-        ## get host name
-        #Todo
+        os.environ["ROS_MASTER_URI"]=concert_ip
         os.environ["ROS_HOSTNAME"]=host_name
         
         print "[remocon_info] connect RemoconInfo "
@@ -146,7 +144,7 @@ class RemoconInfo():
         remocon_status.platform_info.version=PlatformInfo().VERSION_UBUNTU_PRECISE
         remocon_status.platform_info.platform=PlatformInfo().PLATFORM_PC
         remocon_status.platform_info.system=PlatformInfo().SYSTEM_RQT
-        remocon_status.platform_info.name="rqt_remocon"
+        remocon_status.platform_info.name="rqt_remocon"+'_'+self.key.hex
         
         remocon_status.uuid=str(self.key.hex)
         remocon_status.running_app=running_app
@@ -325,6 +323,7 @@ class RemoconInfo():
             return False
         
         print "[remocon_info]Remained App List- %s"%str(self.app_list[app_name]["launch_list"])    
+        self._pub_remocon_status(app_name,False)
         return True
     
     def _start_app_launch(self,app_name,service_name,remappings,parameters):

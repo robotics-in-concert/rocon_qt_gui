@@ -20,19 +20,14 @@ def signal_handler(signum, f):
 # Main
 ##############################################################################.
 if __name__ =="__main__":
-    host_name='127.0.0.1'
-    
-    if len(sys.argv) > 1:
-        host_name =sys.argv[1] #name
-
+ 
     signal.signal(signal.SIGINT, signal_handler)
-    
     app =QApplication(sys.argv)
     # Let the interpreter run each 200 ms.
     timer =QTimer()
     timer.start(200)  
     timer.timeout.connect(lambda: None)  
-    myapp =rocon_remocon.remocon.RemoconMain(None, "My System Tray App",app,host_name)
+    myapp =rocon_remocon.remocon.RemoconMain(None, "My System Tray App",app)
     app.exec_()
     print "rocon_remocon: Main end"
 
