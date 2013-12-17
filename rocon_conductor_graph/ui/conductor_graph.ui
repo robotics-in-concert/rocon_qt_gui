@@ -63,6 +63,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="fit_in_view_push_button">
+          <property name="toolTip">
+           <string>Fit graph in view</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="Line" name="line">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -92,13 +99,6 @@
           </property>
           <property name="checked">
            <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="fit_in_view_push_button">
-          <property name="toolTip">
-           <string>Fit graph in view</string>
           </property>
          </widget>
         </item>

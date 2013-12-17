@@ -60,44 +60,54 @@ class ConductorGraphInfo(object):
         self.gateway_nodes = []
         self.gateway_nodes.append(self._concert_conductor_name)
         self.gateway_edges = EdgeList()
-
+        
+        client_list = []
+        
         for k in data.clients:
-            client_name = k.name            
-            
+            client_list.append((k,True))
+        for k in data.uninvited_clients:
+            client_list.append((k,False)) 
+
+        for client in client_list:
+            k = client[0]
+            client_name = client[0].name            
+
             if self._client_info_list.has_key(client_name):
                 self._client_info_list[client_name]["is_new"] = False
             else:
                 self._client_info_list[client_name]={}
                 self._client_info_list[client_name]["is_new"] = True
+            
             self._client_info_list[client_name]["is_check"]=True
             
-            self._client_info_list[client_name]["name"]=k.name
-            self._client_info_list[client_name]["gateway_name"]=k.gateway_name
-            self._client_info_list[client_name]["platform_info"]=k.platform_info
-            self._client_info_list[client_name]["client_status"]=k.client_status
-            self._client_info_list[client_name]["app_status"]=k.app_status
+            self._client_info_list[client_name]["is_invite"]=client[1]
+            self._client_info_list[client_name]["name"]=client[0].name
+            self._client_info_list[client_name]["gateway_name"]=client[0].gateway_name
+            self._client_info_list[client_name]["platform_info"]=client[0].platform_info
+            self._client_info_list[client_name]["client_status"]=client[0].client_status
+            self._client_info_list[client_name]["app_status"]=client[0].app_status
             
-            self._client_info_list[client_name]["is_local_client"]=k.is_local_client
-            self._client_info_list[client_name]["status"]=k.status
+            self._client_info_list[client_name]["is_local_client"]=client[0].is_local_client
+            self._client_info_list[client_name]["status"]=client[0].status
             
-            self._client_info_list[client_name]["conn_stats"]=k.conn_stats
-            self._client_info_list[client_name]["gateway_available"]=k.conn_stats.gateway_available
-            self._client_info_list[client_name]["time_since_last_seen"]=k.conn_stats.time_since_last_seen
-            self._client_info_list[client_name]["ping_latency_min"]=k.conn_stats.ping_latency_min
-            self._client_info_list[client_name]["ping_latency_max"]=k.conn_stats.ping_latency_max
-            self._client_info_list[client_name]["ping_latency_avg"]=k.conn_stats.ping_latency_avg
-            self._client_info_list[client_name]["ping_latency_mdev"]=k.conn_stats.ping_latency_mdev
+            self._client_info_list[client_name]["conn_stats"]=client[0].conn_stats
+            self._client_info_list[client_name]["gateway_available"]=client[0].conn_stats.gateway_available
+            self._client_info_list[client_name]["time_since_last_seen"]=client[0].conn_stats.time_since_last_seen
+            self._client_info_list[client_name]["ping_latency_min"]=client[0].conn_stats.ping_latency_min
+            self._client_info_list[client_name]["ping_latency_max"]=client[0].conn_stats.ping_latency_max
+            self._client_info_list[client_name]["ping_latency_avg"]=client[0].conn_stats.ping_latency_avg
+            self._client_info_list[client_name]["ping_latency_mdev"]=client[0].conn_stats.ping_latency_mdev
             
-            self._client_info_list[client_name]["network_info_available"]=k.conn_stats.network_info_available
-            self._client_info_list[client_name]["network_type"]=k.conn_stats.network_type
-            self._client_info_list[client_name]["wireless_bitrate"]=k.conn_stats.wireless_bitrate
-            self._client_info_list[client_name]["wireless_link_quality"]=k.conn_stats.wireless_link_quality
-            self._client_info_list[client_name]["wireless_signal_level"]=k.conn_stats.wireless_signal_level
-            self._client_info_list[client_name]["wireless_noise_level"]=k.conn_stats.wireless_noise_level
+            self._client_info_list[client_name]["network_info_available"]=client[0].conn_stats.network_info_available
+            self._client_info_list[client_name]["network_type"]=client[0].conn_stats.network_type
+            self._client_info_list[client_name]["wireless_bitrate"]=client[0].conn_stats.wireless_bitrate
+            self._client_info_list[client_name]["wireless_link_quality"]=client[0].conn_stats.wireless_link_quality
+            self._client_info_list[client_name]["wireless_signal_level"]=client[0].conn_stats.wireless_signal_level
+            self._client_info_list[client_name]["wireless_noise_level"]=client[0].conn_stats.wireless_noise_level
             
             self._client_info_list[client_name]["apps"]={}
             
-            for l in k.apps: 
+            for l in client[0].apps: 
                 app_name = l.name
                 self._client_info_list[client_name]["apps"][app_name] = {}
                 self._client_info_list[client_name]["apps"][app_name]['name'] = l.name
@@ -109,12 +119,12 @@ class ConductorGraphInfo(object):
             #text info
             app_context = "<html>"
             app_context += "<p>-------------------------------------------</p>"
-            app_context += "<p><b>name: </b>" +k.name+"</p>"
-            app_context += "<p><b>gateway_name: </b>" +k.gateway_name+"</p>"
-            app_context += "<p><b>platform_info: </b>" +k.platform_info+"</p>"
+            app_context += "<p><b>name: </b>" +client[0].name+"</p>"
+            app_context += "<p><b>gateway_name: </b>" +client[0].gateway_name+"</p>"
+            app_context += "<p><b>platform_info: </b>" +client[0].platform_info+"</p>"
             app_context += "<p>-------------------------------------------</p>"
-            app_context += "<p><b>client_status: </b>" +k.client_status+"</p>"
-            app_context += "<p><b>app_status: </b>" +k.app_status+"</p>"
+            app_context += "<p><b>client_status: </b>" +client[0].client_status+"</p>"
+            app_context += "<p><b>app_status: </b>" +client[0].app_status+"</p>"
             for l in self._client_info_list[client_name]["apps"].values():
                 app_context += "<p>-------------------------------------------</p>"
                 app_context += "<p><b>app_name: </b>" +l['name']+"</p>"
@@ -125,22 +135,26 @@ class ConductorGraphInfo(object):
             app_context +="</html>"
             self._client_info_list[client_name]["app_context"]=app_context
             #How to set the strength range???
-            connection_strength = self.get_connection_strength(k.conn_stats.wireless_link_quality)
+            connection_strength = self.get_connection_strength(client[0].is_local_client,client[0].conn_stats.wireless_link_quality)
             self._client_info_list[client_name]["connection_strength"]=connection_strength
 
             #graph info
-            self.gateway_nodes.append(k.name)
-            
-            if k.conn_stats.gateway_available == True:            
-                if k.conn_stats.network_type == ConnectionStatistics.WIRED:
-                    self.gateway_edges.add(Edge(self._concert_conductor_name,k.name,"wired"))
-                elif k.conn_stats.network_type == ConnectionStatistics.WIRELESS: 
-                    self.gateway_edges.add(Edge(self._concert_conductor_name,k.name,"wireless"))
+            self.gateway_nodes.append(client[0].name)
+            if client[1] == False: #uninvited client has only node,no link.
+                continue
+            if client[0].conn_stats.gateway_available == True:
+                if client[0].is_local_client == True:
+                    self.gateway_edges.add(Edge(self._concert_conductor_name,client[0].name,"local"))
+                elif client[0].conn_stats.network_type == ConnectionStatistics.WIRED:
+                    self.gateway_edges.add(Edge(self._concert_conductor_name,client[0].name,"wired"))
+                elif client[0].conn_stats.network_type == ConnectionStatistics.WIRELESS: 
+                    self.gateway_edges.add(Edge(self._concert_conductor_name,client[0].name,"wireless"))
                 else:
                     print "[conductor_graph_info]: Unknown network type"
             else:
                 print "[conductor_graph_info]:No network connection"
-
+            
+            
         #new node check
         for k in self._client_info_list.keys():
             if self._client_info_list[k]["is_check"] == True:
@@ -185,18 +199,22 @@ class ConductorGraphInfo(object):
         return result
         pass
         
-    def get_connection_strength(self,link_quality):
-        link_quality_percent = (float(link_quality)/70)*100
-        if 80<link_quality_percent and 100>= link_quality_percent:
+    def get_connection_strength(self,is_local_client,link_quality):
+        if is_local_client == True:
             return 'very_strong'
-        elif 60<link_quality_percent and 80>= link_quality_percent:
-            return 'strong'
-        elif 40<link_quality_percent and 60>= link_quality_percent:
-            return 'normal'
-        elif 20<link_quality_percent and 40>= link_quality_percent:
-            return 'weak'
-        elif 0<=link_quality_percent and 20>= link_quality_percent:
-            return 'very_weak'
         else:
-            return None
+            link_quality_percent = (float(link_quality)/70)*100
+            if 80<link_quality_percent and 100>= link_quality_percent:
+                return 'very_strong'
+            elif 60<link_quality_percent and 80>= link_quality_percent:
+                return 'strong'
+            elif 40<link_quality_percent and 60>= link_quality_percent:
+                return 'normal'
+            elif 20<link_quality_percent and 40>= link_quality_percent:
+                return 'weak'
+            elif 0<=link_quality_percent and 20>= link_quality_percent:
+                return 'very_weak'
+            else:
+                return None
+      
       
