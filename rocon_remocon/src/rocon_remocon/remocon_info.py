@@ -19,6 +19,7 @@ import roslaunch.parent
 from uuid_msgs.msg import UniqueID
 #rocon message and service
 from rocon_std_msgs.msg import PlatformInfo
+from rocon_std_msgs.msg import PlatformTuple
 from rocon_std_msgs.msg import Icon
 from rocon_app_manager_msgs.msg import ErrorCodes
 #concert message and service
@@ -45,10 +46,10 @@ class RemoconInfo():
         self.app_pid=0
         
         self.platform_info=PlatformInfo() 
-        self.platform_info.os=PlatformInfo().OS_LINUX
-        self.platform_info.version=PlatformInfo().VERSION_UBUNTU_PRECISE
-        self.platform_info.platform=PlatformInfo().PLATFORM_PC
-        self.platform_info.system=PlatformInfo().SYSTEM_RQT
+        self.platform_info.os=PlatformTuple.OS_LINUX
+        self.platform_info.version=PlatformTuple.VERSION_UBUNTU_PRECISE
+        self.platform_info.platform=PlatformTuple.PLATFORM_PC
+        self.platform_info.system=PlatformTuple.SYSTEM_RQT
         self.platform_info.name="rqt_remocon"
         
         print "[remocon_info] init complete"
@@ -140,12 +141,15 @@ class RemoconInfo():
         
         remocon_status=RemoconStatus()
         
-        remocon_status.platform_info.os=PlatformInfo().OS_LINUX
-        remocon_status.platform_info.version=PlatformInfo().VERSION_UBUNTU_PRECISE
-        remocon_status.platform_info.platform=PlatformInfo().PLATFORM_PC
-        remocon_status.platform_info.system=PlatformInfo().SYSTEM_RQT
-        remocon_status.platform_info.name="rqt_remocon"+'_'+self.key.hex
-        
+        platform_tuple=PlatformTuple(
+                        os=PlatformTuple.OS_LINUX,
+                        version=PlatformTuple.VERSION_ANY,
+                        platform=PlatformTuple.PLATFORM_PC,
+                        system=PlatformTuple.SYSTEM_RQT,
+                        name="rqt_remocon"+'_'+self.key.hex
+                    )
+        remocon_status.platform_info.tuple = platform_tuple
+
         remocon_status.uuid=str(self.key.hex)
         remocon_status.running_app=running_app
         remocon_status.app_name=app_name  
@@ -174,12 +178,14 @@ class RemoconInfo():
         roles.append(role_name)
         
         #remocon_platform information
-        platform_info=PlatformInfo()
-        platform_info.os=platform_info.OS_UBUNTU
-        platform_info.version=platform_info.VERSION_UBUNTU_PRECISE
-        platform_info.platform='pc'
-        platform_info.system='*'
-        platform_info.name='*'
+        platform_tuple=PlatformTuple(
+                        os=PlatformTuple.OS_UBUNTU,
+                        version=PlatformTuple.VERSION_ANY,
+                        platform=PlatformTuple.PLATFORM_PC,
+                        system=PlatformTuple.SYSTEM_ANY,
+                        name=PlatformTuple.NAME_ANY
+                    )
+        platform_info=PlatformInfo(tuple=platform_tuple, icon=rocon_std_msgs.Icon())
 
         service_handle=rospy.ServiceProxy("/concert/interactions/get_roles_and_apps", GetRolesAndApps)
         call_result=service_handle(roles,platform_info)
