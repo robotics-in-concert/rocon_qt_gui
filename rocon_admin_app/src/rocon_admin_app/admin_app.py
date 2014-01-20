@@ -26,7 +26,7 @@ import roslib
 import rospy
 from admin_app_info import AdminAppInfo
 
-from concert_msgs.srv import EnableConcertService
+from concert_msgs.srv import EnableService
 
 ##############################################################################
 # Admin App
@@ -284,7 +284,7 @@ class AdminApp(Plugin):
     def _enable_service(self):
         print "Enable Service: %s"%self.current_service
         service = "/concert/services/enable"
-        service_handle=rospy.ServiceProxy(service, EnableConcertService)
+        service_handle=rospy.ServiceProxy(service, EnableService)
         call_result=service_handle(self.current_service,True)
         print call_result
         pass
@@ -292,7 +292,7 @@ class AdminApp(Plugin):
     def _disable_service(self):
         print "Disable Service: %s"%self.current_service
         service = "/concert/services/enable"
-        service_handle=rospy.ServiceProxy(service, EnableConcertService)
+        service_handle=rospy.ServiceProxy(service, EnableService)
         call_result=service_handle(self.current_service,False)
         print call_result
         pass
