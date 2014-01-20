@@ -14,7 +14,8 @@ class AdminAppInfo(object):
         self._event_callback = None
         
         self.service_list = {}
-        rospy.Subscriber("/concert/list_concert_services", ConcertServices, self.update_service_list)
+        # should make use of concert_msgs/Strings here.
+        rospy.Subscriber("/concert/services/list", ConcertServices, self.update_service_list)
     
     def _reg_event_callback(self,func):
         self._event_callback = func
