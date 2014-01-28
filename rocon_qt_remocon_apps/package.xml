@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rocon_qt_remocon_apps</name>
-  <version>0.1.0</version>
+  <version>0.6.1</version>
   <description>The rocon_qt_remocon_apps package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 

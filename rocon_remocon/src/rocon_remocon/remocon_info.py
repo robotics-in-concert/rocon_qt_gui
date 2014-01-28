@@ -28,6 +28,7 @@ from concert_msgs.msg import Roles
 from concert_msgs.msg import RemoconStatus
 from concert_msgs.srv import GetRolesAndApps
 from concert_msgs.srv import RequestInteraction
+import rocon_console.console as console
 
 ##############################################################################
 # Remocon Info
@@ -44,18 +45,21 @@ class RemoconInfo():
         self.temp_icon_path= "%s/.ros/rocon/remocon/image/"%(os.getenv("HOME"))
         
         self.app_pid=0
+
+        # This might be naive and only work well on ubuntu...
+        os_codename = rospkg.os_detect.OsDetect().get_codename()
+        self.rocon_uri = rocon_uri.parse(
+                            "rocon:///pc/rqt_remocon/*/" + os_codename
+                            )
         
-        self.platform_info=PlatformInfo() 
-        self.platform_info.os=PlatformTuple.OS_LINUX
-        self.platform_info.version=PlatformTuple.VERSION_UBUNTU_PRECISE
-        self.platform_info.platform=PlatformTuple.PLATFORM_PC
-        self.platform_info.system=PlatformTuple.SYSTEM_RQT
-        self.platform_info.name="rqt_remocon"
-        
-        print "[remocon_info] init complete"
+
+        self.platform_info=PlatformInfo()
+        self.platform_info.uri = str(self.rocon_uri)
+        # icon?
+        print("Remocon : info component initialised")
     
     def __del__(self):
-        print "[remocon_info] Destory!!!"
+        print(console.green + "Remocon" + console.reset + " : info component destroyed")
         
     def _connect(self,concert_name="", concert_ip="http://localhost:11311",host_name='localhost'):
         # remocon name would be good as a persistant configuration variable by the user

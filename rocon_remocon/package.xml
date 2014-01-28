@@ -1,42 +1,20 @@
 <?xml version="1.0"?>
 <package>
   <name>rocon_remocon</name>
-  <version>1.0.0</version>
-  <description>The rocon_remocon package</description>
-  <maintainer email="dwlee@yujinrobot.com">dwlee</maintainer>
-
-
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <version>0.6.1</version>
+  <description>A qt based remocon for interacting with ros systems.</description>
+  <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
+  <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>
   <license>BSD</license>
+  <url type="website">http://www.ros.org/wiki/rocon_remocon</url>
+  <url type="repository">https://github.com/robotics-in-concert/rocon_qt_gui</url>
+  <url type="bugtracker">https://github.com/robotics-in-concert/rocon_qt_gui/issues</url>
+  <author>Daniel Stonier</author>
+  <author>Donguk Lee</author>
 
-
-  <!-- Url tags are optional, but mutiple are allowed, one per tag -->
-  <!-- Optional attribute type can be: website, bugtracker, or repository -->
-  <!-- Example: -->
-  <!-- <url type="website">http://ros.org/wiki/rocon_remocon</url> -->
-
-
-  <!-- Author tags are optional, mutiple are allowed, one per tag -->
-  <!-- Authors do not have to be maintianers, but could be -->
-  <!-- Example: -->
-  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
-
-
-  <!-- The *_depend tags are used to specify dependencies -->
-  <!-- Dependencies can be catkin packages or system dependencies -->
-  <!-- Examples: -->
-  <!-- Use build_depend for packages you need at compile time: -->
-  <!--   <build_depend>message_generation</build_depend> -->
-  <!-- Use buildtool_depend for build tool packages: -->
-  <!--   <buildtool_depend>catkin</buildtool_depend> -->
-  <!-- Use run_depend for packages you need at runtime: -->
-  <!--   <run_depend>message_runtime</run_depend> -->
-  <!-- Use test_depend for packages you need only for testing: -->
-  <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-    
+
+  <run_depend>python-rospkg</run_depend>
   <run_depend>qt_gui_py_common</run_depend>
   <run_depend>rqt_gui</run_depend>
   <run_depend>rqt_gui_py</run_depend>
@@ -44,7 +22,4 @@
   <run_depend>rocon_gateway</run_depend>
   <run_depend>rocon_utilities</run_depend>
   <run_depend>python-rospkg</run_depend>
-
-
-  <!-- The export tag contains other, unspecified, tags -->
 </package>
