@@ -6,7 +6,7 @@
 import sys, signal, string, atexit
 #pyqt
 from PyQt4.QtGui import QAction, QApplication, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
-from PyQt4.QtCore import QTimer
+from PyQt4.QtCore import QTimer, Qt
 #rocon
 import rocon_remocon
 

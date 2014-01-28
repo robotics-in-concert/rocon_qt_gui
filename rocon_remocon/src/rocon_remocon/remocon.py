@@ -366,7 +366,10 @@ class RemoconMain(QMainWindow):
 
         #init
         self._init()
-        self._widget_main.show()     
+        self._widget_main.show()
+        self._widget_main.activateWindow()  # give it the focus
+        self._widget_main.raise_()          # make sure it is on top
+  
   
     def __del__(self):
         print '[RemoconMain]: Destory'
