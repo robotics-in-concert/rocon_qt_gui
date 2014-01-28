@@ -8,9 +8,9 @@
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <license>BSD</license>
   <url type="website">http://wiki.ros.org/rocon_gateway_graph</url>
-  <url type="repository">https://github.com/robotics-in-concert/rocon_multimaster</url>
-  <url type="bugtracker">https://github.com/robotics-in-concert/rocon_multimaster/issues</url>
-  <author email="d.stonier@gmail.com">Daniel Stonier</author> 
+  <url type="repository">https://github.com/robotics-in-concert/rocon_qt_gui</url>
+  <url type="bugtracker">https://github.com/robotics-in-concert/rocon_qt_gui/issues</url>
+  <author>Daniel Stonier</author> 
 
   <buildtool_depend>catkin</buildtool_depend>
 
@@ -25,6 +25,5 @@
   
   <export>
     <rqt_gui plugin="${prefix}/gateway_plugin.xml"/>
-    <rosdoc config="rosdoc.yaml"/>
   </export>
 </package>
