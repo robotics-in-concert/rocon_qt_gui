@@ -328,18 +328,16 @@ class ConductorGraph(Plugin):
             info_text +="<p><b>application_status: </b>" +call_result.application_status+"</p>"
             info_text +="</html>"
             self._client_list_update_signal.emit()
-            
+
         elif service_name=='platform_info':
             service_handle=rospy.ServiceProxy(service, GetPlatformInfo)
             call_result=service_handle()
-            
-            info_text="<html>"
-            info_text +="<p>-------------------------------------------</p>"
-            info_text +="<p><b>os: </b>" +call_result.platform_info.os+"</p>"
-            info_text +="<p><b>version: </b>" +call_result.platform_info.version+"</p>"
-            info_text +="<p><b>system: </b>" +call_result.platform_info.system+"</p>"
-            info_text +="<p><b>name: </b>" +call_result.platform_info.name+"</p>"
-            info_text +="</html>"
+
+            info_text = "<html>"
+            info_text += "<p>-------------------------------------------</p>"
+            info_text += "<p><b>rocon_uri: </b>" + call_result.platform_info.uri + "</p>"
+            info_text += "<p><b>concert_version: </b>" + call_result.platform_info.version + "</p>"
+            info_text += "</html>"
             self._client_list_update_signal.emit()
             
         elif service_name=='invite':

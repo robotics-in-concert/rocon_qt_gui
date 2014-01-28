@@ -113,15 +113,16 @@ class ConductorGraphInfo(object):
                 self._client_info_list[client_name]["apps"][app_name]['name'] = l.name
                 self._client_info_list[client_name]["apps"][app_name]['display_name'] = l.display_name
                 self._client_info_list[client_name]["apps"][app_name]['description'] = l.description
-                self._client_info_list[client_name]["apps"][app_name]['platform'] = l.platform
+                self._client_info_list[client_name]["apps"][app_name]['compatibility'] = l.compatibility
                 self._client_info_list[client_name]["apps"][app_name]['status'] = l.status
 
             #text info
             app_context = "<html>"
             app_context += "<p>-------------------------------------------</p>"
-            app_context += "<p><b>name: </b>" +client[0].name+"</p>"
-            app_context += "<p><b>gateway_name: </b>" +client[0].gateway_name+"</p>"
-            app_context += "<p><b>platform_info: </b>" +client[0].platform_info+"</p>"
+            app_context += "<p><b>name: </b>" + client[0].name + "</p>"
+            app_context += "<p><b>gateway_name: </b>" + client[0].gateway_name + "</p>"
+            app_context += "<p><b>rocon_uri: </b>" + client[0].platform_info.uri + "</p>"
+            app_context += "<p><b>concert_version: </b>" + client[0].platform_info.version + "</p>"
             app_context += "<p>-------------------------------------------</p>"
             app_context += "<p><b>client_status: </b>" +client[0].client_status+"</p>"
             app_context += "<p><b>app_status: </b>" +client[0].app_status+"</p>"
@@ -130,7 +131,7 @@ class ConductorGraphInfo(object):
                 app_context += "<p><b>app_name: </b>" +l['name']+"</p>"
                 app_context += "<p><b>app_display_name: </b>" +l['display_name']+"</p>"
                 app_context += "<p><b>app_description: </b>" +l['description']+"</p>"
-                app_context += "<p><b>app_platform: </b>" +l['platform']+"</p>"
+                app_context += "<p><b>app_compatibility: </b>" +l['compatibility']+"</p>"
                 app_context += "<p><b>app_status: </b>" +l['status']+"</p>"
             app_context +="</html>"
             self._client_info_list[client_name]["app_context"]=app_context
