@@ -1,5 +1,7 @@
-#!/usr/bin/env python
-
+#
+# License: BSD
+#   https://raw.github.com/robotics-in-concert/rocon_qt_gui/license/LICENSE
+#
 ##############################################################################
 # Imports
 ##############################################################################
@@ -15,11 +17,12 @@ import rospy
 import rosservice
 import rocon_utilities
 import roslaunch.parent
+import rospkg.os_detect
+import rocon_uri
 #ros message and service
 from uuid_msgs.msg import UniqueID
 #rocon message and service
-from rocon_std_msgs.msg import PlatformInfo
-from rocon_std_msgs.msg import Icon
+import rocon_std_msgs.msg as rocon_std_msgs
 from rocon_app_manager_msgs.msg import ErrorCodes
 #concert message and service
 from concert_msgs.msg import ConcertInfo
@@ -27,6 +30,7 @@ from concert_msgs.msg import Roles
 from concert_msgs.msg import RemoconStatus
 from concert_msgs.srv import GetRolesAndApps
 from concert_msgs.srv import RequestInteraction
+
 
 ##############################################################################
 # Remocon Info
@@ -43,18 +47,23 @@ class RemoconInfo():
         self.temp_icon_path= "%s/.ros/rocon/remocon/image/"%(os.getenv("HOME"))
         
         self.app_pid=0
-        
-        self.platform_info=PlatformInfo() 
-        self.platform_info.os=PlatformInfo().OS_LINUX
-        self.platform_info.version=PlatformInfo().VERSION_UBUNTU_PRECISE
-        self.platform_info.platform=PlatformInfo().PLATFORM_PC
-        self.platform_info.system=PlatformInfo().SYSTEM_RQT
-        self.platform_info.name="rqt_remocon"
-        
-        print "[remocon_info] init complete"
+
+        # this might be naive and only work well on ubuntu...
+        os_codename = rospkg.os_detect.OsDetect().get_codename()
+        # this would be great as a configurable parameter
+        name = "rqt_remocon_" + self.key.hex
+        self.rocon_uri = rocon_uri.parse(
+                            "rocon:///pc/" + name + "/" + rocon_std_msgs.Strings.URI_WILDCARD + "/" + os_codename
+                            )
+        # be also great to have a configurable icon...with a default
+        self.platform_info=rocon_std_msgs.PlatformInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
+                                                       uri=str(self.rocon_uri),
+                                                       icon=rocon_std_msgs.Icon()
+                                                       )
+        print("[remocon_info] info component initialised")
     
     def __del__(self):
-        print "[remocon_info] Destory!!!"
+        print("[remocon_info] : info component destroyed")
         
     def _connect(self,concert_name="", concert_ip="http://localhost:11311",host_name='localhost'):
         # remocon name would be good as a persistant configuration variable by the user
@@ -80,8 +89,8 @@ class RemoconInfo():
         self.role_sub=rospy.Subscriber("/concert/interactions/roles",Roles, self._roles_callback)
         self.info_sub=rospy.Subscriber("/concert/info", ConcertInfo , self._info_callback)
         
-        self.remocon_status_pub=rospy.Publisher("remocons/"+unique_name,RemoconStatus,latch=True)
-        
+        self.remocon_status_pub=rospy.Publisher("remocons/" + unique_name, RemoconStatus,latch=True)
+
         self._pub_remocon_status("",False)
         self.is_connect=True
         self.is_valid_role=False
@@ -140,12 +149,8 @@ class RemoconInfo():
         
         remocon_status=RemoconStatus()
         
-        remocon_status.platform_info.os=PlatformInfo().OS_LINUX
-        remocon_status.platform_info.version=PlatformInfo().VERSION_UBUNTU_PRECISE
-        remocon_status.platform_info.platform=PlatformInfo().PLATFORM_PC
-        remocon_status.platform_info.system=PlatformInfo().SYSTEM_RQT
-        remocon_status.platform_info.name="rqt_remocon"+'_'+self.key.hex
-        
+        remocon_status.platform_info = self.platform_info
+
         remocon_status.uuid=str(self.key.hex)
         remocon_status.running_app=running_app
         remocon_status.app_name=app_name  
@@ -173,16 +178,8 @@ class RemoconInfo():
         roles=[]
         roles.append(role_name)
         
-        #remocon_platform information
-        platform_info=PlatformInfo()
-        platform_info.os=platform_info.OS_UBUNTU
-        platform_info.version=platform_info.VERSION_UBUNTU_PRECISE
-        platform_info.platform='pc'
-        platform_info.system='*'
-        platform_info.name='*'
-
         service_handle=rospy.ServiceProxy("/concert/interactions/get_roles_and_apps", GetRolesAndApps)
-        call_result=service_handle(roles,platform_info)
+        call_result=service_handle(roles, self.platform_info.uri)
         print "[remocon_info]: call result"
         self.app_list={}
         for k in call_result.data:
@@ -198,7 +195,7 @@ class RemoconInfo():
                     self.app_list[app_name]['launch_list'] ={}
                     
                     self.app_list[app_name]['name']=l.name
-                    self.app_list[app_name]['platform_info']=l.platform_info
+                    self.app_list[app_name]['compatibility']=l.compatibility
                     #todo icon
                     icon_name = l.icon.resource_name.split('/').pop()
                     icon = open(self.temp_icon_path+icon_name,'w')
