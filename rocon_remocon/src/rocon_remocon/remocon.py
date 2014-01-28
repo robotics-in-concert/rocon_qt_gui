@@ -95,7 +95,7 @@ class RemoconSub(QMainWindow):
 ################################################################################################################
     def _init_role_list(self):        
 
-        if not self.remocon_info._connect(self.concert_name, self.concert_master_uri,self.host_name):
+        if not self.remocon_info._connect(self.concert_name, self.concert_master_uri, self.host_name):
             return False
         self._refresh_role_list()    
         return True
@@ -218,16 +218,7 @@ class RemoconSub(QMainWindow):
         info_text += "<p><b>name: </b>" + self.app_list[self.cur_selected_app]['name']+"</p>"
 
         info_text += "<p><b>  ---------------------</b>"+"</p>"
-        info_text += "<p><b>  platform info </b>"+"</p>"
-        
-        
-        info_text += "<p><b>  os: </b>"+self.app_list[self.cur_selected_app]['platform_info'].os+"</p>"
-        info_text += "<p><b>  version: </b>"+self.app_list[self.cur_selected_app]['platform_info'].version+"</p>"
-        info_text += "<p><b>  platform: </b>"+self.app_list[self.cur_selected_app]['platform_info'].platform+"</p>"
-        info_text += "<p><b>  system: </b>"+self.app_list[self.cur_selected_app]['platform_info'].system+"</p>"
-        info_text += "<p><b>  name: </b>"+self.app_list[self.cur_selected_app]['platform_info'].name+"</p>"
-        info_text += "<p><b>  ---------------------</b>"+"</p>"
-        
+        info_text += "<p><b>compatibility: </b>" + self.app_list[self.cur_selected_app]['compatibility'] + "</p>"
         info_text += "<p><b>display name: </b>"+self.app_list[self.cur_selected_app]['display_name']+"</p>"
         info_text += "<p><b>description: </b>"+self.app_list[self.cur_selected_app]['description']+"</p>"
         info_text += "<p><b>service name: </b>"+self.app_list[self.cur_selected_app]['service_name']+"</p>"
@@ -548,7 +539,7 @@ class RemoconMain(QMainWindow):
         params['param2']= context_widget2
         
         #check box
-        use_env_var_check=QCheckBox("Use envionment variables")
+        use_env_var_check=QCheckBox("Use environment variables")
         use_env_var_check.setCheckState(Qt.Unchecked) 
       
         def set_use_env_var(data,text_widget1,text_widget2):
