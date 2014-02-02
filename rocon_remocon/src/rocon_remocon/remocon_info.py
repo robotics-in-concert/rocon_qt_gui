@@ -53,7 +53,7 @@ class RemoconInfo():
         # this would be great as a configurable parameter
         name = "rqt_remocon_" + self.key.hex
         self.rocon_uri = rocon_uri.parse(
-                            "rocon:///pc/" + name + "/" + rocon_std_msgs.Strings.URI_WILDCARD + "/" + os_codename
+                            "rocon:/pc/" + name + "/" + rocon_std_msgs.Strings.URI_WILDCARD + "/" + os_codename
                             )
         # be also great to have a configurable icon...with a default
         self.platform_info=rocon_std_msgs.PlatformInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
