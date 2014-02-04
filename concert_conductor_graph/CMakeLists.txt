@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(rocon_conductor_graph)
+project(concert_conductor_graph)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)

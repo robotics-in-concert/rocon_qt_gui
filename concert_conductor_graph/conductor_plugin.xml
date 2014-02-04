@@ -1,0 +1,12 @@
+<library path="src">
+  <class name="Conductor Graph" type="concert_conductor_graph.conductor_graph.ConductorGraph" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      Plugin for the concert conductor.
+    </description>
+    <qtgui>
+      <label>Conductor Graph</label>
+      <icon type="file">./resources/images/rocon_logo.png</icon>
+      <statustip>Rocon Concert Conductor Graph</statustip>
+    </qtgui>
+  </class>
+</library>

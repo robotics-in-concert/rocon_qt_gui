@@ -1,4 +1,0 @@
-<!-- Quite useless really, but it does provide a 4th way of launching a conductor graph. -->
-<launch>
-  <node pkg="rocon_conductor_graph" name="$(anon conductor_graph)" type="rocon_conductor_graph"/>
-</launch>

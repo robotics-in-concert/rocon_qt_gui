@@ -1,6 +1,6 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package rocon_conductor_graph
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package concert_conductor_graph
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 0.5.4 (2013-09-11)
 ------------------
@@ -10,7 +10,7 @@ Changelog for package rocon_conductor_graph
 0.5.3 (2013-08-30)
 ------------------
 * missing file
-* create rocon_conductor_graph
+* create concert_conductor_graph
 
 0.5.2 (2013-07-17)
 ------------------
