@@ -24,10 +24,12 @@ from PyQt4.QtSvg import QSvgGenerator
 
 ##ros
 from remocon_info import RemoconInfo
+from rocon_console import console
 
 ##############################################################################
 # Remocon Role
 ##############################################################################
+
 
 class RemoconSub(QMainWindow):
     def __init__(self, parent, title,application,concert_index="", concert_name="", concert_master_uri='localhost', host_name='localhost'):
@@ -39,19 +41,19 @@ class RemoconSub(QMainWindow):
         self.application = application
 
         super(RemoconSub, self).__init__(parent)
-        self.initialised= False
+        self.initialised = False
 
-        self._widget_app_list= QWidget()                
-        self._widget_role_list= QWidget()
+        self._widget_app_list = QWidget()
+        self._widget_role_list = QWidget()
 
         self.concert_list = {}
         self.role_list = {}
         self.cur_selected_role = 0
 
         self.app_list = {}
-        self.cur_selected_app= 0
+        self.cur_selected_app = 0
 
-        self.remocon_info = RemoconInfo()
+        self.remocon_info = RemoconInfo(stop_app_postexec_fn=self._set_stop_app_button)
 
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/applist.ui")
         uic.loadUi(path, self._widget_app_list)
@@ -67,62 +69,69 @@ class RemoconSub(QMainWindow):
         self.scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../scripts/")
 
         #role list widget
-        self._widget_role_list.role_list_widget.setIconSize(QSize(50,50))
-        self._widget_role_list.role_list_widget.itemDoubleClicked.connect(self._select_role_list) 
-        self._widget_role_list.back_btn.pressed.connect(self._back_role_list) 
-        self._widget_role_list.refresh_btn.pressed.connect(self._refresh_role_list)  
+        self._widget_role_list.role_list_widget.setIconSize(QSize(50, 50))
+        self._widget_role_list.role_list_widget.itemDoubleClicked.connect(self._select_role_list)
+        self._widget_role_list.back_btn.pressed.connect(self._back_role_list)
+        self._widget_role_list.refresh_btn.pressed.connect(self._refresh_role_list)
         #app list widget
-        self._widget_app_list.app_list_widget.setIconSize(QSize(50,50))
-        self._widget_app_list.app_list_widget.itemDoubleClicked.connect(self._start_app)                
+        self._widget_app_list.app_list_widget.setIconSize(QSize(50, 50))
+        self._widget_app_list.app_list_widget.itemDoubleClicked.connect(self._start_app)
         self._widget_app_list.back_btn.pressed.connect(self._uninit_app_list)
         self._widget_app_list.app_list_widget.itemClicked.connect(self._select_app_list) #concert item click event
         self._widget_app_list.stop_app_btn.pressed.connect(self._stop_app)
         self._widget_app_list.refresh_btn.pressed.connect(self._refresh_app_list)
         self._widget_app_list.stop_app_btn.setDisabled(True)
-        
+
         #init
-        self._init()     
+        self._init()
 
     def _init(self):
         self._read_cache()
-        self._init_role_list()   
+        self._init_role_list()
+        # Ugly Hack : our window manager is not graying out the button when an app closes itself down and the appropriate
+        # callback (_set_stop_app_button) is fired. It does otherwise though so it looks like the window manager
+        # is getting confused when the original program doesn't have the focus.
+        #
+        # Taking control of it ourselves works...
+        self._widget_app_list.stop_app_btn.setStyleSheet(QString.fromUtf8("QPushButton:disabled { color: gray }"))
         self._widget_role_list.show()
-        self.initialised= True        
-        pass
+        self.initialised = True
+
 ################################################################################################################
 ##role list widget
 ################################################################################################################
-    def _init_role_list(self):        
+
+    def _init_role_list(self):
 
         if not self.remocon_info._connect(self.concert_name, self.concert_master_uri, self.host_name):
             return False
-        self._refresh_role_list()    
+        self._refresh_role_list()
         return True
-        
+
     def _uninit_role_list(self):
         print "[RemoconSub]_uninit_role_list"
         self.remocon_info._shutdown()
-        self.cur_selected_role= 0    
-     
-    def _select_role_list(self,Item):
-        print '_select_role_list: '+ Item.text()
-        self.cur_selected_role= str(Item.text())
+        self.cur_selected_role = 0
+
+    def _select_role_list(self, Item):
+        print '_select_role_list: ' + Item.text()
+        self.cur_selected_role = str(Item.text())
 
         self.remocon_info._select_role(self.cur_selected_role)
-        
+
         self._widget_app_list.show()
         self._widget_app_list.move(self._widget_role_list.pos())
         self._widget_role_list.hide()
         self._init_app_list()
         pass
-        
+
     def _back_role_list(self):
         self._uninit_role_list()
         execute_path= self.scripts_path+'rocon_remocon' ##command
         execute_path += " "+"'"+self.host_name+"'" ##arg1
-        
+
         os.execv(self.scripts_path+'rocon_remocon',['',self.host_name])
-        
+
         print "Spawning: %s"%(execute_path)
         pass
 
@@ -196,23 +205,21 @@ class RemoconSub(QMainWindow):
             else:
                 print concert_name+': No icon'
             pass
-        
         pass
-     
+
     def _select_app_list(self,Item):
-        
-        list_widget= Item.listWidget()
-        cur_index= list_widget.count()-list_widget.currentRow()-1
-        
+
+        list_widget = Item.listWidget()
+        cur_index = list_widget.count() - list_widget.currentRow() - 1
+
         for k in self.app_list.values():
-            if(k['index']== cur_index):
-                self.cur_selected_app= k['name']
+            if(k['index'] == cur_index):
+                self.cur_selected_app = k['name']
                 break
-    
+
         self._widget_app_list.app_info.clear()
 
-        info_text= ""
-        info_text= "<html>"
+        info_text = "<html>"
         info_text += "<p>-------------------------------------------</p>"
         info_text += "<p><b>name: </b>" + self.app_list[self.cur_selected_app]['name']+"</p>"
 
@@ -226,32 +233,46 @@ class RemoconSub(QMainWindow):
         info_text += "<p><b>  ---------------------</b>"+"</p>"
         info_text += "<p><b>remappings: </b>" +str(self.app_list[self.cur_selected_app]['remappings'])+"</p>"
         info_text += "<p><b>parameters: </b>" +str(self.app_list[self.cur_selected_app]['parameters'])+"</p>"
-        
+
         info_text +="</html>"
-        
+
         self._widget_app_list.app_info.appendHtml(info_text)
-        
-        if len(self.app_list[self.cur_selected_app]["launch_list"]):
-            self._widget_app_list.stop_app_btn.setDisabled(False)
-        else:
-            self._widget_app_list.stop_app_btn.setDisabled(True)
-        
-    
-    
+        self._set_stop_app_button()
+
+    def _set_stop_app_button(self):
+        '''
+          This can be used by the underlying listeners to check, and if needed,
+          toggle the state of the stop app button whenever a running app
+          terminates itself.
+        '''
+        if not self.app_list:
+            return
+        try:
+            if self.app_list[self.cur_selected_app]["launch_list"]:
+                console.logdebug("Remocon : enabling stop app button")
+                self._widget_app_list.stop_app_btn.setDisabled(False)
+            else:
+                console.logdebug("Remocon : disabling stop app button")
+                self._widget_app_list.stop_app_btn.setEnabled(False)
+        except KeyError:
+            pass  # do nothing
+
     def _stop_app(self):
-        print "Stop app: "+ str(self.cur_selected_app)
+        print "Stop app: " + str(self.cur_selected_app)
         if self.remocon_info._stop_app(self.cur_selected_app):
-            self._widget_app_list.stop_app_btn.setDisabled(True)
+            self._set_stop_app_button()
+            #self._widget_app_list.stop_app_btn.setDisabled(True)
         else:
             pass
+
     def _start_app(self):
         print "Start app: "+ str(self.cur_selected_app)
         if self.remocon_info._start_app(self.cur_selected_role,self.cur_selected_app):
             self._widget_app_list.stop_app_btn.setDisabled(False)
         else:
             pass
+
     def _write_cache(self):
-        
         try:
             cache_concert_info_list= open(self.temp_cache_path,'w')
         except:
