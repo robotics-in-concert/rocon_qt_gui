@@ -4,9 +4,14 @@
       Plugin for the concert conductor.
     </description>
     <qtgui>
+      <group>
+        <label>Rocon</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to robotics-in-concert components.</statustip>
+      </group>
       <label>Conductor Graph</label>
       <icon type="file">./resources/images/rocon_logo.png</icon>
-      <statustip>Rocon Concert Conductor Graph</statustip>
+      <statustip>A runtime view of the world from the concert conductor's perspective.</statustip>
     </qtgui>
   </class>
 </library>
