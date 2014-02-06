@@ -59,6 +59,15 @@ class AdminApp(Plugin):
         self._widget.clear_btn.pressed.connect(self._clear_service_list)
         self._widget.service_tree_widget.itemClicked.connect(self._select_service_tree_item) #concert item click event
         self._refresh_service_list_signal.connect(self._update_service_list)
+        
+        #Not implementation
+        self._widget.clear_btn.setDisabled(True)
+        self._widget.setting_btn.setDisabled(True)
+        
+        self._widget.setting_btn.setToolTip("Not yet")
+        self._widget.clear_btn.setToolTip("Not yet")
+        
+        
 
         context.add_widget(self._widget)
 
