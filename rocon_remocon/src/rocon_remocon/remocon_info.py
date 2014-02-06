@@ -387,7 +387,7 @@ class RemoconInfo():
         self.app_list[app_name]['launch_list'][anonymous_name]['name'] = anonymous_name
         self.app_list[app_name]['launch_list'][anonymous_name]['running'] = str(True)
         self.app_list[app_name]['launch_list'][anonymous_name]['process'] = process
-        self.app_list[app_name]['launch_list'][anonymous_name]['shutdown'] = process.terminate
+        self.app_list[app_name]['launch_list'][anonymous_name]['shutdown'] = partial(process.send_signal, signal.SIGINT)
         return True
 
     def _start_app_webapp(self):
