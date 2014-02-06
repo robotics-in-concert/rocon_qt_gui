@@ -1,5 +1,7 @@
-#!/usr/bin/env python
-
+#
+# License: BSD
+#   https://raw.github.com/robotics-in-concert/rocon_qt_gui/license/LICENSE
+#
 ##############################################################################
 # Imports
 ##############################################################################
@@ -249,7 +251,7 @@ class ConductorGraph(Plugin):
         self._graph._reg_period_callback(self._set_network_statisics)
         
         rospack=rospkg.RosPack()
-        ui_file=os.path.join(rospack.get_path('rocon_conductor_graph'), 'ui', 'conductor_graph.ui')
+        ui_file=os.path.join(rospack.get_path('concert_conductor_graph'), 'ui', 'conductor_graph.ui')
         loadUi(ui_file, self._widget, {'InteractiveGraphicsView': InteractiveGraphicsView})
         self._widget.setObjectName('ConductorGraphUi')
 

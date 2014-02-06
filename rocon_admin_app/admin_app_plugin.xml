@@ -1,12 +1,17 @@
 <library path="src">
   <class name="Admin App" type="rocon_admin_app.admin_app.AdminApp" base_class_type="rqt_gui_py::Plugin">
     <description>
-      Administartor application for enable and disable service
+      Administrator application for concert solution management.
     </description>
     <qtgui>
-      <label>Admin App</label>
+      <group>
+        <label>Rocon</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to robotics-in-concert components.</statustip>
+      </group>
+      <label>Concert Administration</label>
       <icon type="file">./resources/images/rocon_logo.png</icon>
-      <statustip>Administrator Application for managing service</statustip>
+      <statustip>Administrator application for managing concert services</statustip>
     </qtgui>
   </class>
 </library>

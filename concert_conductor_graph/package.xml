@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <package>
-  <name>rocon_conductor_graph</name>
+  <name>concert_conductor_graph</name>
   <version>0.6.1</version>
-  <description>The rocon_conductor_graph package</description>
+  <description>The concert_conductor_graph package</description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>
   <license>BSD</license>
-  <url type="website">http://www.ros.org/wiki/rocon_conductor_graph</url>
+  <url type="website">http://www.ros.org/wiki/concert_conductor_graph</url>
   <url type="repository">https://github.com/robotics-in-concert/rocon_qt_gui</url>
   <url type="bugtracker">https://github.com/robotics-in-concert/rocon_qt_gui/issues</url>
   <author>Daniel Stonier</author>

@@ -1,7 +1,7 @@
 <library path="src">
-  <class name="Gateway Graph" type="rocon_gateway_graph.gateway_graph.GatewayGraph" base_class_type="rqt_gui_py::Plugin">
+  <class name="Conductor Graph" type="concert_conductor_graph.conductor_graph.ConductorGraph" base_class_type="rqt_gui_py::Plugin">
     <description>
-      Plugin for the multimaster gateway model.
+      Plugin for the concert conductor.
     </description>
     <qtgui>
       <group>
@@ -9,9 +9,9 @@
         <icon type="theme">folder</icon>
         <statustip>Plugins related to robotics-in-concert components.</statustip>
       </group>
-      <label>Gateway Graph</label>
+      <label>Conductor Graph</label>
       <icon type="file">./resources/images/rocon_logo.png</icon>
-      <statustip>A runtime view of the current rocon gateway network.</statustip>
+      <statustip>A runtime view of the world from the concert conductor's perspective.</statustip>
     </qtgui>
   </class>
 </library>
