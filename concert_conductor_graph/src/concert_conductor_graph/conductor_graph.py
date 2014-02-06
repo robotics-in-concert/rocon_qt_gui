@@ -550,6 +550,7 @@ class ConductorGraph(Plugin):
             ver_layout.setContentsMargins (9,9,9,9)
             ver_layout.setSizeConstraint (ver_layout.SetDefaultConstraint)
             
+            #button layout
             sub_widget=QWidget()
             sub_widget.setAccessibleName('sub_widget')
             btn_grid_layout=QGridLayout(sub_widget)
@@ -559,27 +560,29 @@ class ConductorGraph(Plugin):
             btn_grid_layout.setColumnStretch (1, 0)
             btn_grid_layout.setRowStretch (2, 0)
 
-            invite_btn=QPushButton("invite")
-            platform_info_btn=QPushButton("platform_info")
-            status_btn=QPushButton("status")
-            start_app_btn=QPushButton("start_app")
-            stop_app_btn=QPushButton("stop_app")
-            get_app_list_app_btn=QPushButton("get_app_list")                        
+            invite_btn=QPushButton("Invite")
+            platform_info_btn=QPushButton("Get Platform Info")
+            status_btn=QPushButton("Get Status")
+            start_app_btn=QPushButton("Start App")
+            stop_app_btn=QPushButton("Atop App")              
 
             invite_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"invite"))
             platform_info_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"platform_info"))  
             status_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"status"))  
             start_app_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"start_app"))  
             stop_app_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"stop_app"))
-            get_app_list_app_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"get_app_list_app"))    
                     
             btn_grid_layout.addWidget(invite_btn)
             btn_grid_layout.addWidget(platform_info_btn)
             btn_grid_layout.addWidget(status_btn)
             btn_grid_layout.addWidget(start_app_btn)
-            btn_grid_layout.addWidget(stop_app_btn)
-             
+            btn_grid_layout.addWidget(stop_app_btn)             
             ver_layout.addWidget(sub_widget)            
+
+            #client information layout
+            context_label = QLabel()
+            context_label.setText("Client information")
+            ver_layout.addWidget(context_label)
             
             app_context_widget=QPlainTextEdit()
             app_context_widget.setObjectName(k["name"]+'_'+'app_context_widget')
@@ -591,6 +594,11 @@ class ConductorGraph(Plugin):
             cursor.movePosition(QTextCursor.Start,QTextCursor.MoveAnchor,0)
             app_context_widget.setTextCursor(cursor)
             ver_layout.addWidget(app_context_widget)
+            
+            #service layout
+            context_label = QLabel()
+            context_label.setText("Service result")
+            ver_layout.addWidget(context_label)
             
             services_text_widget=QPlainTextEdit()
             services_text_widget.setObjectName(k["name"]+'_'+'services_text_widget')
