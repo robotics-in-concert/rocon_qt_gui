@@ -564,7 +564,7 @@ class ConductorGraph(Plugin):
             platform_info_btn=QPushButton("Get Platform Info")
             status_btn=QPushButton("Get Status")
             start_app_btn=QPushButton("Start App")
-            stop_app_btn=QPushButton("Atop App")              
+            stop_app_btn=QPushButton("Stop App")              
 
             invite_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"invite"))
             platform_info_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"platform_info"))  
