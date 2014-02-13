@@ -309,7 +309,8 @@ class RemoconInfo():
         try:
             app_filename = rocon_utilities.find_resource_from_string(app_name)
             return (app_filename, self._start_app_rosrunnable)
-        except IOError:
+        except IOError, ValueError:
+            console.logerror(str(inst))
             pass
         o = urlparse(app_name)
         if o.scheme == 'http':
@@ -391,8 +392,52 @@ class RemoconInfo():
         self.app_list[app_name]['launch_list'][anonymous_name]['shutdown'] = partial(process.send_signal, signal.SIGINT)
         return True
 
-    def _start_app_webapp(self):
-        pass
+    def _start_app_webapp(self, app_name, rosrunnable_filename, service_name, remappings, parameters):
+        if self._check_webbrowser():
+            rosrunnable_filename = "google-chrome"
+            name = os.path.basename(rosrunnable_filename).replace('.', '_')
+            anonymous_name = name + "_" + uuid.uuid4().hex
+            process_listener = partial(self.process_listeners, anonymous_name, 1)
+            process = rocon_utilities.Popen([rosrunnable_filename,"--new-window",app_name], postexec_fn=process_listener)
+            self.app_list[app_name]['launch_list'][anonymous_name] = {}
+            self.app_list[app_name]['launch_list'][anonymous_name]['name'] = anonymous_name
+            self.app_list[app_name]['launch_list'][anonymous_name]['running'] = str(True)
+            self.app_list[app_name]['launch_list'][anonymous_name]['process'] = process
+            self.app_list[app_name]['launch_list'][anonymous_name]['shutdown'] = partial(process.send_signal, signal.SIGINT)
+            return True
+        else:
+            return False
+
+    def _check_webbrowser(self):
+        target_browser = "google-chrome"
+        default_browser = ["firefox.desktop","google-chrome.desktop","opera-browser.desktop","safari.desktop"]
+        mime_type = "x-scheme-handler/http"        
+        output = subprocess.Popen(["cat","%s/.local/share/applications/mimeapps.list"%(os.getenv("HOME"))],stdout=subprocess.PIPE)
+        (out, err) = output.communicate()
+        mimeapps_list={}  
+        tag = "None"        
+        for k in out.split('\n'):
+            if "Default Applications" in k:
+                tag = "Default Applications"
+                mimeapps_list[tag]={}
+                continue
+            elif "Added Associations" in k:
+                tag = "Added Associations"
+                mimeapps_list[tag]={}
+                continue
+            if k.count('='):
+                mimeapps_list[tag][k.split('=')[0]]=k.split('=')[1]   
+        
+        if target_browser in mimeapps_list["Added Associations"][mime_type]:
+            return True
+        else:
+            console.logerror("NOT Installed Google Chrome Browser")
+            return False
+            #for k in default_browser:
+            #    if k in mimeapps_list["Added Associations"][mime_type]:
+            #        print "YES, installed %s"%k
+            #    else:
+            #        print "NO, NOT installed %s"%k
 
     def _stop_app(self, app_name):
         if not app_name in self.app_list:
