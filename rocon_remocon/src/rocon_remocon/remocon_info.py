@@ -309,7 +309,9 @@ class RemoconInfo():
         try:
             app_filename = rocon_utilities.find_resource_from_string(app_name)
             return (app_filename, self._start_app_rosrunnable)
-        except IOError, ValueError:
+        except IOError:
+            pass 
+        except Exception, inst:
             pass
         o = urlparse(app_name)
         if o.scheme == 'http':
