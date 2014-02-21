@@ -15,6 +15,7 @@ import subprocess
 import signal
 import tempfile
 from urlparse import urlparse
+import urllib
 #ros
 import rospy
 import rosservice
@@ -396,10 +397,11 @@ class RemoconInfo():
     def _start_app_webapp(self, app_name, rosrunnable_filename, service_name, remappings, parameters):
         if self._check_webbrowser():
             rosrunnable_filename = "google-chrome"
+            url = self._get_webapp_url(app_name, remappings, parameters)
             name = os.path.basename(rosrunnable_filename).replace('.', '_')
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self.process_listeners, anonymous_name, 1)
-            process = rocon_utilities.Popen([rosrunnable_filename,"--new-window",app_name], postexec_fn=process_listener)
+            process = rocon_utilities.Popen([rosrunnable_filename,"--new-window",url], postexec_fn=process_listener)
             self.app_list[app_name]['launch_list'][anonymous_name] = {}
             self.app_list[app_name]['launch_list'][anonymous_name]['name'] = anonymous_name
             self.app_list[app_name]['launch_list'][anonymous_name]['running'] = str(True)
@@ -409,36 +411,32 @@ class RemoconInfo():
         else:
             return False
 
+    def _get_webapp_url(self, app_name, remappings, parameters):
+        """
+            url syntheiser for sending remappings and parameters information 
+        """
+        url = ""
+        url = app_name
+        url += "?" + "MasterURI=" + str(os.environ["ROS_MASTER_URI"]);
+        if len(parameters) != 0:
+            url += "&" + "params=" + urllib.quote_plus(parameters)
+        if len(remappings) != 0:
+            remaps = "{"
+            for remapping in remappings:
+                remaps += "\'" + remapping.remap_from + "\':\'" + remapping.remap_to + "\',"
+            remaps = remaps[0:len(remaps)-1] +"}"
+            print remaps
+            url += "&" + "remaps=" + urllib.quote_plus(remaps)
+        return url
+
     def _check_webbrowser(self):
-        target_browser = "google-chrome"
-        default_browser = ["firefox.desktop","google-chrome.desktop","opera-browser.desktop","safari.desktop"]
-        mime_type = "x-scheme-handler/http"        
-        output = subprocess.Popen(["cat","%s/.local/share/applications/mimeapps.list"%(os.getenv("HOME"))],stdout=subprocess.PIPE)
-        (out, err) = output.communicate()
-        mimeapps_list={}  
-        tag = "None"        
-        for k in out.split('\n'):
-            if "Default Applications" in k:
-                tag = "Default Applications"
-                mimeapps_list[tag]={}
-                continue
-            elif "Added Associations" in k:
-                tag = "Added Associations"
-                mimeapps_list[tag]={}
-                continue
-            if k.count('='):
-                mimeapps_list[tag][k.split('=')[0]]=k.split('=')[1]   
-        
-        if target_browser in mimeapps_list["Added Associations"][mime_type]:
+        check_result = rocon_utilities.system.which("google-chrome")
+        if check_result:
             return True
-        else:
-            console.logerror("NOT Installed Google Chrome Browser")
+        elif check_result == None:
             return False
-            #for k in default_browser:
-            #    if k in mimeapps_list["Added Associations"][mime_type]:
-            #        print "YES, installed %s"%k
-            #    else:
-            #        print "NO, NOT installed %s"%k
+        else:
+            return False
 
     def _stop_app(self, app_name):
         if not app_name in self.app_list:
