@@ -7,49 +7,40 @@
 # Imports
 ##############################################################################
 
-import sys
 import os
+import sys
 
 import rospy
-from concert_msgs.msg import ConcertInfo
-
 import rocon_remocon
 import rocon_python_comms
+import rocon_std_msgs.msg as rocon_std_msgs
 
 ##############################################################################
-# Methods
+# Main
 ##############################################################################
-
-
-def _check_valid_concert():
-    ret_value = False
-    topic_list = rospy.get_published_topics()
-    for k in topic_list:
-        if k[0] == '/concert/info':
-            ret_value = True
-            break
-    return ret_value
 
 if __name__ == "__main__":
-    rocon_remocon.setup_home_dirs()
-    concert_ip = sys.argv[1]  # ip
+    ros_master_uri = sys.argv[1]
     host_name = sys.argv[2]
 
-    os.environ["ROS_MASTER_URI"] = concert_ip
+    os.environ["ROS_MASTER_URI"] = ros_master_uri
     os.environ["ROS_HOSTNAME"] = host_name
 
     rospy.init_node("rocon_remocon_checker", anonymous=True)
-    if _check_valid_concert():
-        concert_info = rocon_python_comms.SubscriberProxy('/concert/info', ConcertInfo)()
-        print concert_info.name
-        print concert_info.description
-        icon_name = concert_info.icon.resource_name.split('/').pop()
-        if concert_info.icon.data:
+
+    try:
+        topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
+        master_info = rocon_python_comms.SubscriberProxy(topic_name, rocon_std_msgs.MasterInfo)()
+        print master_info.name
+        print master_info.description
+        icon_name = master_info.icon.resource_name.split('/').pop()
+        if master_info.icon.data:
+            rocon_remocon.setup_home_dirs()
             icon = open(os.path.join(rocon_remocon.get_icon_cache_home(), icon_name), 'w')
-            icon.write(concert_info.icon.data)
+            icon.write(master_info.icon.data)
             icon.close()
         print icon_name
-    else:
+    except rocon_python_comms.NotFoundException as e:
         print "Unknown"
         print "Unknown."
         print "Unknown.png"

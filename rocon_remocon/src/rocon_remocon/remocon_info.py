@@ -25,10 +25,9 @@ import rocon_uri
 from rocon_console import console
 import rocon_std_msgs.msg as rocon_std_msgs
 from rocon_app_manager_msgs.msg import ErrorCodes
-#concert message and service
-from concert_msgs.msg import ConcertInfo
 import rocon_interaction_msgs.msg as rocon_interaction_msgs
 import rocon_interaction_msgs.srv as rocon_interaction_srvs
+import rocon_python_comms
 
 from . import utils
 
@@ -70,14 +69,14 @@ class RemoconInfo():
     def __del__(self):
         print("[remocon_info] : info component destroyed")
 
-    def _connect(self, concert_name="", concert_ip="http://localhost:11311", host_name='localhost'):
+    def _connect(self, concert_name="", ros_master_uri="http://localhost:11311", host_name='localhost'):
         # remocon name would be good as a persistant configuration variable by the user
         # so they can set something like 'Bob'.
         remocon_name = 'rqt_remocon'
         unique_name = remocon_name + "_" + self.key.hex
 
         # uri is obtained from the user, stored in ros_master_uri
-        os.environ["ROS_MASTER_URI"] = concert_ip
+        os.environ["ROS_MASTER_URI"] = ros_master_uri
         os.environ["ROS_HOSTNAME"] = host_name
 
         print "[remocon_info] connect RemoconInfo "
@@ -88,11 +87,15 @@ class RemoconInfo():
 
         rospy.init_node(unique_name, disable_signals=True)
 
-        if not self._check_valid_concert():
+        try:
+            concert_info_topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
+            roles_topic_name = rocon_python_comms.find_topic('rocon_interaction_msgs/Roles', timeout=rospy.rostime.Duration(5.0), unique=True)
+        except rocon_python_comms.NotFoundException as e:
+            console.logerror("RemoconInfo : failed to find either concert info or interaction roles topics' [%s]" % str(e))
             return False
 
-        self.role_sub = rospy.Subscriber("/concert/interactions/roles", rocon_interaction_msgs.Roles, self._roles_callback)
-        self.info_sub = rospy.Subscriber("/concert/info", ConcertInfo, self._info_callback)
+        self.role_sub = rospy.Subscriber(roles_topic_name, rocon_interaction_msgs.Roles, self._roles_callback)
+        self.info_sub = rospy.Subscriber(concert_info_topic_name, rocon_std_msgs.MasterInfo, self._info_callback)
 
         self.remocon_status_pub = rospy.Publisher("remocons/" + unique_name, rocon_interaction_msgs.RemoconStatus, latch=True)
 
@@ -104,20 +107,6 @@ class RemoconInfo():
 
     def _disconnect(self):
         self._shutdown()
-
-    def _check_valid_concert(self):
-        ret_value = False
-        topic_cnt = 0
-        topic_list = rospy.get_published_topics()
-        for k in topic_list:
-            if k[0] == '/concert/interactions/roles':
-                topic_cnt += 1
-            if k[0] == '/concert/info':
-                topic_cnt += 1
-            if topic_cnt >= 2:
-                ret_value = True
-                break
-        return ret_value
 
     def _is_shutdown(self):
         print "[remocon_info] shut down is complete"
