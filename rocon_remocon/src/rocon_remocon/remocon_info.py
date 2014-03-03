@@ -425,7 +425,7 @@ class RemoconInfo():
             for remapping in remappings:
                 remaps += "\'" + remapping.remap_from + "\':\'" + remapping.remap_to + "\',"
             remaps = remaps[0:len(remaps)-1] +"}"
-            print remaps
+            console.logdebug("running web app URL: "str(remaps))
             url += "&" + "remaps=" + urllib.quote_plus(remaps)
         return url
 
