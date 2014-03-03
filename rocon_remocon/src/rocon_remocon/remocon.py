@@ -23,8 +23,10 @@ from PyQt4.QtGui import QMainWindow, QCheckBox
 from PyQt4.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout  # QMessageBox, QTabWidget, QPlainTextEdit
 #from PyQt4.QtSvg import QSvgGenerator
 
-from .remocon_info import RemoconInfo
 from rocon_console import console
+
+from .remocon_info import RemoconInfo
+from . import utils
 
 ##############################################################################
 # Remocon
@@ -61,11 +63,8 @@ class RemoconSub(QMainWindow):
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/rolelist.ui")
         uic.loadUi(path, self._widget_role_list)
 
-        self.temp_icon_path = "%s/.ros/rocon/remocon/image/" % (os.getenv("HOME"))
-        self.temp_cache_path = "%s/.ros/rocon/remocon/cache/" % (os.getenv("HOME"))
-        if not os.path.isdir(self.temp_cache_path):
-            os.makedirs(self.temp_cache_path)
-        self.temp_cache_path += "concert_info_list.cache"
+        utils.setup_home_dirs()
+        self.concert_list_cache_path = os.path.join(utils.get_settings_cache_home(), "concert_list.cache")
         self.scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../scripts/")
 
         #role list widget
@@ -194,7 +193,7 @@ class RemoconSub(QMainWindow):
                 icon = QIcon(self.icon_path + app_icon)
                 self._widget_app_list.app_list_widget.item(0).setIcon(icon)
             elif len(app_icon):
-                icon = QIcon(self.temp_icon_path + app_icon)
+                icon = QIcon(os.path.join(utils.get_icon_cache_home(), app_icon))
                 self._widget_app_list.app_list_widget.item(0).setIcon(icon)
             else:
                 print self.concert_name + ': No icon'
@@ -260,9 +259,9 @@ class RemoconSub(QMainWindow):
 
     def _write_cache(self):
         try:
-            cache_concert_info_list = open(self.temp_cache_path, 'w')
+            cache_concert_info_list = open(self.concert_list_cache_path, 'w')
         except:
-            print "No directory or file: %s" % (self.temp_cache_path)
+            print "No directory or file: %s" % (self.concert_list_cache_path)
             return
 
         for k in self.concert_list.values():
@@ -291,9 +290,9 @@ class RemoconSub(QMainWindow):
     def _read_cache(self):
         #read cache and display the concert list
         try:
-            cache_concert_info_list = open(self.temp_cache_path, 'r')
+            cache_concert_info_list = open(self.concert_list_cache_path, 'r')
         except:
-            print "No directory or file: %s" % (self.temp_cache_path)
+            print "No directory or file: %s" % (self.concert_list_cache_path)
             return
         lines = cache_concert_info_list.readlines()
 
@@ -352,13 +351,10 @@ class RemoconMain(QMainWindow):
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/remocon.ui")
         uic.loadUi(path, self._widget_main)
 
-        self.temp_cache_path = "%s/.ros/rocon/remocon/cache/" % (os.getenv("HOME"))
-        if not os.path.isdir(self.temp_cache_path):
-            os.makedirs(self.temp_cache_path)
-        self.temp_cache_path += "concert_info_list.cache"
+        utils.setup_home_dirs()
+        self.concert_list_cache_path = os.path.join(utils.get_settings_cache_home(), "concert_list.cache")
 
         self.icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../resources/images/")
-        self.temp_icon_path = "%s/.ros/rocon/remocon/image/" % (os.getenv("HOME"))
         self.scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../scripts/")
 
         #main widget
@@ -378,7 +374,7 @@ class RemoconMain(QMainWindow):
         self._widget_main.raise_()          # make sure it is on top
 
     def __del__(self):
-        print '[RemoconMain]: Destory'
+        print '[RemoconMain]: Destroy'
 
     def _init(self):
 
@@ -390,6 +386,7 @@ class RemoconMain(QMainWindow):
 
     def _check_up(self):
         for k in self.concert_list.values():
+            print("Concert: %s" % k)
             concert_master_uri = k['master_uri']
             host_name = k['host_name']
             print "[_check_up]:MASTER_URI[%s], HOST_NAME[%s]" % (concert_master_uri, host_name)
@@ -399,7 +396,7 @@ class RemoconMain(QMainWindow):
             while True:
                 print "checking: " + concert_master_uri
                 result = output.poll()
-                if time_out_cnt > 10:
+                if time_out_cnt > 30:
                     print "timeout: " + concert_master_uri
                     try:
                         output.terminate()
@@ -430,9 +427,9 @@ class RemoconMain(QMainWindow):
     def _read_cache(self):
         #read cache and display the concert list
         try:
-            cache_concert_info_list = open(self.temp_cache_path, 'r')
+            cache_concert_info_list = open(self.concert_list_cache_path, 'r')
         except:
-            print "No directory or file: %s" % (self.temp_cache_path)
+            console.logdebug("Remocon : no cached settings found, moving on.")
             return
         lines = cache_concert_info_list.readlines()
         for line in lines:
@@ -586,16 +583,15 @@ class RemoconMain(QMainWindow):
         self._widget_main.list_info_widget.clear()
         self._check_up()
         self._update_concert_list()
-        pass
 
     def _update_concert_list(self):
 
         print '_update_concert_list'
         self._widget_main.list_widget.clear()
         try:
-            cache_concert_info_list = open(self.temp_cache_path, 'w')
+            cache_concert_info_list = open(self.concert_list_cache_path, 'w')
         except:
-            print "No directory or file: %s" % (self.temp_cache_path)
+            print "No directory or file: %s" % (self.concert_list_cache_path)
             return
         for k in self.concert_list.values():
             self._add_concert_list_item(k)
@@ -621,7 +617,7 @@ class RemoconMain(QMainWindow):
         cache_concert_info_list.close()
 
     def _add_concert_list_item(self, concert):
-        print '_add_concert_list_item'
+        print('_add_concert_list_item [%s]' % concert['name'])
         concert_index = concert['index']
         concert_name = concert['name']
         concert_master_uri = concert['master_uri']
@@ -653,7 +649,7 @@ class RemoconMain(QMainWindow):
             icon = QIcon(self.icon_path + concert_icon)
             self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setIcon(icon)
         elif len(concert_icon):
-            icon = QIcon(self.temp_icon_path + concert_icon)
+            icon = QIcon(os.path.join(utils.get_icon_cache_home(), concert_icon))
             self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setIcon(icon)
         else:
             print concert_name + ': No icon'

@@ -6,35 +6,19 @@
 ##############################################################################
 # Imports
 ##############################################################################
-#system
+
 import sys
 import os
-#ros
+
 import rospy
-#concert message and service
 from concert_msgs.msg import ConcertInfo
 
+import rocon_remocon
+import rocon_python_comms
+
 ##############################################################################
-# Imports
+# Methods
 ##############################################################################
-
-temp_icon_path = "%s/.ros/rocon/remocon/image/" % (os.getenv("HOME"))
-if not os.path.isdir(temp_icon_path):
-    os.makedirs(temp_icon_path)
-
-
-def _info_callback(data):
-    concert_name = data.name
-    icon_name = data.icon.resource_name.split('/').pop()
-    icon = open(temp_icon_path + icon_name, 'w')
-    icon.write(data.icon.data)
-    icon.close()
-
-    print concert_name
-    print data.description
-    print icon_name
-
-    rospy.signal_shutdown("shut down check_up")
 
 
 def _check_valid_concert():
@@ -47,21 +31,25 @@ def _check_valid_concert():
     return ret_value
 
 if __name__ == "__main__":
+    rocon_remocon.setup_home_dirs()
     concert_ip = sys.argv[1]  # ip
     host_name = sys.argv[2]
 
     os.environ["ROS_MASTER_URI"] = concert_ip
     os.environ["ROS_HOSTNAME"] = host_name
 
-    rospy.init_node("check_up", anonymous=True, disable_signals=True)
-    if not _check_valid_concert():
+    rospy.init_node("rocon_remocon_checker", anonymous=True)
+    if _check_valid_concert():
+        concert_info = rocon_python_comms.SubscriberProxy('/concert/info', ConcertInfo)()
+        print concert_info.name
+        print concert_info.description
+        icon_name = concert_info.icon.resource_name.split('/').pop()
+        if concert_info.icon.data:
+            icon = open(os.path.join(rocon_remocon.get_icon_cache_home(), icon_name), 'w')
+            icon.write(concert_info.icon.data)
+            icon.close()
+        print icon_name
+    else:
         print "Unknown"
         print "Unknown."
         print "Unknown.png"
-        rospy.signal_shutdown("shut down check_up")
-    info_sub = rospy.Subscriber("/concert/info", ConcertInfo, _info_callback)
-
-    while not rospy.is_shutdown():
-        rospy.sleep(rospy.Duration(0.1))
-        pass
-    rospy.sleep(rospy.Duration(0.1))

@@ -6,14 +6,13 @@
 ##############################################################################
 # Imports
 ##############################################################################
-#system
+
 import sys
 import signal
-#pyqt
+
 from PyQt4.QtGui import QApplication  # QAction, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
 from PyQt4.QtCore import QTimer  # Qt
 
-#rocon
 import rocon_remocon
 
 ##############################################################################

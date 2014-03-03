@@ -6,7 +6,7 @@
 ##############################################################################
 # Imports
 ##############################################################################
-#system
+
 import os
 import uuid
 from functools import partial
@@ -30,10 +30,12 @@ from concert_msgs.msg import ConcertInfo
 import rocon_interaction_msgs.msg as rocon_interaction_msgs
 import rocon_interaction_msgs.srv as rocon_interaction_srvs
 
+from . import utils
 
 ##############################################################################
-# Remocon Info
+# RemoconInfo
 ##############################################################################
+
 
 class RemoconInfo():
     def __init__(self, stop_app_postexec_fn):
@@ -48,7 +50,6 @@ class RemoconInfo():
         self.is_connect = False
         self.is_app_running = False
         self.key = uuid.uuid4()
-        self.temp_icon_path = "%s/.ros/rocon/remocon/image/" % (os.getenv("HOME"))
 
         self.app_pid = 0
 
@@ -123,9 +124,9 @@ class RemoconInfo():
 
     def _shutdown(self):
         if(self.is_connect != True):
-            console.logwarn("Remocon Info : tried to shutdown already disconnected remocon")
+            console.logwarn("RemoconInfo : tried to shutdown already disconnected remocon")
         else:
-            console.logdebug("Remocon Info : shutting down all apps")
+            console.logdebug("RemoconInfo : shutting down all apps")
             for app_name in self.app_list.keys():
                 self._stop_app(app_name)
 
@@ -146,7 +147,7 @@ class RemoconInfo():
             self.role_sub = None
             self.info_sub = None
             self.remocon_status_pub = None
-            console.logdebug("Remocon Info : has shutdown.")
+            console.logdebug("RemoconInfo : has shutdown.")
 
     def _pub_remocon_status(self, app_name, running_app):
         remocon_status = rocon_interaction_msgs.RemoconStatus()
@@ -194,9 +195,10 @@ class RemoconInfo():
                 self.app_list[app_name]['compatibility'] = interaction.compatibility
                 #todo icon
                 icon_name = interaction.icon.resource_name.split('/').pop()
-                icon = open(self.temp_icon_path + icon_name, 'w')
-                icon.write(interaction.icon.data)
-                icon.close()
+                if interaction.icon.data:
+                    icon = open(os.path.join(utils.get_icon_cache_home(), icon_name), 'w')
+                    icon.write(interaction.icon.data)
+                    icon.close()
                 self.app_list[app_name]['icon'] = icon_name
                 self.app_list[app_name]['display_name'] = interaction.display_name
                 self.app_list[app_name]['description'] = interaction.description
@@ -215,7 +217,7 @@ class RemoconInfo():
         self.is_valid_role = True
 
     def _get_concert_info(self):
-        print "[remocon_info] get concert info"
+        console.logdebug("RemoconInfo : retrieving concert information")
         time_out_cnt = 0
         while not rospy.is_shutdown():
             if len(self.concert_info) != 0:
@@ -224,9 +226,8 @@ class RemoconInfo():
                 rospy.sleep(rospy.Duration(0.2))
             time_out_cnt += 1
             if time_out_cnt > 5:
-                print "[remocon_info] get role list: time out 1s"
+                console.logwarn("RemoconInfo : timed out waiting for concert information")
                 break
-
         return self.concert_info
 
     def _info_callback(self, data):
@@ -236,9 +237,10 @@ class RemoconInfo():
 
         icon_name = data.icon.resource_name.split('/').pop()
         # delete concert info in cache
-        icon = open(self.temp_icon_path + icon_name, 'w')
-        icon.write(data.icon.data)
-        icon.close()
+        if data.icon.data:
+            icon = open(os.path.join(utils.get_icon_cache_home(), icon_name), 'w')
+            icon.write(data.icon.data)
+            icon.close()
 
         self.concert_info = {}
         self.concert_info['name'] = concert_name
@@ -465,7 +467,7 @@ class RemoconInfo():
             if name in v['launch_list']:
                 del v['launch_list'][name]
                 if not v['launch_list']:
-                    console.logdebug("Remocon Info : process_listener caught terminating app [%s]" % name)
+                    console.logdebug("RemoconInfo : process_listener caught terminating app [%s]" % name)
                     # inform the gui to update if necessary
                     self._stop_app_postexec_fn()
                     # update the rocon interactions handler
