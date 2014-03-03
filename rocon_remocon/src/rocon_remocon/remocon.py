@@ -53,7 +53,7 @@ class RemoconSub(QMainWindow):
         self.cur_selected_role = 0
 
         self.app_list = {}
-        self.cur_selected_app = 0
+        self.cur_selected_app = None
 
         self.remocon_info = RemoconInfo(stop_app_postexec_fn=self._set_stop_app_button)
 
@@ -204,21 +204,21 @@ class RemoconSub(QMainWindow):
         cur_index = list_widget.count() - list_widget.currentRow() - 1
         for k in self.app_list.values():
             if(k['index'] == cur_index):
-                self.cur_selected_app = k['name']
+                self.cur_selected_app = k
                 break
         self._widget_app_list.app_info.clear()
         info_text = "<html>"
         info_text += "<p>-------------------------------------------</p>"
-        info_text += "<p><b>name: </b>" + self.app_list[self.cur_selected_app]['name'] + "</p>"
+        info_text += "<p><b>name: </b>" + self.cur_selected_app['name'] + "</p>"
         info_text += "<p><b>  ---------------------</b>" + "</p>"
-        info_text += "<p><b>compatibility: </b>" + self.app_list[self.cur_selected_app]['compatibility'] + "</p>"
-        info_text += "<p><b>display name: </b>" + self.app_list[self.cur_selected_app]['display_name'] + "</p>"
-        info_text += "<p><b>description: </b>" + self.app_list[self.cur_selected_app]['description'] + "</p>"
-        info_text += "<p><b>namespace: </b>" + self.app_list[self.cur_selected_app]['namespace'] + "</p>"
-        info_text += "<p><b>max: </b>" + str(self.app_list[self.cur_selected_app]['max']) + "</p>"
+        info_text += "<p><b>compatibility: </b>" + self.cur_selected_app['compatibility'] + "</p>"
+        info_text += "<p><b>display name: </b>" + self.cur_selected_app['display_name'] + "</p>"
+        info_text += "<p><b>description: </b>" + self.cur_selected_app['description'] + "</p>"
+        info_text += "<p><b>namespace: </b>" + self.cur_selected_app['namespace'] + "</p>"
+        info_text += "<p><b>max: </b>" + str(self.cur_selected_app['max']) + "</p>"
         info_text += "<p><b>  ---------------------</b>" + "</p>"
-        info_text += "<p><b>remappings: </b>" + str(self.app_list[self.cur_selected_app]['remappings']) + "</p>"
-        info_text += "<p><b>parameters: </b>" + str(self.app_list[self.cur_selected_app]['parameters']) + "</p>"
+        info_text += "<p><b>remappings: </b>" + str(self.cur_selected_app['remappings']) + "</p>"
+        info_text += "<p><b>parameters: </b>" + str(self.cur_selected_app['parameters']) + "</p>"
         info_text += "</html>"
 
         self._widget_app_list.app_info.appendHtml(info_text)
@@ -233,7 +233,7 @@ class RemoconSub(QMainWindow):
         if not self.app_list:
             return
         try:
-            if self.app_list[self.cur_selected_app]["launch_list"]:
+            if self.cur_selected_app["launch_list"]:
                 console.logdebug("Remocon : enabling stop app button")
                 self._widget_app_list.stop_app_btn.setDisabled(False)
             else:
@@ -243,16 +243,16 @@ class RemoconSub(QMainWindow):
             pass  # do nothing
 
     def _stop_app(self):
-        print "Stop app: " + str(self.cur_selected_app)
-        if self.remocon_info._stop_app(self.cur_selected_app):
+        print "Stop app: " + str(self.cur_selected_app['name'])
+        if self.remocon_info._stop_app(self.cur_selected_app['hash']):
             self._set_stop_app_button()
             #self._widget_app_list.stop_app_btn.setDisabled(True)
         else:
             pass
 
     def _start_app(self):
-        print "Start app: " + str(self.cur_selected_app)
-        if self.remocon_info._start_app(self.cur_selected_app):
+        print "Start app: " + str(self.cur_selected_app['name'])
+        if self.remocon_info._start_app(self.cur_selected_app['hash']):
             self._widget_app_list.stop_app_btn.setDisabled(False)
         else:
             pass
@@ -314,8 +314,6 @@ class RemoconSub(QMainWindow):
                 self.concert_list[concert_index]['icon'] = concert_icon
                 self.concert_list[concert_index]['description'] = concert_description
                 self.concert_list[concert_index]['flag'] = concert_flag
-            else:
-                pass
         cache_concert_info_list.close()
 
 #################################################################

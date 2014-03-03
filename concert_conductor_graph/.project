@@ -3,6 +3,7 @@
 	<name>concert_conductor_graph</name>
 	<comment></comment>
 	<projects>
+		<project>rocon_gateway_utils</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

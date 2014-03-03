@@ -10,12 +10,12 @@ from __future__ import division
 import os
 
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot,SIGNAL,SLOT,QSize
-from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
-from python_qt_binding.QtGui import QSizePolicy,QTextEdit ,QCompleter, QBrush, QColor, QPen, QPushButton
-from python_qt_binding.QtGui import QVBoxLayout, QHBoxLayout, QMessageBox,QTabWidget, QPlainTextEdit
-from python_qt_binding.QtGui import QGridLayout,QTextCursor,QToolTip, QDialog,QGraphicsItem
-from python_qt_binding.QtSvg import QSvgGenerator
+from python_qt_binding import Signal
+from PyQt4.QtCore import Qt, QAbstractListModel
+from PyQt4.QtGui import QGraphicsScene, QIcon, QWidget, QLabel, QComboBox
+from PyQt4.QtGui import QSizePolicy, QTextEdit, QCompleter, QColor, QPushButton
+from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QPlainTextEdit
+from PyQt4.QtGui import QGridLayout, QTextCursor, QDialog
 
 import rospkg
 import rospy
@@ -49,10 +49,10 @@ class RepeatedWordCompleter(QCompleter):
         QCompleter.init(self, parent)
 
     def pathFromIndex(self, index):
-        path=QCompleter.pathFromIndex(self, index)
-        lst=str(self.widget().text()).split(',')
+        path = QCompleter.pathFromIndex(self, index)
+        lst = str(self.widget().text()).split(',')
         if len(lst) > 1:
-            path='%s, %s' % (','.join(lst[:-1]), path)
+            path = '%s, %s' % (','.join(lst[:-1]), path)
         return path
 
     def splitPath(self, path):
@@ -682,7 +682,7 @@ class ConductorGraph(Plugin):
 
                 #set the color of node as connection strength one of red, yellow, green
                 edge_dst_name=edge_item.to_node._label.text()
-                if self._graph._client_info_list.has_key(edge_dst_name):   
+                if edge_dst_name in self._graph._client_info_list.keys():
                   connection_strength=self._graph._client_info_list[edge_dst_name]['connection_strength']
                   if connection_strength=='very_strong':
                       green=QColor(0, 255, 0)

@@ -46,7 +46,6 @@ class ConductorGraphInfo(object):
     def _update_callback(self, data):
         if self._event_callback != None:
             self._event_callback()
-        pass
 
     def update_client_list(self, data):
         print "[conductor_graph_info]: update_client_list"
