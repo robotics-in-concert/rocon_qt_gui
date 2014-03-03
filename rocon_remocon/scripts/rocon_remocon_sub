@@ -6,46 +6,54 @@
 ##############################################################################
 # Imports
 ##############################################################################
-#system
+
 import sys
 import signal
-import string
-import atexit
-#pyqt
-from PyQt4.QtGui import QAction, QApplication, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
+
+from PyQt4.QtGui import QApplication
 from PyQt4.QtCore import QTimer
-#rocon
+
 import rocon_remocon
+
+##############################################################################
+# Globals
+##############################################################################.
+
+app = None
+myapp = None
+
+##############################################################################
+# Methods
+##############################################################################.
+
+
+def signal_handler(signum, f):
+    print "[sub] Interrupt"
+    if signum == signal.SIGINT:
+        myapp._uninit_role_list()
+        app.exit(0)
 
 ##############################################################################
 # Main
 ##############################################################################.
-app = None
-myapp = None
 
-def signal_handler(signum, f): 
-    print "[sub] Interrupt"  
-    if signum == signal.SIGINT:
-        myapp._uninit_role_list()
-        app.exit(0)
 if __name__ == "__main__":
     print "rocon_remocon_sub: Signal Registration"
     signal.signal(signal.SIGINT, signal_handler)
-    
+
     print sys.argv
-    index = sys.argv[1] #name
-    name = sys.argv[2] #ip
-    ip = sys.argv[3] #ip
-    host_name = sys.argv[4] #ip
-    
+    index = sys.argv[1]  # name
+    name = sys.argv[2]  # ip
+    ip = sys.argv[3]  # ip
+    host_name = sys.argv[4]  # ip
+
     app = QApplication(sys.argv)
-    
+
     # Let the interpreter run each 200 ms.
     timer = QTimer()
-    timer.start(200)  
+    timer.start(200)
     timer.timeout.connect(lambda: None)
 
-    myapp = rocon_remocon.RemoconSub(None,"My System Tray App",app,index,name,ip,host_name)
+    myapp = rocon_remocon.RemoconSub(None, "My System Tray App", app, index, name, ip, host_name)
     app.exec_()
     print "rocon_remocon_sub: Main end"
-        

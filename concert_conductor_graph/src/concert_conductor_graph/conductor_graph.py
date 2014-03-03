@@ -17,23 +17,12 @@ from python_qt_binding.QtGui import QVBoxLayout, QHBoxLayout, QMessageBox,QTabWi
 from python_qt_binding.QtGui import QGridLayout,QTextCursor,QToolTip, QDialog,QGraphicsItem
 from python_qt_binding.QtSvg import QSvgGenerator
 
-import rosgraph.impl.graph
-import rosservice
-import rostopic
 import rospkg
-
-######################
-
-import rosnode
-import roslib
 import rospy
-
-from concert_msgs.msg import ConcertClients
-
 from rocon_std_msgs.msg import Remapping
 from rocon_std_msgs.srv import GetPlatformInfo
-
 from rocon_app_manager_msgs.srv import Status, Invite, StartApp, StopApp
+
 ###########################
 
 from .dotcode import RosGraphDotcodeGenerator
@@ -52,6 +41,7 @@ from conductor_graph_info import ConductorGraphInfo
 # Utility Classes
 ##############################################################################
 
+
 class RepeatedWordCompleter(QCompleter):
     """A completer that completes multiple times from a list"""
 
@@ -66,101 +56,103 @@ class RepeatedWordCompleter(QCompleter):
         return path
 
     def splitPath(self, path):
-        path=str(path.split(',')[-1]).lstrip(' ')
+        path = str(path.split(',')[-1]).lstrip(' ')
         return [path]
 
 
 class GraphEventHandler():
-    def __init__(self,tabWidget,item,callback_func):
-        self._tabWidget=tabWidget
-        self._callback_func=callback_func
-        self._item=item
-    def NodeEvent(self,event):
+
+    def __init__(self, tabWidget, item, callback_func):
+        self._tabWidget = tabWidget
+        self._callback_func = callback_func
+        self._item = item
+
+    def NodeEvent(self, event):
         self._callback_func(event)
         for k in range(self._tabWidget.count()):
-             if self._tabWidget.tabText(k)==self._item._label.text():
-                self._tabWidget.setCurrentIndex (k)
-    def EdgeEvent(self,event):
+            if self._tabWidget.tabText(k) == self._item._label.text():
+                self._tabWidget.setCurrentIndex(k)
+
+    def EdgeEvent(self, event):
         self._callback_func(event)
-        self._item.set_color(QColor(0,0,255))
-        
+        self._item.set_color(QColor(0, 0, 255))
+
+
 class NamespaceCompletionModel(QAbstractListModel):
     """Ros package and stacknames"""
     def __init__(self, linewidget, topics_only):
         super(QAbstractListModel, self).__init__(linewidget)
-        self.names=[]
+        self.names = []
 
     def refresh(self, names):
-        namesset=set()
+        namesset = set()
         for n in names:
             namesset.add(str(n).strip())
             namesset.add("-%s" % (str(n).strip()))
-        self.names=sorted(namesset)
+        self.names = sorted(namesset)
 
     def rowCount(self, parent):
         return len(self.names)
 
     def data(self, index, role):
-        if index.isValid() and (role==Qt.DisplayRole or role==Qt.EditRole):
+        if index.isValid() and (role == Qt.DisplayRole or role == Qt.EditRole):
             return self.names[index.row()]
         return None
 
 ##############################################################################
 # Dynamic Argument Layer Classes
 ##############################################################################
+
+
 class DynamicArgumentLayer():
-    def __init__(self,dialog_layout,name='',add=False, params=[]):
-        self.dlg_layout=dialog_layout
-        self.name=name
-        self.add=add
-        self.params=params
-        self.params_list=[]
-        
-        params_item=[]
+    def __init__(self, dialog_layout, name='', add=False, params=[]):
+        self.dlg_layout = dialog_layout
+        self.name = name
+        self.add = add
+        self.params = params
+        self.params_list = []
+
+        params_item = []
         for k in self.params:
-            param_name=k[0]
-            param_type=k[1]
-            param_widget=None
-            params_item.append([param_name,param_widget,param_type])
+            param_name = k[0]
+            param_type = k[1]
+            param_widget = None
+            params_item.append([param_name, param_widget, param_type])
         self.params_list.append(params_item)
 
-        print "DAL: %s"%(self.params_list)
-        
-        self.arg_ver_sub_widget=QWidget()
-        self.arg_ver_layout=QVBoxLayout(self.arg_ver_sub_widget)   
-        self.arg_ver_layout.setContentsMargins (0,0,0,0)
+        print "DAL: %s" % (self.params_list)
+
+        self.arg_ver_sub_widget = QWidget()
+        self.arg_ver_layout = QVBoxLayout(self.arg_ver_sub_widget)
+        self.arg_ver_layout.setContentsMargins(0, 0, 0, 0)
         self._create_layout()
-        
-        pass
-        
+
     def _create_layout(self):
-        name_hor_sub_widget=QWidget()
-        name_hor_layout=QHBoxLayout(name_hor_sub_widget)   
-        
-        name_widget=QLabel(self.name+": ")
+        name_hor_sub_widget = QWidget()
+        name_hor_layout = QHBoxLayout(name_hor_sub_widget)
+
+        name_widget = QLabel(self.name + ": ")
         name_hor_layout.addWidget(name_widget)
-        if self.add==True:
-            btn_add=QPushButton("+",name_hor_sub_widget)
+        if self.add == True:
+            btn_add = QPushButton("+", name_hor_sub_widget)
 
             btn_add.clicked.connect(self._push_param)
             btn_add.clicked.connect(self._update_item)
-            name_hor_layout.addWidget(btn_add)                    
-          
-            btn_subtract=QPushButton("-",name_hor_sub_widget)
+            name_hor_layout.addWidget(btn_add)
+
+            btn_subtract = QPushButton("-", name_hor_sub_widget)
             btn_subtract.clicked.connect(self._pop_param)
             btn_subtract.clicked.connect(self._update_item)
             name_hor_layout.addWidget(btn_subtract)
             pass
-            
-        
+
         self.arg_ver_layout.addWidget(name_hor_sub_widget)
         self.dlg_layout.addWidget(self.arg_ver_sub_widget)
         self._update_item()
-        pass
-    
+
     def _update_item(self):
-        widget_layout=self.arg_ver_layout
-        item_list=self.params_list
+        widget_layout = self.arg_ver_layout
+        item_list = self.params_list
         
         widget_list=widget_layout.parentWidget().children()
         while len(widget_list) > 2:

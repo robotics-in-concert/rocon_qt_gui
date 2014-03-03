@@ -8,13 +8,14 @@
 
 import re
 import copy
-import rocon_utilities
+import rocon_gateway_utils
 import rosgraph.impl.graph
 import roslib
 
 ##############################################################################
 # Implementation
 ##############################################################################
+
 
 def matches_any(name, patternlist):
     if patternlist is None or len(patternlist) == 0:
@@ -63,10 +64,10 @@ class RosGraphDotcodeGenerator:
         else:
             dotcode_factory.add_node_to_graph(dotgraph,
                                               nodename=node,
-                                              #nodename=rocon_utilities.gateway_basename(node),
-                                              #nodelabel=rocon_utilities.gateway_basename(node),
+                                              #nodename=rocon_gateway_utils.gateway_basename(node),
+                                              #nodelabel=rocon_gateway_utils.gateway_basename(node),
                                               shape='ellipse',
-                                              url=rocon_utilities.gateway_basename(node),
+                                              url=rocon_gateway_utils.gateway_basename(node),
                                               #url=node
                                               )
 
@@ -82,7 +83,6 @@ class RosGraphDotcodeGenerator:
         """
         Determine the namespaces of the nodes being displayed
         """
-        namespaces = []
         nodes = graph.gateway_nodes
         namespaces = list(set([roslib.names.namespace(n) for n in nodes]))
         return list(set(namespaces))
@@ -189,7 +189,6 @@ class RosGraphDotcodeGenerator:
         includes, excludes = self._split_filter_string(ns_filter)
         connection_includes, connection_excludes = self._split_filter_string(topic_filter)
 
-        gateway_nodes = []
         connection_nodes = []
         # create the node definitions
 
@@ -197,8 +196,8 @@ class RosGraphDotcodeGenerator:
         gateway_nodes = [n for n in gateway_nodes if matches_any(n, includes) and not matches_any(n, excludes)]
         edges = rosgraphinst.gateway_edges
         edges = [e for e in edges if matches_any(e.label, connection_includes) and not matches_any(e.label, connection_excludes)]
-   
-        hide_unused_advertisements = not show_all_advertisements
+
+        unused_advertisements = not show_all_advertisements
         edges = self._filter_orphaned_edges(edges, list(gateway_nodes) + list(connection_nodes))
         connection_nodes = self._filter_orphaned_topics(connection_nodes, edges)
         # create the graph
