@@ -34,10 +34,10 @@ from . import utils
 
 
 class RemoconSub(QMainWindow):
-    def __init__(self, parent, title, application, concert_index="", concert_name="", concert_master_uri='localhost', host_name='localhost'):
-        self.concert_index = concert_index
-        self.concert_master_uri = concert_master_uri
-        self.concert_name = concert_name
+    def __init__(self, parent, title, application, rocon_master_index="", rocon_master_name="", rocon_master_uri='localhost', host_name='localhost'):
+        self.rocon_master_index = rocon_master_index
+        self.rocon_master_uri = rocon_master_uri
+        self.rocon_master_name = rocon_master_name
         self.host_name = host_name
         self._context = parent
         self.application = application
@@ -48,7 +48,7 @@ class RemoconSub(QMainWindow):
         self._widget_app_list = QWidget()
         self._widget_role_list = QWidget()
 
-        self.concert_list = {}
+        self.rocon_master_list = {}
         self.role_list = {}
         self.cur_selected_role = 0
 
@@ -64,7 +64,7 @@ class RemoconSub(QMainWindow):
         uic.loadUi(path, self._widget_role_list)
 
         utils.setup_home_dirs()
-        self.concert_list_cache_path = os.path.join(utils.get_settings_cache_home(), "concert_list.cache")
+        self.rocon_master_list_cache_path = os.path.join(utils.get_settings_cache_home(), "rocon_master.cache")
         self.scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../scripts/")
 
         #role list widget
@@ -76,7 +76,7 @@ class RemoconSub(QMainWindow):
         self._widget_app_list.app_list_widget.setIconSize(QSize(50, 50))
         self._widget_app_list.app_list_widget.itemDoubleClicked.connect(self._start_app)
         self._widget_app_list.back_btn.pressed.connect(self._uninit_app_list)
-        self._widget_app_list.app_list_widget.itemClicked.connect(self._select_app_list)  # concert item click event
+        self._widget_app_list.app_list_widget.itemClicked.connect(self._select_app_list)  # rocon master item click event
         self._widget_app_list.stop_app_btn.pressed.connect(self._stop_app)
         self._widget_app_list.refresh_btn.pressed.connect(self._refresh_app_list)
         self._widget_app_list.stop_app_btn.setDisabled(True)
@@ -102,7 +102,7 @@ class RemoconSub(QMainWindow):
 
     def _init_role_list(self):
 
-        if not self.remocon_info._connect(self.concert_name, self.concert_master_uri, self.host_name):
+        if not self.remocon_info._connect(self.rocon_master_name, self.rocon_master_uri, self.host_name):
             return False
         self._refresh_role_list()
         return True
@@ -146,17 +146,17 @@ class RemoconSub(QMainWindow):
             font.setPointSize(13)
             self._widget_role_list.role_list_widget.item(0).setFont(font)
 
-        ##get concert info
-        concert_info = self.remocon_info._get_concert_info()
+        ##get rocon master info
+        rocon_master_info = self.remocon_info._get_rocon_master_info()
 
-        if 'name' in concert_info.keys():
-            self.concert_list[self.concert_index]['name'] = concert_info['name']
-        if 'description' in concert_info.keys():
-            self.concert_list[self.concert_index]['description'] = concert_info['description']
-        if 'icon' in concert_info.keys():
-            self.concert_list[self.concert_index]['icon'] = concert_info['icon']
+        if 'name' in rocon_master_info.keys():
+            self.rocon_master_list[self.rocon_master_index]['name'] = rocon_master_info['name']
+        if 'description' in rocon_master_info.keys():
+            self.rocon_master_list[self.rocon_master_index]['description'] = rocon_master_info['description']
+        if 'icon' in rocon_master_info.keys():
+            self.rocon_master_list[self.rocon_master_index]['icon'] = rocon_master_info['icon']
 
-        self.concert_list[self.concert_index]['flag'] = '1'
+        self.rocon_master_list[self.rocon_master_index]['flag'] = '1'
         self._write_cache()
 
 ################################################################################################################
@@ -196,7 +196,7 @@ class RemoconSub(QMainWindow):
                 icon = QIcon(os.path.join(utils.get_icon_cache_home(), app_icon))
                 self._widget_app_list.app_list_widget.item(0).setIcon(icon)
             else:
-                print self.concert_name + ': No icon'
+                print self.rocon_master_name + ': No icon'
             pass
 
     def _select_app_list(self, Item):
@@ -247,74 +247,70 @@ class RemoconSub(QMainWindow):
         if self.remocon_info._stop_app(self.cur_selected_app['hash']):
             self._set_stop_app_button()
             #self._widget_app_list.stop_app_btn.setDisabled(True)
-        else:
-            pass
 
     def _start_app(self):
         print "Start app: " + str(self.cur_selected_app['name'])
         if self.remocon_info._start_app(self.cur_selected_app['hash']):
             self._widget_app_list.stop_app_btn.setDisabled(False)
-        else:
-            pass
 
     def _write_cache(self):
         try:
-            cache_concert_info_list = open(self.concert_list_cache_path, 'w')
+            cache_rocon_master_info_list = open(self.rocon_master_list_cache_path, 'w')
         except:
-            print "No directory or file: %s" % (self.concert_list_cache_path)
+            print "No directory or file: %s" % (self.rocon_master_list_cache_path)
             return
 
-        for k in self.concert_list.values():
-            concert_index = k['index']
-            concert_name = k['name']
-            concert_master_uri = k['master_uri']
-            concert_host_name = k['host_name']
-            concert_icon = k['icon']
-            concert_description = k['description']
-            concert_flag = k['flag']
+        for k in self.rocon_master_list.values():
+            rocon_master_index = k['index']
+            rocon_master_name = k['name']
+            rocon_master_uri = k['master_uri']
+            rocon_master_host_name = k['host_name']
+            rocon_master_icon = k['icon']
+            rocon_master_description = k['description']
+            rocon_master_flag = k['flag']
 
-            concert_elem = '['
-            concert_elem += 'index=' + str(concert_index) + ','
-            concert_elem += 'name=' + str(concert_name) + ','
-            concert_elem += 'master_uri=' + str(concert_master_uri) + ','
-            concert_elem += 'host_name=' + str(concert_host_name) + ','
-            concert_elem += 'description=' + str(concert_description) + ','
-            concert_elem += 'icon=' + concert_icon + ','
-            concert_elem += 'flag=' + concert_flag
-            concert_elem += ']\n'
+            rocon_master_elem = '['
+            rocon_master_elem += 'index=' + str(rocon_master_index) + ','
+            rocon_master_elem += 'name=' + str(rocon_master_name) + ','
+            rocon_master_elem += 'master_uri=' + str(rocon_master_uri) + ','
+            rocon_master_elem += 'host_name=' + str(rocon_master_host_name) + ','
+            rocon_master_elem += 'description=' + str(rocon_master_description) + ','
+            rocon_master_elem += 'icon=' + rocon_master_icon + ','
+            rocon_master_elem += 'flag=' + rocon_master_flag
+            rocon_master_elem += ']\n'
 
-            cache_concert_info_list.write(concert_elem)
+            cache_rocon_master_info_list.write(rocon_master_elem)
 
-        cache_concert_info_list.close()
+        cache_rocon_master_info_list.close()
 
     def _read_cache(self):
-        #read cache and display the concert list
+        #read cache and display the rocon_master list
         try:
-            cache_concert_info_list = open(self.concert_list_cache_path, 'r')
+            cache_rocon_master_info_list = open(self.rocon_master_list_cache_path, 'r')
         except:
-            print "No directory or file: %s" % (self.concert_list_cache_path)
+            print "No directory or file: %s" % (self.rocon_master_list_cache_path)
             return
-        lines = cache_concert_info_list.readlines()
+        lines = cache_rocon_master_info_list.readlines()
 
         for line in lines:
             if line.count("[index="):
-                concert_index = line[string.find(line, "[index=") + len("[index="):string.find(line, ",name=")]
-                concert_name = line[string.find(line, "name=") + len("name="):string.find(line, ",master_uri=")]
-                concert_master_uri = line[string.find(line, ",master_uri=") + len(",master_uri="):string.find(line, ",host_name")]
-                concert_host_name = line[string.find(line, ",host_name=") + len(",host_name="):string.find(line, ",description=")]
-                concert_description = line[string.find(line, ",description=") + len(",description="):string.find(line, ",icon=")]
-                concert_icon = line[string.find(line, ",icon=") + len(",icon="):string.find(line, ",flag=")]
-                concert_flag = line[string.find(line, ",flag=") + len(",flag="):string.find(line, "]")]
+                rocon_master_index = line[string.find(line, "[index=") + len("[index="):string.find(line, ",name=")]
+                rocon_master_name = line[string.find(line, "name=") + len("name="):string.find(line, ",master_uri=")]
+                rocon_master_uri = line[string.find(line, ",master_uri=") + len(",master_uri="):string.find(line, ",host_name")]
+                rocon_master_host_name = line[string.find(line, ",host_name=") + len(",host_name="):string.find(line, ",description=")]
+                rocon_master_description = line[string.find(line, ",description=") + len(",description="):string.find(line, ",icon=")]
+                rocon_master_icon = line[string.find(line, ",icon=") + len(",icon="):string.find(line, ",flag=")]
+                rocon_master_flag = line[string.find(line, ",flag=") + len(",flag="):string.find(line, "]")]
 
-                self.concert_list[concert_index] = {}
-                self.concert_list[concert_index]['index'] = concert_index
-                self.concert_list[concert_index]['name'] = concert_name
-                self.concert_list[concert_index]['master_uri'] = concert_master_uri
-                self.concert_list[concert_index]['host_name'] = concert_host_name
-                self.concert_list[concert_index]['icon'] = concert_icon
-                self.concert_list[concert_index]['description'] = concert_description
-                self.concert_list[concert_index]['flag'] = concert_flag
-        cache_concert_info_list.close()
+                self.rocon_master_list[rocon_master_index] = {}
+                self.rocon_master_list[rocon_master_index]['index'] = rocon_master_index
+                self.rocon_master_list[rocon_master_index]['name'] = rocon_master_name
+                self.rocon_master_list[rocon_master_index]['master_uri'] = rocon_master_uri
+                self.rocon_master_list[rocon_master_index]['host_name'] = rocon_master_host_name
+                self.rocon_master_list[rocon_master_index]['icon'] = rocon_master_icon
+                self.rocon_master_list[rocon_master_index]['description'] = rocon_master_description
+                self.rocon_master_list[rocon_master_index]['flag'] = rocon_master_flag
+        cache_rocon_master_info_list.close()
 
 #################################################################
 ##Remocon Main
@@ -342,28 +338,28 @@ class RemoconMain(QMainWindow):
         self.application = application
         self._widget_main = QWidget()
 
-        self.concert_list = {}
-        self.cur_selected_concert = 0
+        self.rocon_master_list = {}
+        self.cur_selected_rocon_master = None
         self.is_init = False
 
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/remocon.ui")
         uic.loadUi(path, self._widget_main)
 
         utils.setup_home_dirs()
-        self.concert_list_cache_path = os.path.join(utils.get_settings_cache_home(), "concert_list.cache")
+        self.rocon_master_list_cache_path = os.path.join(utils.get_settings_cache_home(), "rocon_master.cache")
 
         self.icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../resources/images/")
         self.scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../scripts/")
 
         #main widget
         self._widget_main.list_widget.setIconSize(QSize(50, 50))
-        self._widget_main.list_widget.itemDoubleClicked.connect(self._connect_concert)  # concert item double click event
-        self._widget_main.list_widget.itemClicked.connect(self._select_concert)  # concert item double click event
+        self._widget_main.list_widget.itemDoubleClicked.connect(self._connect_rocon_master)  # list item double click event
+        self._widget_main.list_widget.itemClicked.connect(self._select_rocon_master)  # list item double click event
 
-        self._widget_main.add_concert_btn.pressed.connect(self._set_add_concert)  # add button event
-        self._widget_main.delete_btn.pressed.connect(self._delete_concert)  # delete button event
-        self._widget_main.delete_all_btn.pressed.connect(self._delete_all_concert)  # delete all button event
-        self._widget_main.refresh_btn.pressed.connect(self._refresh_concert_list)  # refresh all button event
+        self._widget_main.add_concert_btn.pressed.connect(self._set_add_rocon_master)  # add button event
+        self._widget_main.delete_btn.pressed.connect(self._delete_rocon_master)  # delete button event
+        self._widget_main.delete_all_btn.pressed.connect(self._delete_all_rocon_masters)  # delete all button event
+        self._widget_main.refresh_btn.pressed.connect(self._refresh_rocon_master_list)  # refresh all button event
 
         #init
         self._init()
@@ -377,25 +373,25 @@ class RemoconMain(QMainWindow):
     def _init(self):
 
         self._connect_dlg_isValid = False
-        self._current_seleccted_concert = ""
-        self._refresh_concert_list()
+        self.cur_selected_rocon_master = None
+        self._refresh_rocon_master_list()
         self.is_init = True
         pass
 
     def _check_up(self):
-        for k in self.concert_list.values():
+        for k in self.rocon_master_list.values():
             print("Concert: %s" % k)
-            concert_master_uri = k['master_uri']
+            rocon_master_uri = k['master_uri']
             host_name = k['host_name']
-            print "[_check_up]:MASTER_URI[%s], HOST_NAME[%s]" % (concert_master_uri, host_name)
+            print "[_check_up]:MASTER_URI[%s], HOST_NAME[%s]" % (rocon_master_uri, host_name)
 
-            output = subprocess.Popen([self.scripts_path + "rocon_remocon_check_up", concert_master_uri, host_name], stdout=subprocess.PIPE)
+            output = subprocess.Popen([self.scripts_path + "rocon_remocon_check_up", rocon_master_uri, host_name], stdout=subprocess.PIPE)
             time_out_cnt = 0
             while True:
-                print "checking: " + concert_master_uri
+                print "checking: " + rocon_master_uri
                 result = output.poll()
                 if time_out_cnt > 30:
-                    print "timeout: " + concert_master_uri
+                    print "timeout: " + rocon_master_uri
                     try:
                         output.terminate()
                     except:
@@ -423,65 +419,63 @@ class RemoconMain(QMainWindow):
                 time_out_cnt += 1
 
     def _read_cache(self):
-        #read cache and display the concert list
+        #read cache and display the rocon master list
         try:
-            cache_concert_info_list = open(self.concert_list_cache_path, 'r')
+            cache_rocon_master_info_list = open(self.rocon_master_list_cache_path, 'r')
         except:
             console.logdebug("Remocon : no cached settings found, moving on.")
             return
-        lines = cache_concert_info_list.readlines()
+        lines = cache_rocon_master_info_list.readlines()
         for line in lines:
             if line.count("[index="):
-                concert_index = line[string.find(line, "[index=") + len("[index="):string.find(line, ",name=")]
-                concert_name = line[string.find(line, "name=") + len("name="):string.find(line, ",master_uri=")]
-                concert_master_uri = line[string.find(line, ",master_uri=") + len(",master_uri="):string.find(line, ",host_name=")]
-                concert_host_name = line[string.find(line, ",host_name=") + len(",host_name="):string.find(line, ",description=")]
-                concert_description = line[string.find(line, ",description=") + len(",description="):string.find(line, ",icon=")]
-                concert_icon = line[string.find(line, ",icon=") + len(",icon="):string.find(line, ",flag=")]
-                concert_flag = line[string.find(line, ",flag=") + len(",flag="):string.find(line, "]")]
+                rocon_master_index = line[string.find(line, "[index=") + len("[index="):string.find(line, ",name=")]
+                rocon_master_name = line[string.find(line, "name=") + len("name="):string.find(line, ",master_uri=")]
+                rocon_master_uri = line[string.find(line, ",master_uri=") + len(",master_uri="):string.find(line, ",host_name=")]
+                rocon_master_host_name = line[string.find(line, ",host_name=") + len(",host_name="):string.find(line, ",description=")]
+                rocon_master_description = line[string.find(line, ",description=") + len(",description="):string.find(line, ",icon=")]
+                rocon_master_icon = line[string.find(line, ",icon=") + len(",icon="):string.find(line, ",flag=")]
+                rocon_master_flag = line[string.find(line, ",flag=") + len(",flag="):string.find(line, "]")]
 
-                self.concert_list[concert_index] = {}
-                self.concert_list[concert_index]['index'] = concert_index
-                self.concert_list[concert_index]['name'] = concert_name
-                self.concert_list[concert_index]['master_uri'] = concert_master_uri
-                self.concert_list[concert_index]['host_name'] = concert_host_name
-                self.concert_list[concert_index]['icon'] = concert_icon
-                self.concert_list[concert_index]['description'] = concert_description
-                self.concert_list[concert_index]['flag'] = concert_flag
+                self.rocon_master_list[rocon_master_index] = {}
+                self.rocon_master_list[rocon_master_index]['index'] = rocon_master_index
+                self.rocon_master_list[rocon_master_index]['name'] = rocon_master_name
+                self.rocon_master_list[rocon_master_index]['master_uri'] = rocon_master_uri
+                self.rocon_master_list[rocon_master_index]['host_name'] = rocon_master_host_name
+                self.rocon_master_list[rocon_master_index]['icon'] = rocon_master_icon
+                self.rocon_master_list[rocon_master_index]['description'] = rocon_master_description
+                self.rocon_master_list[rocon_master_index]['flag'] = rocon_master_flag
             else:
                 pass
-        cache_concert_info_list.close()
+        cache_rocon_master_info_list.close()
 
-    def _delete_all_concert(self):
-        for k in self.concert_list.values():
-            del self.concert_list[k["index"]]
-        self._update_concert_list()
+    def _delete_all_rocon_masters(self):
+        for k in self.rocon_master_list.values():
+            del self.rocon_master_list[k["index"]]
+        self._update_rocon_master_list()
 
-    def _delete_concert(self):
-        if self.cur_selected_concert in self.concert_list.keys():
-            del self.concert_list[self.cur_selected_concert]
+    def _delete_rocon_master(self):
+        if self.cur_selected_rocon_master in self.rocon_master_list.keys():
+            del self.rocon_master_list[self.cur_selected_rocon_master]
+        self._update_rocon_master_list()
 
-        self._update_concert_list()
-        pass
+    def _add_rocon_master(self, params):
+        rocon_master_uri = str(params['param1'].toPlainText())
+        rocon_master_host_name = str(params['param2'].toPlainText())
+        rocon_master_index = str(uuid.uuid4())
+        self.rocon_master_list[rocon_master_index] = {}
+        self.rocon_master_list[rocon_master_index]['index'] = rocon_master_index
+        self.rocon_master_list[rocon_master_index]['name'] = "Unknown"
+        self.rocon_master_list[rocon_master_index]['master_uri'] = rocon_master_uri
+        self.rocon_master_list[rocon_master_index]['host_name'] = rocon_master_host_name
+        self.rocon_master_list[rocon_master_index]['icon'] = "Unknown.png"
+        self.rocon_master_list[rocon_master_index]['description'] = ""
+        self.rocon_master_list[rocon_master_index]['flag'] = "0"
 
-    def _add_concert(self, params):
-        concert_master_uri = str(params['param1'].toPlainText())
-        concert_host_name = str(params['param2'].toPlainText())
-        concert_index = str(uuid.uuid4())
-        self.concert_list[concert_index] = {}
-        self.concert_list[concert_index]['index'] = concert_index
-        self.concert_list[concert_index]['name'] = "Unknown"
-        self.concert_list[concert_index]['master_uri'] = concert_master_uri
-        self.concert_list[concert_index]['host_name'] = concert_host_name
-        self.concert_list[concert_index]['icon'] = "Unknown.png"
-        self.concert_list[concert_index]['description'] = ""
-        self.concert_list[concert_index]['flag'] = "0"
+        self._update_rocon_master_list()
+        self._refresh_rocon_master_list()
 
-        self._update_concert_list()
-        self._refresh_concert_list()
-
-    def _set_add_concert(self):
-        print '_add_concert'
+    def _set_add_rocon_master(self):
+        print '_add_rocon_master'
         if self._connect_dlg_isValid:
             print "Dialog is live!!"
             self._connect_dlg.done(0)
@@ -559,7 +553,7 @@ class RemoconMain(QMainWindow):
         btn_cancel = QPushButton("Cancel")
 
         btn_call.clicked.connect(lambda: self._connect_dlg.done(0))
-        btn_call.clicked.connect(lambda: self._add_concert(params))
+        btn_call.clicked.connect(lambda: self._add_rocon_master(params))
 
         btn_cancel.clicked.connect(lambda: self._connect_dlg.done(0))
 
@@ -573,58 +567,58 @@ class RemoconMain(QMainWindow):
         self._connect_dlg.finished.connect(self._destroy_connect_dlg)
         self._connect_dlg_isValid = True
 
-    def _refresh_concert_list(self):
-        print '_refresh_concert_list'
+    def _refresh_rocon_master_list(self):
+        print '_refresh_rocon_master_list'
         if self.is_init:
-            self._update_concert_list()
+            self._update_rocon_master_list()
         self._read_cache()
         self._widget_main.list_info_widget.clear()
         self._check_up()
-        self._update_concert_list()
+        self._update_rocon_master_list()
 
-    def _update_concert_list(self):
+    def _update_rocon_master_list(self):
 
-        print '_update_concert_list'
+        print '_update_rocon_master_list'
         self._widget_main.list_widget.clear()
         try:
-            cache_concert_info_list = open(self.concert_list_cache_path, 'w')
+            cache_rocon_master_info_list = open(self.rocon_master_list_cache_path, 'w')
         except:
-            print "No directory or file: %s" % (self.concert_list_cache_path)
+            print "No directory or file: %s" % (self.rocon_master_list_cache_path)
             return
-        for k in self.concert_list.values():
-            self._add_concert_list_item(k)
-            concert_index = k['index']
-            concert_name = k['name']
-            concert_master_uri = k['master_uri']
-            concert_host_name = k['host_name']
-            concert_icon = k['icon']
-            concert_description = k['description']
-            concert_flag = k['flag']
+        for k in self.rocon_master_list.values():
+            self._add_rocon_master_list_item(k)
+            rocon_master_index = k['index']
+            rocon_master_name = k['name']
+            rocon_master_uri = k['master_uri']
+            rocon_master_host_name = k['host_name']
+            rocon_master_icon = k['icon']
+            rocon_master_description = k['description']
+            rocon_master_flag = k['flag']
 
-            concert_elem = '['
-            concert_elem += 'index=' + str(concert_index) + ','
-            concert_elem += 'name=' + str(concert_name) + ','
-            concert_elem += 'master_uri=' + str(concert_master_uri) + ','
-            concert_elem += 'host_name=' + str(concert_host_name) + ','
-            concert_elem += 'description=' + str(concert_description) + ','
-            concert_elem += 'icon=' + concert_icon + ','
-            concert_elem += 'flag=' + concert_flag
-            concert_elem += ']\n'
+            rocon_master_elem = '['
+            rocon_master_elem += 'index=' + str(rocon_master_index) + ','
+            rocon_master_elem += 'name=' + str(rocon_master_name) + ','
+            rocon_master_elem += 'master_uri=' + str(rocon_master_uri) + ','
+            rocon_master_elem += 'host_name=' + str(rocon_master_host_name) + ','
+            rocon_master_elem += 'description=' + str(rocon_master_description) + ','
+            rocon_master_elem += 'icon=' + rocon_master_icon + ','
+            rocon_master_elem += 'flag=' + rocon_master_flag
+            rocon_master_elem += ']\n'
 
-            cache_concert_info_list.write(concert_elem)
-        cache_concert_info_list.close()
+            cache_rocon_master_info_list.write(rocon_master_elem)
+        cache_rocon_master_info_list.close()
 
-    def _add_concert_list_item(self, concert):
-        print('_add_concert_list_item [%s]' % concert['name'])
-        concert_index = concert['index']
-        concert_name = concert['name']
-        concert_master_uri = concert['master_uri']
-        concert_host_name = concert['host_name']
-        concert_icon = concert['icon']
-        concert_description = concert['description']
-        concert['cur_row'] = str(self._widget_main.list_widget.count())
+    def _add_rocon_master_list_item(self, rocon_master):
+        print('_add_rocon_master_list_item [%s]' % rocon_master['name'])
+        rocon_master_index = rocon_master['index']
+        rocon_master_name = rocon_master['name']
+        rocon_master_uri = rocon_master['master_uri']
+        rocon_master_host_name = rocon_master['host_name']
+        rocon_master_icon = rocon_master['icon']
+        rocon_master_description = rocon_master['description']
+        rocon_master['cur_row'] = str(self._widget_main.list_widget.count())
 
-        display_name = str(concert_name) + "\n" + "[" + str(concert_master_uri) + "]"
+        display_name = str(rocon_master_name) + "\n" + "[" + str(rocon_master_uri) + "]"
         self._widget_main.list_widget.insertItem(self._widget_main.list_widget.count(), display_name)
 
         #setting the list font
@@ -634,64 +628,64 @@ class RemoconMain(QMainWindow):
         self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setFont(font)
 
         #setToolTip
-        concert_info = ""
-        concert_info += "concert_index: " + str(concert_index) + "\n"
-        concert_info += "concert_name: " + str(concert_name) + "\n"
-        concert_info += "master_uri:  " + str(concert_master_uri) + "\n"
-        concert_info += "host_name:  " + str(concert_host_name) + "\n"
-        concert_info += "description:  " + str(concert_description)
-        self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setToolTip(concert_info)
+        rocon_master_info = ""
+        rocon_master_info += "rocon_master_index: " + str(rocon_master_index) + "\n"
+        rocon_master_info += "rocon_master_name: " + str(rocon_master_name) + "\n"
+        rocon_master_info += "master_uri:  " + str(rocon_master_uri) + "\n"
+        rocon_master_info += "host_name:  " + str(rocon_master_host_name) + "\n"
+        rocon_master_info += "description:  " + str(rocon_master_description)
+        self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setToolTip(rocon_master_info)
 
         #set icon
-        if len(concert_icon) and concert_icon == "Unknown.png":
-            icon = QIcon(self.icon_path + concert_icon)
+        if len(rocon_master_icon) and rocon_master_icon == "Unknown.png":
+            icon = QIcon(self.icon_path + rocon_master_icon)
             self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setIcon(icon)
-        elif len(concert_icon):
-            icon = QIcon(os.path.join(utils.get_icon_cache_home(), concert_icon))
+        elif len(rocon_master_icon):
+            icon = QIcon(os.path.join(utils.get_icon_cache_home(), rocon_master_icon))
             self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setIcon(icon)
         else:
-            print concert_name + ': No icon'
+            print rocon_master_name + ': No icon'
         pass
 
-    def _select_concert(self, Item):
+    def _select_rocon_master(self, Item):
         list_widget = Item.listWidget()
-        for k in self.concert_list.values():
+        for k in self.rocon_master_list.values():
             if k["cur_row"] == str(list_widget.currentRow()):
-                self.cur_selected_concert = k['index']
+                self.cur_selected_rocon_master = k['index']
                 break
         self._widget_main.list_info_widget.clear()
         info_text = "<html>"
         info_text += "<p>-------------------------------------------</p>"
-        info_text += "<p><b>name: </b>" + str(self.concert_list[self.cur_selected_concert]['name']) + "</p>"
-        info_text += "<p><b>master_uri: </b>" + str(self.concert_list[self.cur_selected_concert]['master_uri']) + "</p>"
-        info_text += "<p><b>host_name: </b>" + str(self.concert_list[self.cur_selected_concert]['host_name']) + "</p>"
-        info_text += "<p><b>description: </b>" + str(self.concert_list[self.cur_selected_concert]['description']) + "</p>"
+        info_text += "<p><b>name: </b>" + str(self.rocon_master_list[self.cur_selected_rocon_master]['name']) + "</p>"
+        info_text += "<p><b>master_uri: </b>" + str(self.rocon_master_list[self.cur_selected_rocon_master]['master_uri']) + "</p>"
+        info_text += "<p><b>host_name: </b>" + str(self.rocon_master_list[self.cur_selected_rocon_master]['host_name']) + "</p>"
+        info_text += "<p><b>description: </b>" + str(self.rocon_master_list[self.cur_selected_rocon_master]['description']) + "</p>"
         info_text += "<p>-------------------------------------------</p>"
         info_text += "</html>"
         self._widget_main.list_info_widget.appendHtml(info_text)
 
     def _destroy_connect_dlg(self):
-        print "[Dialog] Distory!!!"
+        print "[Dialog] Destroy!!!"
         self._connect_dlg_isValid = False
 
-    def _connect_concert(self):
-        concert_name = str(self.concert_list[self.cur_selected_concert]['name'])
-        concert_master_uri = str(self.concert_list[self.cur_selected_concert]['master_uri'])
-        concert_host_name = str(self.concert_list[self.cur_selected_concert]['host_name'])
+    def _connect_rocon_master(self):
+        rocon_master_name = str(self.rocon_master_list[self.cur_selected_rocon_master]['name'])
+        rocon_master_uri = str(self.rocon_master_list[self.cur_selected_rocon_master]['master_uri'])
+        rocon_master_host_name = str(self.rocon_master_list[self.cur_selected_rocon_master]['host_name'])
 
-        concert_index = str(self.cur_selected_concert)
+        rocon_master_index = str(self.cur_selected_rocon_master)
 
-        if self.concert_list[concert_index]['flag'] == '0':
+        if self.rocon_master_list[rocon_master_index]['flag'] == '0':
             # DJS: unused reply box?
             # reply = QMessageBox.warning(self, 'ERROR', "YOU SELECT NO CONCERT", QMessageBox.Ok|QMessageBox.Ok)
             return
 
         execute_path = self.scripts_path + 'rocon_remocon_sub'  # command
-        execute_path += " " + "'" + concert_index + "'"  # arg1
-        execute_path += " " + "'" + concert_name + "'"  # arg2
-        execute_path += " " + "'" + concert_master_uri + "'"  # arg3
-        execute_path += " " + "'" + concert_host_name + "'"  # arg4
+        execute_path += " " + "'" + rocon_master_index + "'"  # arg1
+        execute_path += " " + "'" + rocon_master_name + "'"  # arg2
+        execute_path += " " + "'" + rocon_master_uri + "'"  # arg3
+        execute_path += " " + "'" + rocon_master_host_name + "'"  # arg4
 
         self._widget_main.hide()
-        os.execv(self.scripts_path + 'rocon_remocon_sub', ["", concert_index, concert_name, concert_master_uri, concert_host_name])
+        os.execv(self.scripts_path + 'rocon_remocon_sub', ["", rocon_master_index, rocon_master_name, rocon_master_uri, rocon_master_host_name])
         print "Spawning: %s" % (execute_path)

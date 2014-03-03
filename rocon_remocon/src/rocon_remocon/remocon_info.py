@@ -45,7 +45,7 @@ class RemoconInfo():
         self._stop_app_postexec_fn = stop_app_postexec_fn
         self.role_list = {}
         self.app_list = {}
-        self.concert_info = {}
+        self.rocon_master_info = {}
         self.is_connect = False
         self.is_app_running = False
         self.key = uuid.uuid4()
@@ -69,7 +69,7 @@ class RemoconInfo():
     def __del__(self):
         print("[remocon_info] : info component destroyed")
 
-    def _connect(self, concert_name="", ros_master_uri="http://localhost:11311", host_name='localhost'):
+    def _connect(self, rocon_master_name="", ros_master_uri="http://localhost:11311", host_name='localhost'):
         # remocon name would be good as a persistant configuration variable by the user
         # so they can set something like 'Bob'.
         remocon_name = 'rqt_remocon'
@@ -88,15 +88,18 @@ class RemoconInfo():
         rospy.init_node(unique_name, disable_signals=True)
 
         try:
-            concert_info_topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
+            rocon_master_info_topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
             roles_topic_name = rocon_python_comms.find_topic('rocon_interaction_msgs/Roles', timeout=rospy.rostime.Duration(5.0), unique=True)
+            get_interactions_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions', timeout=rospy.rostime.Duration(15.0), unique=True)
+            request_interaction_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/RequestInteraction', timeout=rospy.rostime.Duration(15.0), unique=True)
         except rocon_python_comms.NotFoundException as e:
-            console.logerror("RemoconInfo : failed to find either concert info or interaction roles topics' [%s]" % str(e))
+            console.logerror("RemoconInfo : failed to find either rocon master info or interactions topics and services' [%s]" % str(e))
             return False
 
         self.role_sub = rospy.Subscriber(roles_topic_name, rocon_interaction_msgs.Roles, self._roles_callback)
-        self.info_sub = rospy.Subscriber(concert_info_topic_name, rocon_std_msgs.MasterInfo, self._info_callback)
-
+        self.info_sub = rospy.Subscriber(rocon_master_info_topic_name, rocon_std_msgs.MasterInfo, self._info_callback)
+        self.get_interactions_service_proxy = rospy.ServiceProxy(get_interactions_service_name, rocon_interaction_srvs.GetInteractions)
+        self.request_interaction_service_proxy = rospy.ServiceProxy(request_interaction_service_name, rocon_interaction_srvs.RequestInteraction)
         self.remocon_status_pub = rospy.Publisher("remocons/" + unique_name, rocon_interaction_msgs.RemoconStatus, latch=True)
 
         self._pub_remocon_status(0, False)
@@ -165,8 +168,7 @@ class RemoconInfo():
         roles = []
         roles.append(role_name)
 
-        service_handle = rospy.ServiceProxy("/concert/interactions/get_interactions", rocon_interaction_srvs.GetInteractions)
-        call_result = service_handle(roles, self.platform_info.uri)
+        call_result = self.get_interactions_service_proxy(roles, self.platform_info.uri)
         print "[remocon_info]: call result"
         self.app_list = {}
         for interaction in call_result.interactions:
@@ -205,36 +207,36 @@ class RemoconInfo():
             self.role_list[k]['name'] = k
         self.is_valid_role = True
 
-    def _get_concert_info(self):
-        console.logdebug("RemoconInfo : retrieving concert information")
+    def _get_rocon_master_info(self):
+        console.logdebug("RemoconInfo : retrieving rocon master information")
         time_out_cnt = 0
         while not rospy.is_shutdown():
-            if len(self.concert_info) != 0:
+            if len(self.rocon_master_info) != 0:
                 break
             else:
                 rospy.sleep(rospy.Duration(0.2))
             time_out_cnt += 1
             if time_out_cnt > 5:
-                console.logwarn("RemoconInfo : timed out waiting for concert information")
+                console.logwarn("RemoconInfo : timed out waiting for rocon master information")
                 break
-        return self.concert_info
+        return self.rocon_master_info
 
     def _info_callback(self, data):
         print "[remocon_info] sample info call back calling!!!!"
         self.is_valid_info = False
-        concert_name = data.name
+        rocon_master_name = data.name
 
         icon_name = data.icon.resource_name.split('/').pop()
-        # delete concert info in cache
+        # delete rocon master info in cache
         if data.icon.data:
             icon = open(os.path.join(utils.get_icon_cache_home(), icon_name), 'w')
             icon.write(data.icon.data)
             icon.close()
 
-        self.concert_info = {}
-        self.concert_info['name'] = concert_name
-        self.concert_info['description'] = data.description
-        self.concert_info['icon'] = icon_name
+        self.rocon_master_info = {}
+        self.rocon_master_info['name'] = rocon_master_name
+        self.rocon_master_info['description'] = data.description
+        self.rocon_master_info['icon'] = icon_name
 
         self.is_valid_info = True
 
@@ -253,8 +255,7 @@ class RemoconInfo():
 
         app = self.app_list[app_hash]
         #get the permission
-        service_handle = rospy.ServiceProxy("/concert/interactions/request_interaction", rocon_interaction_srvs.RequestInteraction)
-        call_result = service_handle(app['hash'])
+        call_result = self.request_interaction_service_proxy(app['hash'])
 
         if call_result.error_code == ErrorCodes.SUCCESS:
             print "[remocon_info] permisson ok"
