@@ -124,7 +124,6 @@ class RemoconSub(QMainWindow):
         self._widget_app_list.move(self._widget_role_list.pos())
         self._widget_role_list.hide()
         self._init_app_list()
-        pass
 
     def _back_role_list(self):
         self._uninit_role_list()
@@ -136,7 +135,6 @@ class RemoconSub(QMainWindow):
     def _refresh_role_list(self):
         self._widget_role_list.role_list_widget.clear()
 
-        #get role list
         role_list = self.remocon_info.get_role_list()
 
         #set list widget item
@@ -148,7 +146,7 @@ class RemoconSub(QMainWindow):
             self._widget_role_list.role_list_widget.item(0).setFont(font)
 
         ##get rocon master info
-        rocon_master_info = self.remocon_info._get_rocon_master_info()
+        rocon_master_info = self.remocon_info.get_rocon_master_info()
 
         if 'name' in rocon_master_info.keys():
             self.rocon_master_list[self.rocon_master_index]['name'] = rocon_master_info['name']
@@ -190,6 +188,7 @@ class RemoconSub(QMainWindow):
             #setting the icon
 
             app_icon = k['icon']
+            print("Icon: %s" % app_icon)
             if app_icon == "unknown.png":
                 icon = QIcon(self.icon_paths['unknown'])
                 self._widget_app_list.app_list_widget.item(0).setIcon(icon)

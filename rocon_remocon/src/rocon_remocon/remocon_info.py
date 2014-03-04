@@ -124,15 +124,12 @@ class RemoconInfo():
 
             rospy.signal_shutdown("shut down remocon_info")
             while not rospy.is_shutdown():
-                #sleep some
-                pass
+                rospy.rostime.wallsleep(0.1)
 
             self.is_connect = False
-            self.role_sub.unregister()
             self.info_sub.unregister()
             self.remocon_status_pub.unregister()
 
-            self.role_sub = None
             self.info_sub = None
             self.remocon_status_pub = None
             console.logdebug("RemoconInfo : has shutdown.")
@@ -152,14 +149,10 @@ class RemoconInfo():
           filter the interactions table against our compatibilty rocon_uri.
           We can then extract the valid roles for us from the interaction
           list that returns.
-
-          Alternatively, we could set up a get_roles service on the interaction
-          manager. That would move this code there, and also allow a proper
-          step by step approach. Note that we can't use the roles latched
-          publisher from the interactions manager - that provides us with the
-          complete set of roles, some of which may not have any compatible
-          apps for this platform.
         '''
+        # Might want to put a filtering get_roles service on the interactions
+        # manager. See:
+        #    https://github.com/robotics-in-concert/rocon_qt_gui/issues/52
         try:
             response = self.get_interactions_service_proxy([], self.platform_info.uri)
         except (rospy.ROSInterruptException, rospy.ServiceException):
@@ -200,7 +193,7 @@ class RemoconInfo():
                 self.app_list[app_hash]['parameters'] = interaction.parameters
                 self.app_list[app_hash]['hash'] = interaction.hash
 
-    def _get_rocon_master_info(self):
+    def get_rocon_master_info(self):
         console.logdebug("RemoconInfo : retrieving rocon master information")
         time_out_cnt = 0
         while not rospy.is_shutdown():
