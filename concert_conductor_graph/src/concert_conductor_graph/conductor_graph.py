@@ -10,8 +10,7 @@ from __future__ import division
 import os
 
 from python_qt_binding import loadUi
-from python_qt_binding import Signal
-from PyQt4.QtCore import Qt, QAbstractListModel
+from PyQt4.QtCore import Qt, QAbstractListModel, Signal
 from PyQt4.QtGui import QGraphicsScene, QIcon, QWidget, QLabel, QComboBox
 from PyQt4.QtGui import QSizePolicy, QTextEdit, QCompleter, QColor, QPushButton
 from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QPlainTextEdit
