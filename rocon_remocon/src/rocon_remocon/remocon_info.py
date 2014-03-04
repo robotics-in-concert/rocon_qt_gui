@@ -43,7 +43,6 @@ class RemoconInfo():
           @type method with no args
         '''
         self._stop_app_postexec_fn = stop_app_postexec_fn
-        self.role_list = {}
         self.app_list = {}
         self.rocon_master_info = {}
         self.is_connect = False
@@ -96,7 +95,6 @@ class RemoconInfo():
             console.logerror("RemoconInfo : failed to find either rocon master info or interactions topics and services' [%s]" % str(e))
             return False
 
-        self.role_sub = rospy.Subscriber(roles_topic_name, rocon_interaction_msgs.Roles, self._roles_callback)
         self.info_sub = rospy.Subscriber(rocon_master_info_topic_name, rocon_std_msgs.MasterInfo, self._info_callback)
         self.get_interactions_service_proxy = rospy.ServiceProxy(get_interactions_service_name, rocon_interaction_srvs.GetInteractions)
         self.request_interaction_service_proxy = rospy.ServiceProxy(request_interaction_service_name, rocon_interaction_srvs.RequestInteraction)
@@ -104,7 +102,6 @@ class RemoconInfo():
 
         self._pub_remocon_status(0, False)
         self.is_connect = True
-        self.is_valid_role = False
         self.is_valid_info = False
         return True
 
@@ -122,7 +119,6 @@ class RemoconInfo():
             for app_hash in self.app_list.keys():
                 self._stop_app(app_hash)
 
-            self.role_list = {}
             self.app_list = {}
             self.is_connect = False
 
@@ -150,19 +146,25 @@ class RemoconInfo():
         print "[remocon_info] publish remocon status"
         self.remocon_status_pub.publish(remocon_status)
 
-    def _get_role_list(self):
-        print "[remocon_info] get role list"
-        time_out_cnt = 0
-        while not rospy.is_shutdown():
-            if len(self.role_list) != 0:
-                break
-            else:
-                rospy.sleep(rospy.Duration(0.2))
-            time_out_cnt += 1
-            if time_out_cnt > 5:
-                print "[remocon_info] get role list: time out 1s"
-                break
-        return self.role_list
+    def get_role_list(self):
+        '''
+          Currently we just call the get_interactions service which will
+          filter the interactions table against our compatibilty rocon_uri.
+          We can then extract the valid roles for us from the interaction
+          list that returns.
+
+          Alternatively, we could set up a get_roles service on the interaction
+          manager. That would move this code there, and also allow a proper
+          step by step approach. Note that we can't use the roles latched
+          publisher from the interactions manager - that provides us with the
+          complete set of roles, some of which may not have any compatible
+          apps for this platform.
+        '''
+        try:
+            response = self.get_interactions_service_proxy([], self.platform_info.uri)
+        except (rospy.ROSInterruptException, rospy.ServiceException):
+            return []
+        return list(set([i.role for i in response.interactions]))
 
     def _select_role(self, role_name):
         roles = []
@@ -197,14 +199,6 @@ class RemoconInfo():
                 self.app_list[app_hash]['remappings'] = interaction.remappings
                 self.app_list[app_hash]['parameters'] = interaction.parameters
                 self.app_list[app_hash]['hash'] = interaction.hash
-
-    def _roles_callback(self, data):
-        print "[remocon_info] sample roles call back calling!!!!"
-        #self.is_valid_role=False
-        for k in data.list:
-            self.role_list[k] = {}
-            self.role_list[k]['name'] = k
-        self.is_valid_role = True
 
     def _get_rocon_master_info(self):
         console.logdebug("RemoconInfo : retrieving rocon master information")

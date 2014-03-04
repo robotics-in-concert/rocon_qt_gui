@@ -52,7 +52,6 @@ class RemoconSub(QMainWindow):
         self._widget_role_list = QWidget()
 
         self.rocon_master_list = {}
-        self.role_list = {}
         self.cur_selected_role = 0
 
         self.app_list = {}
@@ -135,15 +134,14 @@ class RemoconSub(QMainWindow):
         print "Spawning: %s" % (execute_path)
 
     def _refresh_role_list(self):
-        self.role_list = {}
         self._widget_role_list.role_list_widget.clear()
 
         #get role list
-        self.role_list = self.remocon_info._get_role_list()
+        role_list = self.remocon_info.get_role_list()
 
         #set list widget item
-        for k in self.role_list.values():
-            self._widget_role_list.role_list_widget.insertItem(0, k['name'])
+        for role in role_list:
+            self._widget_role_list.role_list_widget.insertItem(0, role)
             #setting the list font
             font = self._widget_role_list.role_list_widget.item(0).font()
             font.setPointSize(13)
