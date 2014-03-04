@@ -280,7 +280,7 @@ class RemoconInfo():
         try:
             app_filename = rocon_python_utils.ros.find_resource_from_string(app_name, extension='launch')
             return (app_filename, self._start_app_launch)
-        except rospkg.ResourceNotFound:
+        except (rospkg.ResourceNotFound, ValueError):
             pass
         try:
             app_filename = rocon_python_utils.ros.find_resource_from_string(app_name)
@@ -372,7 +372,7 @@ class RemoconInfo():
     def _start_app_webapp(self, app, rosrunnable_filename):
         if self._check_webbrowser():
             rosrunnable_filename = "google-chrome"
-            url = self._get_webapp_url(app['name'], app['remappings'], app['parameters'])
+            url = self._get_webapp_url(app)
             name = os.path.basename(rosrunnable_filename).replace('.', '_')
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self.process_listeners, anonymous_name, 1)
@@ -386,12 +386,12 @@ class RemoconInfo():
         else:
             return False
 
-    def _get_webapp_url(self, app,):
+    def _get_webapp_url(self, app):
         """
            url syntheiser for sending remappings and parameters information
         """
         url = app['name']
-        url += "?" + "MasterURI=" + str(os.environ["ROS_MASTER_URI"])
+        #url += "?" + "MasterURI=" + str(os.environ["ROS_MASTER_URI"])
         if len(app['parameters']) != 0:
             url += "&" + "params=" + urllib.quote_plus(app['parameters'])
         if len(app['remappings']) != 0:
