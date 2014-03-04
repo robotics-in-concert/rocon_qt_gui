@@ -88,7 +88,6 @@ class RemoconInfo():
 
         try:
             rocon_master_info_topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
-            roles_topic_name = rocon_python_comms.find_topic('rocon_interaction_msgs/Roles', timeout=rospy.rostime.Duration(5.0), unique=True)
             get_interactions_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions', timeout=rospy.rostime.Duration(15.0), unique=True)
             request_interaction_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/RequestInteraction', timeout=rospy.rostime.Duration(15.0), unique=True)
         except rocon_python_comms.NotFoundException as e:
