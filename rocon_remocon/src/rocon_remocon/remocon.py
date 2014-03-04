@@ -137,8 +137,8 @@ class RemoconSub(QMainWindow):
 
         role_list = self.remocon_info.get_role_list()
 
-        #set list widget item
-        for role in role_list:
+        #set list widget item (reverse order because we push them on the top)
+        for role in reversed(role_list):
             self._widget_role_list.role_list_widget.insertItem(0, role)
             #setting the list font
             font = self._widget_role_list.role_list_widget.item(0).font()

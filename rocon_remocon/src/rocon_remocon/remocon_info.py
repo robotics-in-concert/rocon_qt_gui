@@ -156,7 +156,9 @@ class RemoconInfo():
             response = self.get_interactions_service_proxy([], self.platform_info.uri)
         except (rospy.ROSInterruptException, rospy.ServiceException):
             return []
-        return list(set([i.role for i in response.interactions]))
+        role_list = list(set([i.role for i in response.interactions]))
+        role_list.sort()
+        return role_list
 
     def _select_role(self, role_name):
         roles = []
