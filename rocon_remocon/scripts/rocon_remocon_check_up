@@ -43,4 +43,4 @@ if __name__ == "__main__":
     except rocon_python_comms.NotFoundException as e:
         print "Unknown"
         print "Unknown."
-        print "Unknown.png"
+        print "unknown.png"

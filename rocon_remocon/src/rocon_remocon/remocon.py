@@ -8,6 +8,7 @@
 ##############################################################################
 
 import os
+import sys
 import subprocess
 import string
 import uuid
@@ -23,6 +24,8 @@ from PyQt4.QtGui import QMainWindow, QCheckBox
 from PyQt4.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout  # QMessageBox, QTabWidget, QPlainTextEdit
 #from PyQt4.QtSvg import QSvgGenerator
 
+import rospkg
+import rocon_python_utils
 from rocon_console import console
 
 from .remocon_info import RemoconInfo
@@ -189,8 +192,8 @@ class RemoconSub(QMainWindow):
             #setting the icon
 
             app_icon = k['icon']
-            if len(app_icon) and app_icon == "Unknown.png":
-                icon = QIcon(self.icon_path + app_icon)
+            if app_icon == "unknown.png":
+                icon = QIcon(self.icon_paths['unknown'])
                 self._widget_app_list.app_list_widget.item(0).setIcon(icon)
             elif len(app_icon):
                 icon = QIcon(os.path.join(utils.get_icon_cache_home(), app_icon))
@@ -348,7 +351,12 @@ class RemoconMain(QMainWindow):
         utils.setup_home_dirs()
         self.rocon_master_list_cache_path = os.path.join(utils.get_settings_cache_home(), "rocon_master.cache")
 
-        self.icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../resources/images/")
+        self.icon_paths = {}
+        try:
+            self.icon_paths['unknown'] = rocon_python_utils.ros.find_resource_from_string('rocon_icons/unknown', extension='png')
+        except (rospkg.ResourceNotFound, ValueError):
+            console.logerror("Remocon : couldn't find icons on the ros package path (install rocon_icons and rocon_bubble_icons")
+            sys.exit(1)
         self.scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../scripts/")
 
         #main widget
@@ -399,7 +407,7 @@ class RemoconMain(QMainWindow):
 
                     k['name'] = "Unknown"
                     k['description'] = "Unknown."
-                    k['icon'] = "Unknown.png"
+                    k['icon'] = "unknown.png"
                     k['flag'] = '0'
                     break
 
@@ -465,7 +473,7 @@ class RemoconMain(QMainWindow):
         self.rocon_master_list[rocon_master_index]['name'] = "Unknown"
         self.rocon_master_list[rocon_master_index]['master_uri'] = rocon_master_uri
         self.rocon_master_list[rocon_master_index]['host_name'] = rocon_master_host_name
-        self.rocon_master_list[rocon_master_index]['icon'] = "Unknown.png"
+        self.rocon_master_list[rocon_master_index]['icon'] = "unknown.png"
         self.rocon_master_list[rocon_master_index]['description'] = ""
         self.rocon_master_list[rocon_master_index]['flag'] = "0"
 
@@ -635,8 +643,8 @@ class RemoconMain(QMainWindow):
         self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setToolTip(rocon_master_info)
 
         #set icon
-        if len(rocon_master_icon) and rocon_master_icon == "Unknown.png":
-            icon = QIcon(self.icon_path + rocon_master_icon)
+        if rocon_master_icon == "unknown.png":
+            icon = QIcon(self.icon_paths['unknown'])
             self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setIcon(icon)
         elif len(rocon_master_icon):
             icon = QIcon(os.path.join(utils.get_icon_cache_home(), rocon_master_icon))
