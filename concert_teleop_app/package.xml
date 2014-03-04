@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package>
+  <name>concert_teleop_app</name>
+  <version>0.6.1</version>
+  <description>The concert_teleop_app package</description>
+
+  <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>
+  <license>BSD</license>
+
+  <author>Donguk Lee</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <run_depend>qt_gui_py_common</run_depend>
+  <run_depend>rqt_gui</run_depend>
+  <run_depend>rqt_gui_py</run_depend>
+  <run_depend>rqt_graph</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>rocon_gateway</run_depend>
+  <run_depend>rocon_utilities</run_depend>
+  <run_depend>python-rospkg</run_depend>
+
+  <export>
+    <rqt_gui plugin="${prefix}/teleop_app_plugin.xml"/>
+  </export>
+</package>
