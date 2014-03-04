@@ -444,8 +444,6 @@ class RemoconMain(QMainWindow):
                 self.rocon_master_list[rocon_master_index]['icon'] = rocon_master_icon
                 self.rocon_master_list[rocon_master_index]['description'] = rocon_master_description
                 self.rocon_master_list[rocon_master_index]['flag'] = rocon_master_flag
-            else:
-                pass
         cache_rocon_master_info_list.close()
 
     def _delete_all_rocon_masters(self):

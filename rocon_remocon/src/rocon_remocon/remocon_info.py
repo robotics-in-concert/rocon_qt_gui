@@ -184,7 +184,6 @@ class RemoconInfo():
 
                 self.app_list[app_hash]['name'] = interaction.name
                 self.app_list[app_hash]['compatibility'] = interaction.compatibility
-                #todo icon
                 icon_name = interaction.icon.resource_name.split('/').pop()
                 if interaction.icon.data:
                     icon = open(os.path.join(utils.get_icon_cache_home(), icon_name), 'w')
