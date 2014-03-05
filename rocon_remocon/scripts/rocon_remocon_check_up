@@ -6,58 +6,41 @@
 ##############################################################################
 # Imports
 ##############################################################################
-#system
-import sys
+
 import os
-#ros
+import sys
+
 import rospy
-#concert message and service
-from concert_msgs.msg import ConcertInfo
+import rocon_remocon
+import rocon_python_comms
+import rocon_std_msgs.msg as rocon_std_msgs
 
-temp_icon_path = "%s/.ros/rocon/remocon/image/"%(os.getenv("HOME"))
-if not os.path.isdir(temp_icon_path):
-    os.makedirs(temp_icon_path)
-
-def _info_callback(data):
-    concert_name=data.name       
-    icon_name = data.icon.resource_name.split('/').pop()
-    icon = open(temp_icon_path+icon_name,'w')
-    icon.write(data.icon.data)
-    icon.close()  
-    
-    print concert_name
-    print data.description
-    print icon_name
-    
-    rospy.signal_shutdown("shut down check_up")       
-
-def _check_valid_concert():
-    ret_value = False
-    topic_list = rospy.get_published_topics()
-    for k in topic_list:
-        if k[0] == '/concert/info':
-            ret_value = True
-            break                        
-    return ret_value   
+##############################################################################
+# Main
+##############################################################################
 
 if __name__ == "__main__":
-     
-    concert_ip = sys.argv[1] #ip
-    host_name=sys.argv[2]
+    ros_master_uri = sys.argv[1]
+    host_name = sys.argv[2]
 
-    os.environ["ROS_MASTER_URI"] = concert_ip
+    os.environ["ROS_MASTER_URI"] = ros_master_uri
     os.environ["ROS_HOSTNAME"] = host_name
-    
-    rospy.init_node("check_up",anonymous = True, disable_signals=True)
-    if not _check_valid_concert():
+
+    rospy.init_node("rocon_remocon_checker", anonymous=True)
+
+    try:
+        topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
+        master_info = rocon_python_comms.SubscriberProxy(topic_name, rocon_std_msgs.MasterInfo)()
+        print master_info.name
+        print master_info.description
+        icon_name = master_info.icon.resource_name.split('/').pop()
+        if master_info.icon.data:
+            rocon_remocon.setup_home_dirs()
+            icon = open(os.path.join(rocon_remocon.get_icon_cache_home(), icon_name), 'w')
+            icon.write(master_info.icon.data)
+            icon.close()
+        print icon_name
+    except rocon_python_comms.NotFoundException as e:
         print "Unknown"
         print "Unknown."
-        print "Unknown.png"
-        rospy.signal_shutdown("shut down check_up")
-    info_sub = rospy.Subscriber("/concert/info", ConcertInfo , _info_callback)
-
-    while not rospy.is_shutdown():
-        rospy.sleep(rospy.Duration(0.1))
-        pass
-    rospy.sleep(rospy.Duration(0.1))
-    
+        print "unknown.png"

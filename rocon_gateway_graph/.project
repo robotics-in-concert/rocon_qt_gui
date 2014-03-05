@@ -3,8 +3,7 @@
 	<name>rocon_gateway_graph</name>
 	<comment></comment>
 	<projects>
-		<project>rocon_gateway</project>
-		<project>rocon_utilities</project>
+		<project>rocon_gateway_utils</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

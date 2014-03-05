@@ -6,32 +6,45 @@
 ##############################################################################
 # Imports
 ##############################################################################
-#system
-import sys, signal, string, atexit
-#pyqt
-from PyQt4.QtGui import QAction, QApplication, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
-from PyQt4.QtCore import QTimer, Qt
-#rocon
+
+import sys
+import signal
+
+from PyQt4.QtGui import QApplication  # QAction, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
+from PyQt4.QtCore import QTimer  # Qt
+
 import rocon_remocon
+
+##############################################################################
+# Globals
+##############################################################################.
 
 app = None
 myapp = None
-def signal_handler(signum, f): 
+
+##############################################################################
+# Methods
+##############################################################################.
+
+
+def signal_handler(signum, f):
     print "[main] Interrupt"
-    if signum ==signal.SIGINT:
+    if signum == signal.SIGINT:
         app.exit(0)
+
 ##############################################################################
 # Main
 ##############################################################################.
-if __name__ =="__main__":
- 
+
+
+if __name__ == "__main__":
+
     signal.signal(signal.SIGINT, signal_handler)
-    app =QApplication(sys.argv)
+    app = QApplication(sys.argv)
     # Let the interpreter run each 200 ms.
-    timer =QTimer()
-    timer.start(200)  
-    timer.timeout.connect(lambda: None)  
-    myapp =rocon_remocon.remocon.RemoconMain(None, "My System Tray App",app)
+    timer = QTimer()
+    timer.start(200)
+    timer.timeout.connect(lambda: None)
+    myapp = rocon_remocon.remocon.RemoconMain(None, "Rocon Remocon", app)
     app.exec_()
     print "rocon_remocon: Main end"
-

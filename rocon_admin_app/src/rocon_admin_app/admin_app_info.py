@@ -6,21 +6,21 @@
 import rospy
 
 from concert_msgs.msg import ConcertServices
-#from concert_msgs.msg import ConcertClients
 
 ##############################################################################
 # Graph
 ##############################################################################
 
+
 class AdminAppInfo(object):
     def __init__(self):
         self._event_callback = None
-        
+
         self.service_list = {}
         # should make use of concert_msgs/Strings here.
         rospy.Subscriber("/concert/services/list", ConcertServices, self.update_service_list)
-    
-    def _reg_event_callback(self,func):
+
+    def _reg_event_callback(self, func):
         self._event_callback = func
 
 

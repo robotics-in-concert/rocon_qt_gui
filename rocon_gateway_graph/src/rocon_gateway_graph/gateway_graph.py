@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_multimaster/master/rocon_gateway_graph/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_qt_gui/license/LICENSE
 #
 ##############################################################################
 # Imports
@@ -15,13 +14,10 @@ from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractList
 from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QCompleter, QBrush, QColor, QPen
 from python_qt_binding.QtSvg import QSvgGenerator
 
-import rosgraph.impl.graph
 import rosservice
 import rostopic
 import rospkg
 
-from .dotcode import RosGraphDotcodeGenerator, GATEWAY_GATEWAY_GRAPH, GATEWAY_FLIPPED_GRAPH, GATEWAY_PULLED_GRAPH
-from .interactive_graphics_view import InteractiveGraphicsView
 from qt_dotgraph.dot_to_qt import DotToQtGenerator
 from qt_gui.plugin import Plugin
 
@@ -30,7 +26,11 @@ from qt_dotgraph.pydotfactory import PydotFactory
 # TODO: use pygraphviz instead, but non-deterministic layout will first be resolved in graphviz 2.30
 # from qtgui_plugin.pygraphvizfactory import PygraphvizFactory
 
+# Should escape this dependency on graph -> rocon_gateway_utils
 from rocon_gateway import Graph
+
+from .dotcode import RosGraphDotcodeGenerator, GATEWAY_GATEWAY_GRAPH, GATEWAY_FLIPPED_GRAPH, GATEWAY_PULLED_GRAPH
+from .interactive_graphics_view import InteractiveGraphicsView
 
 ##############################################################################
 # Utility Classes

@@ -21,18 +21,18 @@ from python_qt_binding.QtSvg import QSvgGenerator
 from qt_gui.plugin import Plugin
 #ros
 import rospkg
-import rosnode
-import roslib
 import rospy
-from admin_app_info import AdminAppInfo
 
+from .admin_app_info import AdminAppInfo
 from concert_msgs.srv import EnableService
 
 ##############################################################################
 # Admin App
 ##############################################################################
-class AdminApp(Plugin):    
-    
+
+
+class AdminApp(Plugin):
+
     _refresh_service_list_signal=Signal()
 
     def __init__(self, context):

@@ -7,10 +7,5 @@ d = generate_distutils_setup(
     packages=['rocon_remocon'],
     package_dir={'': 'src'},
     scripts=['scripts/rocon_remocon'],
-    #package_data = {'rocon_conductor_graph': [
-    #       'ui/*',
-    #       'resources/images/*'
-    #       ]},
-    #requires=['qt_gui_py_common', 'rqt_gui', 'rqt_gui_py', 'rospy', 'rospkg']
 )
 setup(**d)
