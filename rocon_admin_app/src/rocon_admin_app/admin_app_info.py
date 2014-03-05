@@ -52,6 +52,7 @@ class AdminAppInfo(object):
             service_context += "<p><b>resource: </b>" +k.resource+"</p>"
             service_context += "<p><b>description: </b>" +k.description+"</p>"
             service_context += "<p><b>author: </b>" +k.author+"</p>"
+            service_context += "<p><b>priority: </b>" +k.priority+"</p>"
             service_context += "<p><b>launcher_type: </b>" +k.launcher_type+"</p>"
             service_context += "<p><b>launcher: </b>" +k.launcher+"</p>"
             service_context += "<p><b>uuid: </b>" +str(k.uuid)+"</p>"
