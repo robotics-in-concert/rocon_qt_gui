@@ -90,6 +90,7 @@ class AdminApp(Plugin):
     def _update_service_list(self):
         self._widget.service_tree_widget.clear()
         self._widget.service_info_text.clear()
+        self._widgetitem_service_pair = {}
         service_list = self.admin_app_info.service_list
         
         for k in service_list.values():
@@ -112,13 +113,15 @@ class AdminApp(Plugin):
                 font.setPointSize(15)
                 client_item.setFont(0,font)
                 service_item.addChild (client_item)
+
+            self._widgetitem_service_pair[service_item] = k
             
             #self._widget.service_tree_widget.addTopLevelItem(service_item)
         pass    
         
-    def _update_client_list(self,service_name):
+    def _update_client_list(self,resource_name):
         service_list = self.admin_app_info.service_list
-        client_list=service_list[service_name]["client_list"]
+        client_list=service_list[resource_name]["client_list"]
         self._widget.client_tab_widget.clear()
         for k in client_list.values(): 
             client_name = k["name"]
@@ -146,10 +149,10 @@ class AdminApp(Plugin):
             self._widget.client_tab_widget.addTab(main_widget, client_name)
         pass
     
-    def _set_service_info(self,service_name):
+    def _set_service_info(self,resource_name):
         service_list = self.admin_app_info.service_list
         self._widget.service_info_text.clear()
-        self._widget.service_info_text.appendHtml(service_list[service_name]['context'])
+        self._widget.service_info_text.appendHtml(service_list[resource_name]['context'])
         pass
         
     def _set_client_info(self,client_name):
@@ -158,20 +161,22 @@ class AdminApp(Plugin):
         
         pass  
         
-    def _select_service_tree_item(self,Item):
-        
-        if Item.parent() == None:
-            print '_select_service: '+ Item.text(0)
-            self._set_service_info(Item.text(0))
-            self.current_service=Item.text(0)
-            self._update_client_list(self.current_service)
+    def _select_service_tree_item(self,item):
+        if item.parent() == None:
+            selected_service = self._widgetitem_service_pair[item]
+
+            print '_select_service: '+ selected_service['name']
+            self._set_service_info(selected_service['resource'])
+            self.current_service = selected_service
+            self._update_client_list(self.current_service['resource'])
         
         else:
-            print '_select_service: '+Item.parent().text(0)
-            print '_select_client: '+ Item.text(0)
+            selected_service = self._widgetitem_service_pair[item.parent()]
+            print '_select_service: '+ selected_service['name']
+            print '_select_client: '+ item.text(0)
 
-            self._set_service_info(Item.parent().text(0))
-            self._set_client_info(Item.text(0))
+            self._set_service_info(selected_service['resource'])
+            self._set_client_info(item.text(0))
             
             for k in range(self._widget.client_tab_widget.count()):
                 tab_text = self._widget.client_tab_widget.tabText (k)
@@ -291,18 +296,18 @@ class AdminApp(Plugin):
         pass
     
     def _enable_service(self):
-        print "Enable Service: %s"%self.current_service
+        print "Enable Service: %s"%self.current_service['name']
         service = "/concert/services/enable"
         service_handle=rospy.ServiceProxy(service, EnableService)
-        call_result=service_handle(self.current_service,True)
+        call_result=service_handle(self.current_service['resource'],True)
         print call_result
         pass
         
     def _disable_service(self):
-        print "Disable Service: %s"%self.current_service
+        print "Disable Service: %s"%self.current_service['name']
         service = "/concert/services/enable"
         service_handle=rospy.ServiceProxy(service, EnableService)
-        call_result=service_handle(self.current_service,False)
+        call_result=service_handle(self.current_service['resource'],False)
         print call_result
         pass
         
@@ -312,7 +317,7 @@ class AdminApp(Plugin):
         pass
    
     def _set_configuration(self, params):        
-        print self.current_service+" set param: "
+        print self.current_service['name']+" set param: "
         print "param1: "+ params['param1'].toPlainText()
         print "param2: "+ params['param2'].toPlainText()
         print "param3: "+ params['param3'].toPlainText()   
