@@ -29,10 +29,10 @@ class AdminAppInfo(object):
         self.service_list = {}
         for k in data.services:
             service_name = k.name
-            resource_name = k.resource
+            resource_name = k.resource_name
             self.service_list[service_name] = {}
             self.service_list[service_name]['name'] = service_name
-            self.service_list[service_name]['resource'] = k.resource
+            self.service_list[service_name]['resource_name'] = k.resource_name
             self.service_list[service_name]['description'] = k.description
             
             self.service_list[service_name]['author'] = k.author
@@ -49,7 +49,7 @@ class AdminAppInfo(object):
             service_context = "<html>"
             service_context += "<p>-------------------------------------------</p>"
             service_context += "<p><b>name: </b>" +k.name+"</p>"
-            service_context += "<p><b>resource: </b>" +k.resource+"</p>"
+            service_context += "<p><b>resource_name: </b>" +k.resource_name+"</p>"
             service_context += "<p><b>description: </b>" +k.description+"</p>"
             service_context += "<p><b>author: </b>" +k.author+"</p>"
             service_context += "<p><b>priority: </b>" +str(k.priority)+"</p>"
