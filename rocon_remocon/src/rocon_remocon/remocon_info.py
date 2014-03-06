@@ -363,12 +363,11 @@ class RemoconInfo():
     def _start_app_webapp(self, app, rosrunnable_filename):
         web_browser = self._check_webbrowser()
         if web_browser is not None:
-            rosrunnable_filename = web_browser
             url = self._get_webapp_url(app)
-            name = os.path.basename(rosrunnable_filename).replace('.', '_')
+            name = os.path.basename(web_browser).replace('.', '_')
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self.process_listeners, anonymous_name, 1)
-            process = rocon_python_utils.system.Popen([rosrunnable_filename, "--new-window", url], postexec_fn=process_listener)
+            process = rocon_python_utils.system.Popen([web_browser, "--new-window", url], postexec_fn=process_listener)
             app['launch_list'][anonymous_name] = {}
             app['launch_list'][anonymous_name]['name'] = anonymous_name
             app['launch_list'][anonymous_name]['running'] = str(True)
