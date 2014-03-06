@@ -266,11 +266,13 @@ class RemoconInfo():
         '''
         try:
             app_filename = rocon_python_utils.ros.find_resource_from_string(app_name, extension='launch')
+            console.logdebug("RemoconInfo : regular start app [%s]")
             return (app_filename, self._start_app_launch)
         except (rospkg.ResourceNotFound, ValueError):
             pass
         try:
             app_filename = rocon_python_utils.ros.find_resource_from_string(app_name)
+            console.logdebug("RemoconInfo : start_app_rosrunnable [%s]")
             return (app_filename, self._start_app_rosrunnable)
         except rospkg.ResourceNotFound:
             pass
@@ -278,8 +280,10 @@ class RemoconInfo():
             pass
         o = urlparse(app_name)
         if o.scheme == 'http':
+            console.logdebug("RemoconInfo : start_app_webapp [%s]")
             return (app_name, self._start_app_webapp)
         else:
+            console.logdebug("RemoconInfo : start_app_global_executable [%s]")
             return (app_name, self._start_app_global_executable)
 
     def _start_app_launch(self, app, roslaunch_filename):
@@ -357,8 +361,9 @@ class RemoconInfo():
         return True
 
     def _start_app_webapp(self, app, rosrunnable_filename):
-        if self._check_webbrowser():
-            rosrunnable_filename = "google-chrome"
+        web_browser = self._check_webbrowser()
+        if web_browser is not None:
+            rosrunnable_filename = web_browser
             url = self._get_webapp_url(app)
             name = os.path.basename(rosrunnable_filename).replace('.', '_')
             anonymous_name = name + "_" + uuid.uuid4().hex
@@ -391,13 +396,11 @@ class RemoconInfo():
         return url
 
     def _check_webbrowser(self):
-        check_result = rocon_python_utils.system.which("google-chrome")
-        if check_result:
-            return True
-        elif check_result == None:
-            return False
-        else:
-            return False
+        if rocon_python_utils.system.which("google-chrome"):
+            return 'google-chrome'
+        elif rocon_python_utils.system.which("google-chrome-unstable"):
+            return 'google-chrome-unstable'
+        return None
 
     def _stop_app(self, app_hash):
         if not app_hash in self.app_list:
