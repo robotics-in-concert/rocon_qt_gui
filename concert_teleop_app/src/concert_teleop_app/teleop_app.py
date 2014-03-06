@@ -47,11 +47,10 @@ class TeleopApp(Plugin):
         #button event connection
         #concert item click event
         self._widget.robot_list_tree_widget.itemClicked.connect(self._select_robot_list_tree_item)
-        
         self._widget.test_btn.pressed.connect(self.test_func)
         self._widget.test_add_robot_btn.pressed.connect(self._add_robot)
         self._widget.test_delete_robot_btn.pressed.connect(self._delete_robot)
-        
+
         self._widget.backward_btn.pressed.connect(self._backward)
         self._widget.forward_btn.pressed.connect(self._forward)
         self._widget.left_turn_btn.pressed.connect(self._left_turn)
@@ -61,7 +60,6 @@ class TeleopApp(Plugin):
         #init
         self.scene = QGraphicsScene()
         self._widget.camera_view.setScene(self.scene)
-    
         self.robot_list = {}
         self.current_robot = ""
         pass
