@@ -11,7 +11,7 @@ from __future__ import division
 import os
 #pyqt
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot, SIGNAL,SLOT, QRectF
+from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot, SIGNAL,SLOT, QRectF , QTimer
 from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
 from python_qt_binding.QtGui import QSizePolicy,QTextEdit, QCompleter, QBrush,QDialog, QColor, QPen, QPushButton
 from python_qt_binding.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
@@ -29,8 +29,8 @@ from qt_gui.plugin import Plugin
 
 
 class TeleopApp(Plugin):
-
-    _display_image_signal = Signal()
+    _update_robot_list_signal = Signal()
+    CAMERA_FPS = (1000 / 20)
 
     def __init__(self, context):
         self._context = context
@@ -57,27 +57,41 @@ class TeleopApp(Plugin):
         self._widget.forward_btn.pressed.connect(self._forward)
         self._widget.left_turn_btn.pressed.connect(self._left_turn)
         self._widget.right_turn_btn.pressed.connect(self._right_turn)
-        self._display_image_signal.connect(self._display_image)
-
+        self._widget.test_capture_teleop_btn.pressed.connect(self._capture_teleop)
+        self._update_robot_list_signal.connect(self._update_robot_list)
         context.add_widget(self._widget)
         #init
         self.scene = QGraphicsScene()
         self._widget.camera_view.setScene(self.scene)
-         #
-        self.robot_list = {}
-        self.current_robot = ""
-        self.teleop_image_width = 320
-        self.teleop_image_height = 240
-         #
+
+        self.timer = QTimer(self._widget)
+        self.timer.timeout.connect(self._display_image)
+        self.timer.start(self.CAMERA_FPS)
+
         self.teleop_app_info = TeleopAppInfo()
-        self.teleop_app_info._reg_event_callback(self._refresh)
+        self.teleop_app_info._reg_event_callback(self._refresh_robot_list)
+
+        self.robot_item_list = {}
+        self.current_robot = None
+
+        pass
+
+    def _capture_teleop(self):
+        if self.current_robot == None:
+                print "NO Select robot"
+                return
+        print ("_capture teleop: %s"%self.current_robot["rocon_uri"])
+        self.teleop_app_info._capture_teleop(self.current_robot["rocon_uri"])
         pass
 
     def _update_robot_list(self):
         self._widget.robot_list_tree_widget.clear()
-        for k in self.robot_list.values():
+        robot_list = self.teleop_app_info.robot_list
+
+        for k in robot_list.values():
             robot_item = QTreeWidgetItem(self._widget.robot_list_tree_widget)
-            robot_item.setText(0, k['name'])
+            robot_item.setText(0, k["name"].string)
+            self.robot_item_list[robot_item] = k
         pass
 
     def _add_robot(self):
@@ -111,27 +125,24 @@ class TeleopApp(Plugin):
 
     def _select_robot_list_tree_item(self, Item):
         print '_select_robot: ' + Item.text(0)
-        self.current_robot = Item.text(0)
+        self.current_robot = self.robot_item_list[Item]
         pass
-    
-    def _refresh(self):
-        self._display_image_signal.emit()
+
+    def _refresh_robot_list(self):
+        self._update_robot_list_signal.emit()
         pass
-    
+
     def _display_image(self):
         image = self.teleop_app_info.image_data
-        pixmap = QPixmap(QImage(image.data, image.width, image.height, image.step, QImage.Format_RGB888))
-        #self._widget.fitInView (self, QRectF rect, Qt.AspectRatioMode mode = Qt.IgnoreAspectRatio)
-        self.scene.addPixmap(pixmap)
-        self.scene.update()
-        pass
-            
+        if image:
+            if len(self.scene.items()) > 1:
+                self.scene.removeItem(self.scene.items()[0])
+
+            image = self.teleop_app_info.image_data
+            pixmap = QPixmap(QImage(image.data, image.width, image.height, image.step, QImage.Format_RGB888))
+            self._widget.camera_view.fitInView(QRectF(0, 0, image.width, image.height), Qt.KeepAspectRatio)
+            self.scene.addPixmap(pixmap)
+            self.scene.update()
 
     def test_func(self):
         print "it is test"
-        rospack = rospkg.RosPack()
-        ui_file = os.path.join(rospack.get_path('concert_teleop_app'), 'resources/images', 'rocon_logo.png')
-        print ui_file
-        pixmap = QPixmap(ui_file)
-        self.scene.addPixmap(pixmap)
-        self.scene.update()

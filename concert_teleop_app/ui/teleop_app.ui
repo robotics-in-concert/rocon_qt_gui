@@ -119,6 +119,13 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="test_capture_teleop_btn">
+       <property name="text">
+        <string>Capture Teleop</string>
+       </property>
+      </widget>
+     </item>
      <item alignment="Qt::AlignTop">
       <widget class="QPushButton" name="test_delete_robot_btn">
        <property name="text">
