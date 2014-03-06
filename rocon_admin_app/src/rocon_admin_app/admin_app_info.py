@@ -30,20 +30,20 @@ class AdminAppInfo(object):
         for k in data.services:
             service_name = k.name
             resource_name = k.resource
-            self.service_list[resource_name] = {}
-            self.service_list[resource_name]['name'] = service_name
-            self.service_list[resource_name]['resource'] = k.resource
-            self.service_list[resource_name]['description'] = k.description
+            self.service_list[service_name] = {}
+            self.service_list[service_name]['name'] = service_name
+            self.service_list[service_name]['resource'] = k.resource
+            self.service_list[service_name]['description'] = k.description
             
-            self.service_list[resource_name]['author'] = k.author
-            self.service_list[resource_name]['priority'] = k.priority
-            self.service_list[resource_name]['launcher_type'] = k.launcher_type
-            self.service_list[resource_name]['launcher'] = k.launcher
-            self.service_list[resource_name]['uuid'] = k.uuid
-            self.service_list[resource_name]['status'] = k.status
-            self.service_list[resource_name]['enabled'] = k.enabled
+            self.service_list[service_name]['author'] = k.author
+            self.service_list[service_name]['priority'] = k.priority
+            self.service_list[service_name]['launcher_type'] = k.launcher_type
+            self.service_list[service_name]['launcher'] = k.launcher
+            self.service_list[service_name]['uuid'] = k.uuid
+            self.service_list[service_name]['status'] = k.status
+            self.service_list[service_name]['enabled'] = k.enabled
             # not implementation
-            self.service_list[resource_name]['client_list'] = {}
+            self.service_list[service_name]['client_list'] = {}
                 
             #html
             service_context = "<html>"
@@ -60,7 +60,7 @@ class AdminAppInfo(object):
             service_context += "<p><b>enabled: </b>" +str(k.enabled)+"</p>"
             service_context +="</html>"
             
-            self.service_list[resource_name]['context'] = service_context
+            self.service_list[service_name]['context'] = service_context
             
         if self._event_callback != None:
             self._event_callback()
