@@ -7,6 +7,8 @@
 #ros
 import rospy
 from std_msgs.msg import String
+from sensor_msgs.msg import Image
+
 #rocon
 from rocon_console import console
 
@@ -18,11 +20,16 @@ from rocon_console import console
 
 class TeleopAppInfo(object):
     def __init__(self):
+
         self._event_callback = None
+        self.image_data = None
         self.robot_list = {}
         # should make use of concert_msgs/Strings here.
         #rospy.Subscriber("/available_teleop", String, self.update_robot_list)
         #rospy.Subscriber("/available_teleop", String, self.update_robot_list)
+
+        rospy.Subscriber("/usb_cam/image_raw", Image, self._update_teleop_image)
+        print "register sub"
 
     def _update_robot_list(self, data):
         """
@@ -40,6 +47,8 @@ class TeleopAppInfo(object):
         @param data: compressed image
         @type
         """
+        self.image_data = data
+        self._event_callback()
         pass
 
     def _request_teleop_cmd_vel(self, cmd_vel):

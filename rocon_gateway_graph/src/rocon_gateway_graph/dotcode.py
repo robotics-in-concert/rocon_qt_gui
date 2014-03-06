@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_multimaster/master/rocon_gateway_graph/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_qt_gui/license/LICENSE
 #
 ##############################################################################
 # Imports
@@ -9,7 +8,7 @@
 
 import re
 import copy
-import rocon_utilities
+import rocon_gateway_utils
 import rosgraph.impl.graph
 import roslib
 
@@ -75,7 +74,7 @@ class RosGraphDotcodeGenerator:
                                               #nodename=rocon_utilities.gateway_basename(node),
                                               #nodelabel=rocon_utilities.gateway_basename(node),
                                               shape='ellipse',
-                                              url=rocon_utilities.gateway_basename(node),
+                                              url=rocon_gateway_utils.gateway_basename(node),
                                               #url=node
                                               )
 

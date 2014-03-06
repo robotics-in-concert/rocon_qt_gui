@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>AdminAppWidget</class>
- <widget class="QWidget" name="AdminAppWidget">
+ <class>TeleopAppWidget</class>
+ <widget class="QWidget" name="TeleopAppWidget">
   <property name="enabled">
    <bool>true</bool>
   </property>
@@ -20,7 +20,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Administrator Application</string>
+   <string>Teleop Application</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="1">

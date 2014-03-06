@@ -30,6 +30,8 @@ from qt_gui.plugin import Plugin
 
 class TeleopApp(Plugin):
 
+    _display_image_signal = Signal()
+
     def __init__(self, context):
         self._context = context
         super(TeleopApp, self).__init__(context)
@@ -55,13 +57,20 @@ class TeleopApp(Plugin):
         self._widget.forward_btn.pressed.connect(self._forward)
         self._widget.left_turn_btn.pressed.connect(self._left_turn)
         self._widget.right_turn_btn.pressed.connect(self._right_turn)
+        self._display_image_signal.connect(self._display_image)
 
         context.add_widget(self._widget)
         #init
         self.scene = QGraphicsScene()
         self._widget.camera_view.setScene(self.scene)
+         #
         self.robot_list = {}
         self.current_robot = ""
+        self.teleop_image_width = 320
+        self.teleop_image_height = 240
+         #
+        self.teleop_app_info = TeleopAppInfo()
+        self.teleop_app_info._reg_event_callback(self._refresh)
         pass
 
     def _update_robot_list(self):
@@ -104,6 +113,19 @@ class TeleopApp(Plugin):
         print '_select_robot: ' + Item.text(0)
         self.current_robot = Item.text(0)
         pass
+    
+    def _refresh(self):
+        self._display_image_signal.emit()
+        pass
+    
+    def _display_image(self):
+        image = self.teleop_app_info.image_data
+        pixmap = QPixmap(QImage(image.data, image.width, image.height, image.step, QImage.Format_RGB888))
+        #self._widget.fitInView (self, QRectF rect, Qt.AspectRatioMode mode = Qt.IgnoreAspectRatio)
+        self.scene.addPixmap(pixmap)
+        self.scene.update()
+        pass
+            
 
     def test_func(self):
         print "it is test"

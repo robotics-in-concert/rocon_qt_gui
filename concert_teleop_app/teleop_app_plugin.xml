@@ -9,7 +9,7 @@
         <icon type="theme">folder</icon>
         <statustip>Plugins related to robotics-in-concert components.</statustip>
       </group>
-      <label>Concert Administration</label>
+      <label>Teleop App</label>
       <icon type="file">./resources/images/rocon_logo.png</icon>
       <statustip>teleop application </statustip>
     </qtgui>
