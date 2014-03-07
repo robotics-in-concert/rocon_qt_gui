@@ -9,6 +9,7 @@
 #system
 from __future__ import division
 import os
+import time
 #pyqt
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot, SIGNAL,SLOT, QRectF , QTimer
@@ -30,7 +31,13 @@ from qt_gui.plugin import Plugin
 
 class TeleopApp(Plugin):
     _update_robot_list_signal = Signal()
+    _captured_teleop_signal = Signal()
+
     CAMERA_FPS = (1000 / 20)
+    D2R = 3.141592 / 180
+    R2D = 180 / 3.141592
+    LINEAR_V = 1.5
+    ANGULAR_V = 60 * D2R
 
     def __init__(self, context):
         self._context = context
@@ -46,42 +53,61 @@ class TeleopApp(Plugin):
         loadUi(ui_file, self._widget, {})
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
-        #button event connection
         #concert item click event
-        self._widget.robot_list_tree_widget.itemClicked.connect(self._select_robot_list_tree_item)
-        self._widget.test_btn.pressed.connect(self.test_func)
-        self._widget.test_add_robot_btn.pressed.connect(self._add_robot)
-        self._widget.test_delete_robot_btn.pressed.connect(self._delete_robot)
 
-        self._widget.backward_btn.pressed.connect(self._backward)
-        self._widget.forward_btn.pressed.connect(self._forward)
-        self._widget.left_turn_btn.pressed.connect(self._left_turn)
-        self._widget.right_turn_btn.pressed.connect(self._right_turn)
+        self._widget.robot_list_tree_widget.itemClicked.connect(self._select_robot_list_tree_item)
+        #button event connection
+        self._widget.backward_btn.setAutoRepeat(True)
+        self._widget.forward_btn.setAutoRepeat(True)
+        self._widget.left_turn_btn.setAutoRepeat(True)
+        self._widget.right_turn_btn.setAutoRepeat(True)
+
+        self._widget.backward_btn.clicked.connect(self._backward)
+        self._widget.forward_btn.clicked.connect(self._forward)
+        self._widget.left_turn_btn.clicked.connect(self._left_turn)
+        self._widget.right_turn_btn.clicked.connect(self._right_turn)
+
+        self._widget.backward_btn.released.connect(self._stop)
+        self._widget.forward_btn.released.connect(self._stop)
+        self._widget.left_turn_btn.released.connect(self._stop)
+        self._widget.right_turn_btn.released.connect(self._stop)
+
         self._widget.test_capture_teleop_btn.pressed.connect(self._capture_teleop)
         self._update_robot_list_signal.connect(self._update_robot_list)
+        self._captured_teleop_signal.connect(self._show_capture_teleop_message)
         context.add_widget(self._widget)
+
         #init
         self.scene = QGraphicsScene()
         self._widget.camera_view.setScene(self.scene)
-
         self.timer = QTimer(self._widget)
         self.timer.timeout.connect(self._display_image)
         self.timer.start(self.CAMERA_FPS)
 
         self.teleop_app_info = TeleopAppInfo()
         self.teleop_app_info._reg_event_callback(self._refresh_robot_list)
+        self.teleop_app_info._reg_capture_event_callback(self._capture_event_callback)
 
         self.robot_item_list = {}
         self.current_robot = None
 
+    def _show_capture_teleop_message(self):
+        print "capture success"
+        QMessageBox.warning(self._widget, 'SUCCESS', "CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
+        self._widget.test_capture_teleop_btn.setEnabled(False)
+        self._widget.setDisabled(False)
         pass
+
+    def _capture_event_callback(self):
+        self._captured_teleop_signal.emit()
 
     def _capture_teleop(self):
         if self.current_robot == None:
                 print "NO Select robot"
                 return
-        print ("_capture teleop: %s"%self.current_robot["rocon_uri"])
+        print ("_capture teleop: %s" % self.current_robot["rocon_uri"])
         self.teleop_app_info._capture_teleop(self.current_robot["rocon_uri"])
+        self._widget.setDisabled(True)
         pass
 
     def _update_robot_list(self):
@@ -92,36 +118,33 @@ class TeleopApp(Plugin):
             robot_item = QTreeWidgetItem(self._widget.robot_list_tree_widget)
             robot_item.setText(0, k["name"].string)
             self.robot_item_list[robot_item] = k
-        pass
-
-    def _add_robot(self):
-        print "add robot"
-        robot_list = self.robot_list
-        robot_name = "robot_" + str(len(robot_list))
-        self.robot_list[robot_name] = {}
-        self.robot_list[robot_name]['name'] = robot_name
-        self._update_robot_list()
-        pass
-
-    def _delete_robot(self):
-        print "delete robot"
-        pass
 
     def _backward(self):
-        print "%s: backward robot" % self.current_robot
-        pass
+        if self._widget.backward_btn.isDown():
+            self.teleop_app_info._request_teleop_cmd_vel(-self.LINEAR_V, 0)
+        else:
+            self._stop()
 
     def _forward(self):
-        print "%s: forward robot" % self.current_robot
-        pass
+        if self._widget.forward_btn.isDown():
+            self.teleop_app_info._request_teleop_cmd_vel(self.LINEAR_V, 0)
+        else:
+            self._stop()
 
     def _left_turn(self):
-        print "%s: left_turn robot" % self.current_robot
-        pass
+        if self._widget.left_turn_btn.isDown():
+            self.teleop_app_info._request_teleop_cmd_vel(0, self.ANGULAR_V)
+        else:
+            self._stop()
 
     def _right_turn(self):
-        print "%s: right_turn robot" % self.current_robot
-        pass
+        if self._widget.right_turn_btn.isDown():
+            self.teleop_app_info._request_teleop_cmd_vel(0, -self.ANGULAR_V)
+        else:
+            self._stop()
+
+    def _stop(self):
+        self.teleop_app_info._request_teleop_cmd_vel(0, 0)
 
     def _select_robot_list_tree_item(self, Item):
         print '_select_robot: ' + Item.text(0)
@@ -138,11 +161,9 @@ class TeleopApp(Plugin):
             if len(self.scene.items()) > 1:
                 self.scene.removeItem(self.scene.items()[0])
 
-            image = self.teleop_app_info.image_data
-            pixmap = QPixmap(QImage(image.data, image.width, image.height, image.step, QImage.Format_RGB888))
-            self._widget.camera_view.fitInView(QRectF(0, 0, image.width, image.height), Qt.KeepAspectRatio)
+            image_data = self.teleop_app_info.image_data.data
+            pixmap = QPixmap()
+            pixmap.loadFromData(image_data, format="PNG",)
+            self._widget.camera_view.fitInView(QRectF(0, 0, 640, 480), Qt.KeepAspectRatio)
             self.scene.addPixmap(pixmap)
             self.scene.update()
-
-    def test_func(self):
-        print "it is test"
