@@ -14,8 +14,9 @@ import signal
 import tempfile
 from urlparse import urlparse
 import urllib
+import yaml
+import json
 
-#ros
 import rospy
 import rocon_python_utils
 import roslaunch.parent
@@ -379,19 +380,36 @@ class RemoconInfo():
 
     def _get_webapp_url(self, app):
         """
-           url syntheiser for sending remappings and parameters information
+           url syntheiser for sending remappings and parameters information.
+           We convert the interaction parameter (yaml string) and remapping (rocon_std_msgs.Remapping[])
+           variables into generic python list/dictionary objects and convert these into
+           json strings as it makes it easier for web apps to handle them.
         """
         url = app['name']
-        #url += "?" + "MasterURI=" + str(os.environ["ROS_MASTER_URI"])
-        if len(app['parameters']) != 0:
-            url += "&" + "params=" + urllib.quote_plus(app['parameters'])
+        json_args = {}
+        # The parameters variable is a yaml string:
+        #  - convert this to a python object
+        #  - convert to a json string
+        #  - url encode the symbols
+        yaml_string = app['parameters']
+        if yaml_string:
+            json_string = json.dumps(yaml.load(yaml_string))
+            rospy.logwarn("Json string: %s" % json_string)
+            json_args['params'] = json_string
+        # The remappings variable is a bit more complicated
+        #  - convert rocon_std_msgs.Remapping[] to list of dics in the form of [ { remap_from: 'xyz', remap_to: 'zyx' } ]
+        #  - convert to a json string
+        #  - url encode the symbols
+        remappings = []  # need to create a list of dictionaries (note: app['remappings'] is a list of rocon_std_msgs.Remapping)
         if len(app['remappings']) != 0:
-            remaps = "{"
-            for remapping in app['remappings']:
-                remaps += "\'" + remapping.remap_from + "\':\'" + remapping.remap_to + "\',"
-            remaps = remaps[0:len(remaps) - 1] + "}"
-            print remaps
-            url += "&" + "remaps=" + urllib.quote_plus(remaps)
+            for r in app['remappings']:
+                remapping = {}
+                remapping['remap_from'] = r.remap_from
+                remapping['remap_to'] = r.remap_to
+                remappings.append(remapping)
+            json_string = json.dumps(remappings)
+            json_args['remaps'] = json_string
+        url += "?" + urllib.urlencode(json_args)
         return url
 
     def _check_webbrowser(self):
