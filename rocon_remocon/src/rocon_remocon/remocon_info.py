@@ -385,12 +385,10 @@ class RemoconInfo():
            variables into generic python list/dictionary objects and convert these into
            json strings as it makes it easier for web apps to handle them.
         """
-        url = app['name']
         interaction_data = {}
         interaction_data['display_name'] = app['display_name']
         # parameters
-        params = yaml.load(app['parameters'])
-        interaction_data['parameters'] = params
+        interaction_data['parameters'] = yaml.load(app['parameters'])
         # remappings
         interaction_data['remappings'] = {}  # need to create a dictionary for easy parsing (note: app['remappings'] is a list of rocon_std_msgs.Remapping)
         for r in app['remappings']:
@@ -399,8 +397,8 @@ class RemoconInfo():
         console.logdebug("Remocon Info : web app query string %s" % interaction_data)
         query_string_mappings = {}
         query_string_mappings['interaction_data'] = json.dumps(interaction_data)
-        url += "?" + urllib.urlencode(query_string_mappings)
-        return url
+        # constructing the url
+        return app['name'] + "?" + urllib.urlencode(query_string_mappings)
 
     def _check_webbrowser(self):
         if rocon_python_utils.system.which("google-chrome"):
