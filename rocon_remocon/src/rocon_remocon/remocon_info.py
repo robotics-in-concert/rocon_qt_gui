@@ -386,30 +386,20 @@ class RemoconInfo():
            json strings as it makes it easier for web apps to handle them.
         """
         url = app['name']
-        json_args = {}
-        # The parameters variable is a yaml string:
-        #  - convert this to a python object
-        #  - convert to a json string
-        #  - url encode the symbols
-        yaml_string = app['parameters']
-        if yaml_string:
-            json_string = json.dumps(yaml.load(yaml_string))
-            rospy.logwarn("Json string: %s" % json_string)
-            json_args['params'] = json_string
-        # The remappings variable is a bit more complicated
-        #  - convert rocon_std_msgs.Remapping[] to list of dics in the form of [ { remap_from: 'xyz', remap_to: 'zyx' } ]
-        #  - convert to a json string
-        #  - url encode the symbols
-        remappings = []  # need to create a list of dictionaries (note: app['remappings'] is a list of rocon_std_msgs.Remapping)
-        if len(app['remappings']) != 0:
-            for r in app['remappings']:
-                remapping = {}
-                remapping['remap_from'] = r.remap_from
-                remapping['remap_to'] = r.remap_to
-                remappings.append(remapping)
-            json_string = json.dumps(remappings)
-            json_args['remaps'] = json_string
-        url += "?" + urllib.urlencode(json_args)
+        interaction_data = {}
+        interaction_data['display_name'] = app['display_name']
+        # parameters
+        params = yaml.load(app['parameters'])
+        interaction_data['parameters'] = params
+        # remappings
+        interaction_data['remappings'] = {}  # need to create a dictionary for easy parsing (note: app['remappings'] is a list of rocon_std_msgs.Remapping)
+        for r in app['remappings']:
+            interaction_data['remappings'][r.remap_from] = r.remap_to
+        # package all the data in json format and dump it to one query string variable
+        console.logdebug("Remocon Info : web app query string %s" % interaction_data)
+        query_string_mappings = {}
+        query_string_mappings['interaction_data'] = json.dumps(interaction_data)
+        url += "?" + urllib.urlencode(query_string_mappings)
         return url
 
     def _check_webbrowser(self):
