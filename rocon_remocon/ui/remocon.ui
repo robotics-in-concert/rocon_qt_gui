@@ -20,7 +20,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Concert List</string>
+      <string>Ros Master List</string>
      </property>
     </widget>
    </item>
