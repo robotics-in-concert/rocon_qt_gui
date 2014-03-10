@@ -485,7 +485,7 @@ class RemoconMain(QMainWindow):
 
         #dialog
         self._connect_dlg = QDialog(self._widget_main)
-        self._connect_dlg.setWindowTitle("Add Concert")
+        self._connect_dlg.setWindowTitle("Add Ros Master")
         self._connect_dlg.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
         self._connect_dlg.setMinimumSize(350, 0)
         # dlg_rect = self._connect_dlg.geometry()
