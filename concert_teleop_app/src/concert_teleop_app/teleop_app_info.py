@@ -3,20 +3,20 @@
 # License: BSD
 #   https://raw.github.com/robotics-in-concert/rocon_qt_gui/license/LICENSE
 #
+##############################################################################
+# Imports
+##############################################################################
 
 #ros
 import rospy
-from std_msgs.msg import String
 from sensor_msgs.msg import CompressedImage
 
 #rocon
 import rocon_uri
 import rocon_python_comms
-from rocon_console import console
 from rocon_std_msgs.msg import StringArray
 from geometry_msgs.msg import Twist
 
-import rocon_service_pair_msgs.msg as rocon_service_pair_msgs
 import rocon_service_msgs.msg as rocon_service_msgs
 
 ##############################################################################
@@ -80,7 +80,6 @@ class TeleopAppInfo(object):
         """
         print "update the teleop image"
         self.image_data = data
-        pass
 
     def _request_teleop_cmd_vel(self, linear, angular):
         """
@@ -88,7 +87,7 @@ class TeleopAppInfo(object):
 
         @param linear: linear velocity. Unit is m/s
         @type float
-        
+
         @param angular: angular velocity. Unit is rad/s
         @type float
         """
@@ -137,10 +136,10 @@ class TeleopAppInfo(object):
          """
         uri = rocon_uri.parse(captured_teleop_rocon_uri)
         print ("init teleop: %s" % uri.name.string)
-        captureed_name = uri.name.string
+        captured_name = uri.name.string
 
-        self.captured_teleop_cmd_vel_pub = rospy.Publisher(captureed_name + "/cmd_vel", Twist, latch=True)
-        rospy.Subscriber(captureed_name + "/compressed_image", CompressedImage, self._update_teleop_image)
+        self.captured_teleop_cmd_vel_pub = rospy.Publisher(captured_name + "/cmd_vel", Twist, latch=True)
+        rospy.Subscriber(captured_name + "/compressed_image", CompressedImage, self._update_teleop_image)
 
     def error_callback(self, msg_id, error_message):
         """ User callback to feed into non-blocking requests.
@@ -155,6 +154,6 @@ class TeleopAppInfo(object):
 
     def _reg_event_callback(self, func):
         self._event_callback = func
-    
+
     def _reg_capture_event_callback(self, func):
         self._capture_event_callback = func

@@ -163,6 +163,6 @@ class TeleopApp(Plugin):
             image_data = self.teleop_app_info.image_data.data
             pixmap = QPixmap()
             pixmap.loadFromData(image_data, format="PNG",)
-            self._widget.camera_view.fitInView(QRectF(0, 0, 640, 480), Qt.KeepAspectRatio)
+            self._widget.camera_view.fitInView(QRectF(0, 0, pixmap.width(), pixmap.height()), Qt.KeepAspectRatio)
             self.scene.addPixmap(pixmap)
             self.scene.update()
