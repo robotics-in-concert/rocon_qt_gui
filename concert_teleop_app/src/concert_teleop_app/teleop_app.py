@@ -92,7 +92,6 @@ class TeleopApp(Plugin):
         self.current_robot = None
 
     def _show_capture_teleop_message(self):
-        print "capture success"
         QMessageBox.warning(self._widget, 'SUCCESS', "CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
         self._widget.test_capture_teleop_btn.setEnabled(False)
         self._widget.setDisabled(False)

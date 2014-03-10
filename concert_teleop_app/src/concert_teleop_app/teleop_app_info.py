@@ -86,8 +86,11 @@ class TeleopAppInfo(object):
         """
         Update the teleop image
 
-        @param cmd_vel: command of velocity
-        @type
+        @param linear: linear velocity. Unit is m/s
+        @type float
+        
+        @param angular: angular velocity. Unit is rad/s
+        @type float
         """
         if self.captured_teleop_cmd_vel_pub:
             cmd_vel = Twist()
