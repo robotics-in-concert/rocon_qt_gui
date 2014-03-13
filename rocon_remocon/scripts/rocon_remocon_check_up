@@ -26,9 +26,8 @@ if __name__ == "__main__":
     os.environ["ROS_MASTER_URI"] = ros_master_uri
     os.environ["ROS_HOSTNAME"] = host_name
 
-    rospy.init_node("rocon_remocon_checker", anonymous=True)
-
     try:
+        rospy.init_node("rocon_remocon_checker", anonymous=True)
         topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
         master_info = rocon_python_comms.SubscriberProxy(topic_name, rocon_std_msgs.MasterInfo)()
         print master_info.name
@@ -44,3 +43,5 @@ if __name__ == "__main__":
         print "Unknown"
         print "Unknown."
         print "unknown.png"
+    #except rospy.exceptions.ROSInitException as e:
+    #    pass
