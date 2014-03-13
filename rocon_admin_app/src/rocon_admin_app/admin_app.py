@@ -119,9 +119,9 @@ class AdminApp(Plugin):
             #self._widget.service_tree_widget.addTopLevelItem(service_item)
         pass    
         
-    def _update_client_list(self,resource_name):
+    def _update_client_list(self,service_name):
         service_list = self.admin_app_info.service_list
-        client_list=service_list[resource_name]["client_list"]
+        client_list=service_list[service_name]["client_list"]
         self._widget.client_tab_widget.clear()
         for k in client_list.values(): 
             client_name = k["name"]
@@ -149,10 +149,10 @@ class AdminApp(Plugin):
             self._widget.client_tab_widget.addTab(main_widget, client_name)
         pass
     
-    def _set_service_info(self,resource_name):
+    def _set_service_info(self,service_name):
         service_list = self.admin_app_info.service_list
         self._widget.service_info_text.clear()
-        self._widget.service_info_text.appendHtml(service_list[resource_name]['context'])
+        self._widget.service_info_text.appendHtml(service_list[service_name]['context'])
         pass
         
     def _set_client_info(self,client_name):
@@ -166,16 +166,16 @@ class AdminApp(Plugin):
             selected_service = self._widgetitem_service_pair[item]
 
             print '_select_service: '+ selected_service['name']
-            self._set_service_info(selected_service['resource'])
+            self._set_service_info(selected_service['name'])
             self.current_service = selected_service
-            self._update_client_list(self.current_service['resource'])
+            self._update_client_list(self.current_service['name'])
         
         else:
             selected_service = self._widgetitem_service_pair[item.parent()]
             print '_select_service: '+ selected_service['name']
             print '_select_client: '+ item.text(0)
 
-            self._set_service_info(selected_service['resource'])
+            self._set_service_info(selected_service['name'])
             self._set_client_info(item.text(0))
             
             for k in range(self._widget.client_tab_widget.count()):
@@ -299,7 +299,7 @@ class AdminApp(Plugin):
         print "Enable Service: %s"%self.current_service['name']
         service = "/concert/services/enable"
         service_handle=rospy.ServiceProxy(service, EnableService)
-        call_result=service_handle(self.current_service['resource'],True)
+        call_result=service_handle(self.current_service['name'],True)
         print call_result
         pass
         
@@ -307,7 +307,7 @@ class AdminApp(Plugin):
         print "Disable Service: %s"%self.current_service['name']
         service = "/concert/services/enable"
         service_handle=rospy.ServiceProxy(service, EnableService)
-        call_result=service_handle(self.current_service['resource'],False)
+        call_result=service_handle(self.current_service['name'],False)
         print call_result
         pass
         

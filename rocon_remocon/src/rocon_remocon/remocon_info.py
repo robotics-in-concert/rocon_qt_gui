@@ -14,8 +14,9 @@ import signal
 import tempfile
 from urlparse import urlparse
 import urllib
+import yaml
+import json
 
-#ros
 import rospy
 import rocon_python_utils
 import roslaunch.parent
@@ -266,11 +267,13 @@ class RemoconInfo():
         '''
         try:
             app_filename = rocon_python_utils.ros.find_resource_from_string(app_name, extension='launch')
+            console.logdebug("RemoconInfo : regular start app [%s]")
             return (app_filename, self._start_app_launch)
         except (rospkg.ResourceNotFound, ValueError):
             pass
         try:
             app_filename = rocon_python_utils.ros.find_resource_from_string(app_name)
+            console.logdebug("RemoconInfo : start_app_rosrunnable [%s]")
             return (app_filename, self._start_app_rosrunnable)
         except rospkg.ResourceNotFound:
             pass
@@ -278,8 +281,10 @@ class RemoconInfo():
             pass
         o = urlparse(app_name)
         if o.scheme == 'http':
+            console.logdebug("RemoconInfo : start_app_webapp [%s]")
             return (app_name, self._start_app_webapp)
         else:
+            console.logdebug("RemoconInfo : start_app_global_executable [%s]")
             return (app_name, self._start_app_global_executable)
 
     def _start_app_launch(self, app, roslaunch_filename):
@@ -357,13 +362,13 @@ class RemoconInfo():
         return True
 
     def _start_app_webapp(self, app, rosrunnable_filename):
-        if self._check_webbrowser():
-            rosrunnable_filename = "google-chrome"
+        web_browser = self._check_webbrowser()
+        if web_browser is not None:
             url = self._get_webapp_url(app)
-            name = os.path.basename(rosrunnable_filename).replace('.', '_')
+            name = os.path.basename(web_browser).replace('.', '_')
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self.process_listeners, anonymous_name, 1)
-            process = rocon_python_utils.system.Popen([rosrunnable_filename, "--new-window", url], postexec_fn=process_listener)
+            process = rocon_python_utils.system.Popen([web_browser, "--new-window", url], postexec_fn=process_listener)
             app['launch_list'][anonymous_name] = {}
             app['launch_list'][anonymous_name]['name'] = anonymous_name
             app['launch_list'][anonymous_name]['running'] = str(True)
@@ -375,29 +380,32 @@ class RemoconInfo():
 
     def _get_webapp_url(self, app):
         """
-           url syntheiser for sending remappings and parameters information
+           url syntheiser for sending remappings and parameters information.
+           We convert the interaction parameter (yaml string) and remapping (rocon_std_msgs.Remapping[])
+           variables into generic python list/dictionary objects and convert these into
+           json strings as it makes it easier for web apps to handle them.
         """
-        url = app['name']
-        #url += "?" + "MasterURI=" + str(os.environ["ROS_MASTER_URI"])
-        if len(app['parameters']) != 0:
-            url += "&" + "params=" + urllib.quote_plus(app['parameters'])
-        if len(app['remappings']) != 0:
-            remaps = "{"
-            for remapping in app['remappings']:
-                remaps += "\'" + remapping.remap_from + "\':\'" + remapping.remap_to + "\',"
-            remaps = remaps[0:len(remaps) - 1] + "}"
-            print remaps
-            url += "&" + "remaps=" + urllib.quote_plus(remaps)
-        return url
+        interaction_data = {}
+        interaction_data['display_name'] = app['display_name']
+        # parameters
+        interaction_data['parameters'] = yaml.load(app['parameters'])
+        # remappings
+        interaction_data['remappings'] = {}  # need to create a dictionary for easy parsing (note: app['remappings'] is a list of rocon_std_msgs.Remapping)
+        for r in app['remappings']:
+            interaction_data['remappings'][r.remap_from] = r.remap_to
+        # package all the data in json format and dump it to one query string variable
+        console.logdebug("Remocon Info : web app query string %s" % interaction_data)
+        query_string_mappings = {}
+        query_string_mappings['interaction_data'] = json.dumps(interaction_data)
+        # constructing the url
+        return app['name'] + "?" + urllib.urlencode(query_string_mappings)
 
     def _check_webbrowser(self):
-        check_result = rocon_python_utils.system.which("google-chrome")
-        if check_result:
-            return True
-        elif check_result == None:
-            return False
-        else:
-            return False
+        if rocon_python_utils.system.which("google-chrome"):
+            return 'google-chrome'
+        elif rocon_python_utils.system.which("google-chrome-unstable"):
+            return 'google-chrome-unstable'
+        return None
 
     def _stop_app(self, app_hash):
         if not app_hash in self.app_list:
