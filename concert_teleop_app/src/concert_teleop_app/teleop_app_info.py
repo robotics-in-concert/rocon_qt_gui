@@ -127,6 +127,8 @@ class TeleopAppInfo(object):
             if msg.result == True:
                 self._init_teleop(self.captured_teleop_rocon_uri)
                 self._capture_event_callback()
+            else:
+                self._capture_event_callback()
 
     def _init_teleop(self, captured_teleop_rocon_uri):
         """ After capturing teleop, intialization with teleop information.
