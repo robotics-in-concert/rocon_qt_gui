@@ -87,7 +87,6 @@ class RemoconSub(QMainWindow):
         self._init()
 
     def _init(self):
-        self._read_cache()
         self._init_role_list()
         # Ugly Hack : our window manager is not graying out the button when an app closes itself down and the appropriate
         # callback (_set_stop_app_button) is fired. It does otherwise though so it looks like the window manager
@@ -144,19 +143,6 @@ class RemoconSub(QMainWindow):
             font = self._widget_role_list.role_list_widget.item(0).font()
             font.setPointSize(13)
             self._widget_role_list.role_list_widget.item(0).setFont(font)
-
-        ##get rocon master info
-        rocon_master_info = self.remocon_info.get_rocon_master_info()
-
-        if 'name' in rocon_master_info.keys():
-            self.rocon_master_list[self.rocon_master_index]['name'] = rocon_master_info['name']
-        if 'description' in rocon_master_info.keys():
-            self.rocon_master_list[self.rocon_master_index]['description'] = rocon_master_info['description']
-        if 'icon' in rocon_master_info.keys():
-            self.rocon_master_list[self.rocon_master_index]['icon'] = rocon_master_info['icon']
-
-        self.rocon_master_list[self.rocon_master_index]['flag'] = '1'
-        self._write_cache()
 
 ################################################################################################################
 ##app list widget
@@ -252,65 +238,6 @@ class RemoconSub(QMainWindow):
         print "Start app: " + str(self.cur_selected_app['name'])
         if self.remocon_info._start_app(self.cur_selected_app['hash']):
             self._widget_app_list.stop_app_btn.setDisabled(False)
-
-    def _write_cache(self):
-        try:
-            cache_rocon_master_info_list = open(self.rocon_master_list_cache_path, 'w')
-        except:
-            print "No directory or file: %s" % (self.rocon_master_list_cache_path)
-            return
-
-        for k in self.rocon_master_list.values():
-            rocon_master_index = k['index']
-            rocon_master_name = k['name']
-            rocon_master_uri = k['master_uri']
-            rocon_master_host_name = k['host_name']
-            rocon_master_icon = k['icon']
-            rocon_master_description = k['description']
-            rocon_master_flag = k['flag']
-
-            rocon_master_elem = '['
-            rocon_master_elem += 'index=' + str(rocon_master_index) + ','
-            rocon_master_elem += 'name=' + str(rocon_master_name) + ','
-            rocon_master_elem += 'master_uri=' + str(rocon_master_uri) + ','
-            rocon_master_elem += 'host_name=' + str(rocon_master_host_name) + ','
-            rocon_master_elem += 'description=' + str(rocon_master_description) + ','
-            rocon_master_elem += 'icon=' + rocon_master_icon + ','
-            rocon_master_elem += 'flag=' + rocon_master_flag
-            rocon_master_elem += ']\n'
-
-            cache_rocon_master_info_list.write(rocon_master_elem)
-
-        cache_rocon_master_info_list.close()
-
-    def _read_cache(self):
-        #read cache and display the rocon_master list
-        try:
-            cache_rocon_master_info_list = open(self.rocon_master_list_cache_path, 'r')
-        except:
-            print "No directory or file: %s" % (self.rocon_master_list_cache_path)
-            return
-        lines = cache_rocon_master_info_list.readlines()
-
-        for line in lines:
-            if line.count("[index="):
-                rocon_master_index = line[string.find(line, "[index=") + len("[index="):string.find(line, ",name=")]
-                rocon_master_name = line[string.find(line, "name=") + len("name="):string.find(line, ",master_uri=")]
-                rocon_master_uri = line[string.find(line, ",master_uri=") + len(",master_uri="):string.find(line, ",host_name")]
-                rocon_master_host_name = line[string.find(line, ",host_name=") + len(",host_name="):string.find(line, ",description=")]
-                rocon_master_description = line[string.find(line, ",description=") + len(",description="):string.find(line, ",icon=")]
-                rocon_master_icon = line[string.find(line, ",icon=") + len(",icon="):string.find(line, ",flag=")]
-                rocon_master_flag = line[string.find(line, ",flag=") + len(",flag="):string.find(line, "]")]
-
-                self.rocon_master_list[rocon_master_index] = {}
-                self.rocon_master_list[rocon_master_index]['index'] = rocon_master_index
-                self.rocon_master_list[rocon_master_index]['name'] = rocon_master_name
-                self.rocon_master_list[rocon_master_index]['master_uri'] = rocon_master_uri
-                self.rocon_master_list[rocon_master_index]['host_name'] = rocon_master_host_name
-                self.rocon_master_list[rocon_master_index]['icon'] = rocon_master_icon
-                self.rocon_master_list[rocon_master_index]['description'] = rocon_master_description
-                self.rocon_master_list[rocon_master_index]['flag'] = rocon_master_flag
-        cache_rocon_master_info_list.close()
 
 #################################################################
 ##Remocon Main
