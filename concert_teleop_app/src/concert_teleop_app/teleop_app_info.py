@@ -106,6 +106,7 @@ class TeleopAppInfo(object):
         """
         request = rocon_service_msgs.CaptureTeleopRequest()
         request.rocon_uri = rocon_uri
+        request.release = False
         self.captured_teleop_rocon_uri = rocon_uri
         msg_id = self.capture_teleop(request, timeout=rospy.Duration(5.0), callback=self._capture_callback, error_callback=self.error_callback)
         self.service_pair_msg_q.append(msg_id)

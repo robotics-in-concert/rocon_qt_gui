@@ -341,7 +341,12 @@ class RemoconInfo():
         name = os.path.basename(rosrunnable_filename).replace('.', '_')
         anonymous_name = name + "_" + uuid.uuid4().hex
         process_listener = partial(self.process_listeners, anonymous_name, 1)
-        process = rocon_python_utils.system.Popen(['rosrun', package_name, rosrunnable_filename, '__name:=%s' % anonymous_name], postexec_fn=process_listener)
+        command_args = ['rosrun', package_name, rosrunnable_filename, '__name:=%s' % anonymous_name]
+        remapping_args = []
+        for remap in app['remappings']:
+            remapping_args.append(remap.remap_from + ":=" + remap.remap_to)
+        command_args.extend(remapping_args)
+        process = rocon_python_utils.system.Popen(command_args, postexec_fn=process_listener)
         app['launch_list'][anonymous_name] = {}
         app['launch_list'][anonymous_name]['name'] = anonymous_name
         app['launch_list'][anonymous_name]['running'] = str(True)
