@@ -11,7 +11,7 @@ from __future__ import division
 import os
 #pyqt
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot, SIGNAL,SLOT, QRectF , QTimer
+from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot, SIGNAL,SLOT, QRectF , QTimer, QEvent
 from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
 from python_qt_binding.QtGui import QSizePolicy,QTextEdit, QCompleter, QBrush,QDialog, QColor, QPen, QPushButton
 from python_qt_binding.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
@@ -30,7 +30,6 @@ from qt_gui.plugin import Plugin
 
 class TeleopApp(Plugin):
     _update_robot_list_signal = Signal()
-    _captured_teleop_signal = Signal()
 
     CAMERA_FPS = (1000 / 20)
     D2R = 3.141592 / 180
@@ -55,7 +54,7 @@ class TeleopApp(Plugin):
 
         #list item click event
         self._widget.robot_list_tree_widget.itemClicked.connect(self._select_robot_list_tree_item)
-        self._widget.robot_list_tree_widget.itemDoubleClicked.connect(self._capture_teleop)
+        self._widget.robot_list_tree_widget.itemDoubleClicked.connect(self._dbclick_robot_list_item)
 
         #button event connection
         self._widget.backward_btn.setAutoRepeat(True)
@@ -75,10 +74,12 @@ class TeleopApp(Plugin):
 
         self._widget.capture_teleop_btn.pressed.connect(self._capture_teleop)
         self._widget.release_teleop_btn.pressed.connect(self._release_teleop)
-
         #signal event connection
+        self._widget.destroyed.connect(self._exit)
         self._update_robot_list_signal.connect(self._update_robot_list)
-        self._captured_teleop_signal.connect(self._show_capture_teleop_message)
+        self.connect(self, SIGNAL("capture"), self._show_capture_teleop_message)
+        self.connect(self, SIGNAL("release"), self._show_release_teleop_message)
+        self.connect(self, SIGNAL("error"), self._show_error_teleop_message)
         context.add_widget(self._widget)
 
         #init
@@ -88,40 +89,45 @@ class TeleopApp(Plugin):
         self.timer.timeout.connect(self._display_image)
         self.timer.start(self.CAMERA_FPS)
 
+        self._widget.release_teleop_btn.setEnabled(False)
+
         self.teleop_app_info = TeleopAppInfo()
         self.teleop_app_info._reg_event_callback(self._refresh_robot_list)
         self.teleop_app_info._reg_capture_event_callback(self._capture_event_callback)
+        self.teleop_app_info._reg_release_event_callback(self._release_event_callback)
+        self.teleop_app_info._reg_error_event_callback(self._error_event_callback)
 
         self.robot_item_list = {}
         self.current_robot = None
         self.current_captured_robot = None
 
-    def _show_capture_teleop_message(self):
-        QMessageBox.warning(self._widget, 'SUCCESS', "CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
-        for k in self.robot_item_list.keys():
-            if self.robot_item_list[k] == self.current_robot:
-                k.setBackground(0, QBrush(Qt.SolidPattern))
-                k.setBackgroundColor(0, QColor(0, 255, 0, 255))
-                robot_name = k.text(0)
-                k.setText(0, str(robot_name) + " (captured)")
-            else:
-                k.setBackground(0, QBrush(Qt.NoBrush))
-                k.setBackgroundColor(0, QColor(0, 0, 0, 0))
-                robot_name = k.text(0)
-                k.setText(0, robot_name[:robot_name.find(" (captured)")])
+    def _exit(self):
+        if self.current_captured_robot:
+            self.teleop_app_info._release_teleop(self.current_captured_robot["rocon_uri"])
 
+    def _show_capture_teleop_message(self, rtn):
+        if rtn:
+            QMessageBox.warning(self._widget, 'SUCCESS', "CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
+            for k in self.robot_item_list.keys():
+                if self.robot_item_list[k] == self.current_robot:
+                    k.setBackground(0, QBrush(Qt.SolidPattern))
+                    k.setBackgroundColor(0, QColor(0, 255, 0, 255))
+                    robot_name = k.text(0)
+                    k.setText(0, str(robot_name) + " (captured)")
+                else:
+                    k.setBackground(0, QBrush(Qt.NoBrush))
+                    k.setBackgroundColor(0, QColor(0, 0, 0, 0))
+                    robot_name = k.text(0)
+        else:
+            QMessageBox.warning(self._widget, 'FAIL', "FAIURE CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
         self._widget.capture_teleop_btn.setEnabled(False)
+        self._widget.release_teleop_btn.setEnabled(True)
         self._widget.setDisabled(False)
         self.current_captured_robot = self.current_robot
-        pass
 
-    def _capture_event_callback(self):
-        self._captured_teleop_signal.emit()
-
-    def _release_teleop(self):
-        if self.current_captured_robot:
-            #success
-            self._widget.capture_teleop_btn.setEnabled(True)
+    def _show_release_teleop_message(self, rtn):
+        if rtn:
+            QMessageBox.warning(self._widget, 'SUCCESS', "RELEASE!!!!", QMessageBox.Ok | QMessageBox.Ok)
             for k in self.robot_item_list.keys():
                 if self.robot_item_list[k] == self.current_captured_robot:
                     k.setBackground(0, QBrush(Qt.NoBrush))
@@ -129,17 +135,60 @@ class TeleopApp(Plugin):
                     robot_name = k.text(0)
                     k.setText(0, robot_name[:robot_name.find(" (captured)")])
         else:
-            print "NO current_captured_robot"
-        pass
+            QMessageBox.warning(self._widget, 'FAIL', "FAIURE RELEASE!!!!", QMessageBox.Ok | QMessageBox.Ok)
+
+        self._widget.setDisabled(False)
+        self._widget.capture_teleop_btn.setEnabled(True)
+        self._widget.release_teleop_btn.setEnabled(False)
+        self.current_captured_robot = None
+
+    def _show_error_teleop_message(self, err):
+        QMessageBox.warning(self._widget, 'ERROR', err, QMessageBox.Ok | QMessageBox.Ok)
+        self._widget.setDisabled(False)
+        self._widget.capture_teleop_btn.setEnabled(True)
+        self._widget.release_teleop_btn.setEnabled(True)
+
+    def _capture_event_callback(self, rtn):
+        try:
+            self.emit(SIGNAL("capture"), rtn)
+        except:
+            pass
+
+    def _release_event_callback(self, rtn):
+        try:
+            self.emit(SIGNAL("release"), rtn)
+        except:
+            pass
+
+    def _error_event_callback(self, err):
+        try:
+            self.emit(SIGNAL("error"), err)
+        except:
+            pass
+
+    def _release_teleop(self):
+        if self.current_robot != self.current_captured_robot:
+            print "NO Capture robot (captured: %s)" % self.current_captured_robot['name'].string
+            return
+        self.teleop_app_info._release_teleop(self.current_robot["rocon_uri"])
+        self._widget.setDisabled(True)
 
     def _capture_teleop(self):
         if self.current_robot == None:
-                print "NO Select robot"
-                return
-        print ("_capture teleop: %s" % self.current_robot["rocon_uri"])
+            print "NO Select robot"
+            return
+        elif self.current_captured_robot:
+            print "Already captured robot"
+            return
         self.teleop_app_info._capture_teleop(self.current_robot["rocon_uri"])
         self._widget.setDisabled(True)
         pass
+
+    def _dbclick_robot_list_item(self):
+        if self.current_captured_robot == None:
+            self._capture_teleop()
+        else:
+            self._release_teleop()
 
     def _update_robot_list(self):
         self._widget.robot_list_tree_widget.clear()
@@ -178,13 +227,14 @@ class TeleopApp(Plugin):
         self.teleop_app_info._request_teleop_cmd_vel(0, 0)
 
     def _select_robot_list_tree_item(self, Item):
-        print '_select_robot: ' + Item.text(0)
-
         if not Item in self.robot_item_list.keys():
             print "HAS NO KEY"
         else:
             self.current_robot = self.robot_item_list[Item]
-        pass
+            if self.current_robot == self.current_captured_robot:
+                self._widget.release_teleop_btn.setEnabled(True)
+            else:
+                self._widget.release_teleop_btn.setEnabled(False)
 
     def _refresh_robot_list(self):
         self._update_robot_list_signal.emit()
@@ -202,3 +252,5 @@ class TeleopApp(Plugin):
             self._widget.camera_view.fitInView(QRectF(0, 0, pixmap.width(), pixmap.height()), Qt.KeepAspectRatio)
             self.scene.addPixmap(pixmap)
             self.scene.update()
+        else:
+            self.scene.clear()
