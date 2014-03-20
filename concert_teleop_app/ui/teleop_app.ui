@@ -92,15 +92,36 @@
         <property name="text">
          <string>Robot List</string>
         </property>
+        <property name="background">
+         <color>
+          <red>255</red>
+          <green>0</green>
+          <blue>0</blue>
+         </color>
+        </property>
        </column>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="test_capture_teleop_btn">
-       <property name="text">
-        <string>Capture Teleop</string>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="margin">
+        <number>9</number>
        </property>
-      </widget>
+       <item>
+        <widget class="QPushButton" name="capture_teleop_btn">
+         <property name="text">
+          <string>Capture Teleop</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="release_teleop_btn">
+         <property name="text">
+          <string>Release Teleop</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
