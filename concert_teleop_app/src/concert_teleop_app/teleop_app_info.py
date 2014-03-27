@@ -37,7 +37,6 @@ class TeleopAppInfo(object):
         self.captured_teleop_rocon_uri = None
         self.captured_teleop_cmd_vel_pub = None
         self.captured_teleop_compressed_image_sub = None
-        rospy.Subscriber("/usb_cam/image_raw", CompressedImage, self._update_teleop_image)
         rospy.Subscriber("/services/teleop/available_teleops", StringArray, self._update_robot_list)
         self.capture_teleop = rocon_python_comms.ServicePairClient('/services/teleop/capture_teleop', rocon_service_msgs.CaptureTeleopPair)
 

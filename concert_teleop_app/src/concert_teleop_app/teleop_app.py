@@ -34,8 +34,8 @@ class TeleopApp(Plugin):
     CAMERA_FPS = (1000 / 20)
     D2R = 3.141592 / 180
     R2D = 180 / 3.141592
-    LINEAR_V = 1.5
-    ANGULAR_V = 60 * D2R
+    LINEAR_V = 2.0
+    ANGULAR_V = 90 * D2R
 
     def __init__(self, context):
         self._context = context
@@ -58,9 +58,13 @@ class TeleopApp(Plugin):
 
         #button event connection
         self._widget.backward_btn.setAutoRepeat(True)
+        self._widget.backward_btn.setAutoRepeatInterval(5)
         self._widget.forward_btn.setAutoRepeat(True)
+        self._widget.forward_btn.setAutoRepeatInterval(5)
         self._widget.left_turn_btn.setAutoRepeat(True)
+        self._widget.left_turn_btn.setAutoRepeatInterval(5)
         self._widget.right_turn_btn.setAutoRepeat(True)
+        self._widget.right_turn_btn.setAutoRepeatInterval(5)
 
         self._widget.backward_btn.clicked.connect(self._backward)
         self._widget.forward_btn.clicked.connect(self._forward)
