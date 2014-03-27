@@ -240,15 +240,21 @@ class TeleopApp(Plugin):
         self._update_robot_list_signal.emit()
         pass
 
+    def _check_image_format(self, image_format):
+        formats = ['JPG', 'PNG', 'BMP', 'JPEG']
+        for f in formats:
+            if f in image_format.upper():
+                return f
+
     def _display_image(self):
         image = self.teleop_app_info.image_data
         if image:
             if len(self.scene.items()) > 1:
                 self.scene.removeItem(self.scene.items()[0])
-
             image_data = self.teleop_app_info.image_data.data
+            image_format = self._check_image_format(self.teleop_app_info.image_data.format)
             pixmap = QPixmap()
-            pixmap.loadFromData(image_data, format="PNG",)
+            pixmap.loadFromData(image_data, format=image_format)
             self._widget.camera_view.fitInView(QRectF(0, 0, pixmap.width(), pixmap.height()), Qt.KeepAspectRatio)
             self.scene.addPixmap(pixmap)
             self.scene.update()
