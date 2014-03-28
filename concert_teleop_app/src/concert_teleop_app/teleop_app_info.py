@@ -37,7 +37,6 @@ class TeleopAppInfo(object):
         self.captured_teleop_rocon_uri = None
         self.captured_teleop_cmd_vel_pub = None
         self.captured_teleop_compressed_image_sub = None
-        rospy.Subscriber("/usb_cam/image_raw", CompressedImage, self._update_teleop_image)
         rospy.Subscriber("/services/teleop/available_teleops", StringArray, self._update_robot_list)
         self.capture_teleop = rocon_python_comms.ServicePairClient('/services/teleop/capture_teleop', rocon_service_msgs.CaptureTeleopPair)
 
@@ -108,7 +107,7 @@ class TeleopAppInfo(object):
         request.rocon_uri = rocon_uri
         request.release = False
         self.captured_teleop_rocon_uri = rocon_uri
-        msg_id = self.capture_teleop(request, timeout=rospy.Duration(5.0), callback=self._capture_callback, error_callback=self.error_callback)
+        msg_id = self.capture_teleop(request, timeout=rospy.Duration(15.0), callback=self._capture_callback, error_callback=self.error_callback)
         self.service_pair_msg_q.append(msg_id)
 
     def _release_teleop(self, rocon_uri):
@@ -122,7 +121,7 @@ class TeleopAppInfo(object):
         request.rocon_uri = rocon_uri
         request.release = True
         self.captured_teleop_rocon_uri = rocon_uri
-        msg_id = self.capture_teleop(request, timeout=rospy.Duration(5.0), callback=self._release_callback, error_callback=self.error_callback)
+        msg_id = self.capture_teleop(request, timeout=rospy.Duration(15.0), callback=self._release_callback, error_callback=self.error_callback)
         self.service_pair_msg_q.append(msg_id)
 
     def _capture_callback(self, msg_id, msg):

@@ -34,8 +34,8 @@ class TeleopApp(Plugin):
     CAMERA_FPS = (1000 / 20)
     D2R = 3.141592 / 180
     R2D = 180 / 3.141592
-    LINEAR_V = 1.5
-    ANGULAR_V = 60 * D2R
+    LINEAR_V = 2.0
+    ANGULAR_V = 90 * D2R
 
     def __init__(self, context):
         self._context = context
@@ -58,9 +58,13 @@ class TeleopApp(Plugin):
 
         #button event connection
         self._widget.backward_btn.setAutoRepeat(True)
+        self._widget.backward_btn.setAutoRepeatInterval(5)
         self._widget.forward_btn.setAutoRepeat(True)
+        self._widget.forward_btn.setAutoRepeatInterval(5)
         self._widget.left_turn_btn.setAutoRepeat(True)
+        self._widget.left_turn_btn.setAutoRepeatInterval(5)
         self._widget.right_turn_btn.setAutoRepeat(True)
+        self._widget.right_turn_btn.setAutoRepeatInterval(5)
 
         self._widget.backward_btn.clicked.connect(self._backward)
         self._widget.forward_btn.clicked.connect(self._forward)
@@ -240,15 +244,21 @@ class TeleopApp(Plugin):
         self._update_robot_list_signal.emit()
         pass
 
+    def _check_image_format(self, image_format):
+        formats = ['JPG', 'PNG', 'BMP', 'JPEG']
+        for f in formats:
+            if f in image_format.upper():
+                return f
+
     def _display_image(self):
         image = self.teleop_app_info.image_data
         if image:
             if len(self.scene.items()) > 1:
                 self.scene.removeItem(self.scene.items()[0])
-
             image_data = self.teleop_app_info.image_data.data
+            image_format = self._check_image_format(self.teleop_app_info.image_data.format)
             pixmap = QPixmap()
-            pixmap.loadFromData(image_data, format="PNG",)
+            pixmap.loadFromData(image_data, format=image_format)
             self._widget.camera_view.fitInView(QRectF(0, 0, pixmap.width(), pixmap.height()), Qt.KeepAspectRatio)
             self.scene.addPixmap(pixmap)
             self.scene.update()
