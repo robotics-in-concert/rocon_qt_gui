@@ -122,12 +122,12 @@ class TeleopApp(Plugin):
                     k.setBackground(0, QBrush(Qt.NoBrush))
                     k.setBackgroundColor(0, QColor(0, 0, 0, 0))
                     robot_name = k.text(0)
+            self._widget.capture_teleop_btn.setEnabled(False)
+            self._widget.release_teleop_btn.setEnabled(True)
+            self.current_captured_robot = self.current_robot
         else:
             QMessageBox.warning(self._widget, 'FAIL', "FAIURE CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
-        self._widget.capture_teleop_btn.setEnabled(False)
-        self._widget.release_teleop_btn.setEnabled(True)
         self._widget.setDisabled(False)
-        self.current_captured_robot = self.current_robot
 
     def _show_release_teleop_message(self, rtn):
         if rtn:
