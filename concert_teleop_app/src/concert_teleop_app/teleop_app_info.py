@@ -17,7 +17,7 @@ import rocon_python_comms
 from rocon_std_msgs.msg import StringArray
 from geometry_msgs.msg import Twist
 
-import rocon_service_msgs.msg as rocon_service_msgs
+import concert_service_msgs.msg as concert_service_msgs
 
 ##############################################################################
 # TeleopAppInfo
@@ -38,7 +38,7 @@ class TeleopAppInfo(object):
         self.captured_teleop_cmd_vel_pub = None
         self.captured_teleop_compressed_image_sub = None
         rospy.Subscriber("/services/teleop/available_teleops", StringArray, self._update_robot_list)
-        self.capture_teleop = rocon_python_comms.ServicePairClient('/services/teleop/capture_teleop', rocon_service_msgs.CaptureTeleopPair)
+        self.capture_teleop = rocon_python_comms.ServicePairClient('/services/teleop/capture_teleop', concert_service_msgs.CaptureTeleopPair)
 
     def _update_robot_list(self, data):
         """
@@ -103,7 +103,7 @@ class TeleopAppInfo(object):
         @param rocon_uri: robot information as uri type
         @type rocon_uri class
         """
-        request = rocon_service_msgs.CaptureTeleopRequest()
+        request = concert_service_msgs.CaptureTeleopRequest()
         request.rocon_uri = rocon_uri
         request.release = False
         self.captured_teleop_rocon_uri = rocon_uri
@@ -117,7 +117,7 @@ class TeleopAppInfo(object):
         @param rocon_uri: robot information as uri type
         @type rocon_uri class
         """
-        request = rocon_service_msgs.CaptureTeleopRequest()
+        request = concert_service_msgs.CaptureTeleopRequest()
         request.rocon_uri = rocon_uri
         request.release = True
         self.captured_teleop_rocon_uri = rocon_uri

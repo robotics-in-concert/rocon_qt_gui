@@ -3,6 +3,7 @@
 	<name>concert_teleop_app</name>
 	<comment></comment>
 	<projects>
+		<project>concert_service_msgs</project>
 		<project>rocon_console</project>
 	</projects>
 	<buildSpec>
