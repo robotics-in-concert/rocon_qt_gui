@@ -43,5 +43,9 @@ if __name__ == "__main__":
         print "Unknown"
         print "Unknown."
         print "unknown.png"
+    except AttributeError as e:
+        print "Unknown"
+        print "Unknown."
+        print "unknown.png"
     except rospy.exceptions.ROSInitException as e:
         pass
