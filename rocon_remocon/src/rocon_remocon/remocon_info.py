@@ -90,6 +90,7 @@ class RemoconInfo():
         try:
             rocon_master_info_topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
             get_interactions_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions', timeout=rospy.rostime.Duration(5.0), unique=True)
+            get_roles_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetRoles', timeout=rospy.rostime.Duration(5.0), unique=True)
             request_interaction_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/RequestInteraction', timeout=rospy.rostime.Duration(5.0), unique=True)
         except rocon_python_comms.NotFoundException as e:
             console.logerror("RemoconInfo : failed to find either rocon master info or interactions topics and services' [%s]" % str(e))
@@ -97,6 +98,7 @@ class RemoconInfo():
 
         self.info_sub = rospy.Subscriber(rocon_master_info_topic_name, rocon_std_msgs.MasterInfo, self._info_callback)
         self.get_interactions_service_proxy = rospy.ServiceProxy(get_interactions_service_name, rocon_interaction_srvs.GetInteractions)
+        self.get_roles_service_proxy = rospy.ServiceProxy(get_roles_service_name, rocon_interaction_srvs.GetRoles)
         self.request_interaction_service_proxy = rospy.ServiceProxy(request_interaction_service_name, rocon_interaction_srvs.RequestInteraction)
         self.remocon_status_pub = rospy.Publisher("remocons/" + unique_name, rocon_interaction_msgs.RemoconStatus, latch=True)
 
@@ -144,22 +146,11 @@ class RemoconInfo():
         self.remocon_status_pub.publish(remocon_status)
 
     def get_role_list(self):
-        '''
-          Currently we just call the get_interactions service which will
-          filter the interactions table against our compatibilty rocon_uri.
-          We can then extract the valid roles for us from the interaction
-          list that returns.
-        '''
-        # Might want to put a filtering get_roles service on the interactions
-        # manager. See:
-        #    https://github.com/robotics-in-concert/rocon_qt_gui/issues/52
         try:
-            response = self.get_interactions_service_proxy([], self.platform_info.uri)
+            response = self.get_roles_service_proxy(self.platform_info.uri)
         except (rospy.ROSInterruptException, rospy.ServiceException):
             return []
-        role_list = list(set([i.role for i in response.interactions]))
-        role_list.sort()
-        return role_list
+        return response.roles
 
     def _select_role(self, role_name):
         roles = []
