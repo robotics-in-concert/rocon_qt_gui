@@ -11,11 +11,13 @@ from __future__ import division
 import os
 #pyqt
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot, SIGNAL,SLOT, QRectF , QTimer, QEvent
-from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
-from python_qt_binding.QtGui import QSizePolicy,QTextEdit, QCompleter, QBrush,QDialog, QColor, QPen, QPushButton
+from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal
+from python_qt_binding.QtCore import pyqtSlot, SIGNAL,SLOT, QRectF , QTimer, QEvent, QUrl
+from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QLabel, QComboBox
+from python_qt_binding.QtGui import QSizePolicy,QTextEdit, QCompleter, QBrush, QDialog, QColor, QPen, QPushButton
 from python_qt_binding.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
 from python_qt_binding.QtGui import QTreeWidgetItem, QPixmap, QGraphicsScene
+from python_qt_binding.QtDeclarative import QDeclarativeView
 from python_qt_binding.QtSvg import QSvgGenerator
 #ros
 import rospkg
@@ -32,10 +34,15 @@ class TeleopApp(Plugin):
     _update_robot_list_signal = Signal()
 
     CAMERA_FPS = (1000 / 20)
+    CONTROL_INTERVAL = 10
     D2R = 3.141592 / 180
     R2D = 180 / 3.141592
     LINEAR_V = 2.0
     ANGULAR_V = 90 * D2R
+    UP_KEY = 16777235
+    DOWN_KEY = 16777237
+    LEFT_KEY = 16777234
+    RIGHT_KEY = 16777236
 
     def __init__(self, context):
         self._context = context
@@ -57,44 +64,31 @@ class TeleopApp(Plugin):
         self._widget.robot_list_tree_widget.itemDoubleClicked.connect(self._dbclick_robot_list_item)
 
         #button event connection
-        self._widget.backward_btn.setAutoRepeat(True)
-        self._widget.backward_btn.setAutoRepeatInterval(5)
-        self._widget.forward_btn.setAutoRepeat(True)
-        self._widget.forward_btn.setAutoRepeatInterval(5)
-        self._widget.left_turn_btn.setAutoRepeat(True)
-        self._widget.left_turn_btn.setAutoRepeatInterval(5)
-        self._widget.right_turn_btn.setAutoRepeat(True)
-        self._widget.right_turn_btn.setAutoRepeatInterval(5)
-
-        self._widget.backward_btn.clicked.connect(self._backward)
-        self._widget.forward_btn.clicked.connect(self._forward)
-        self._widget.left_turn_btn.clicked.connect(self._left_turn)
-        self._widget.right_turn_btn.clicked.connect(self._right_turn)
-
-        self._widget.backward_btn.released.connect(self._stop)
-        self._widget.forward_btn.released.connect(self._stop)
-        self._widget.left_turn_btn.released.connect(self._stop)
-        self._widget.right_turn_btn.released.connect(self._stop)
 
         self._widget.capture_teleop_btn.pressed.connect(self._capture_teleop)
         self._widget.release_teleop_btn.pressed.connect(self._release_teleop)
         #signal event connection
+
         self._widget.destroyed.connect(self._exit)
+
         self._update_robot_list_signal.connect(self._update_robot_list)
         self.connect(self, SIGNAL("capture"), self._show_capture_teleop_message)
         self.connect(self, SIGNAL("release"), self._show_release_teleop_message)
         self.connect(self, SIGNAL("error"), self._show_error_teleop_message)
+
         context.add_widget(self._widget)
 
         #init
-        self.scene = QGraphicsScene()
+        self.scene = QGraphicsScene(self._widget)
         self._widget.camera_view.setScene(self.scene)
-        self.timer = QTimer(self._widget)
-        self.timer.timeout.connect(self._display_image)
-        self.timer.start(self.CAMERA_FPS)
+        self.timer_image = QTimer(self._widget)
+        self.timer_image.timeout.connect(self._display_image)
+        self.timer_image.start(self.CAMERA_FPS)
+
+        self.timer_contorl = QTimer(self._widget)
+        self.timer_contorl.timeout.connect(self._on_move)
 
         self._widget.release_teleop_btn.setEnabled(False)
-
         self.teleop_app_info = TeleopAppInfo()
         self.teleop_app_info._reg_event_callback(self._refresh_robot_list)
         self.teleop_app_info._reg_capture_event_callback(self._capture_event_callback)
@@ -104,6 +98,64 @@ class TeleopApp(Plugin):
         self.robot_item_list = {}
         self.current_robot = None
         self.current_captured_robot = None
+
+        #virtual joystick controll
+        self.direction = ""
+        vj_path = os.path.join(rospack.get_path('concert_teleop_app'), 'ui', 'virtual_jostick.qml')
+        self._widget.vj_view.setSource(QUrl(vj_path))
+        self._widget.vj_view.setResizeMode(QDeclarativeView.SizeRootObjectToView)
+        rootObject = self._widget.vj_view.rootObject()
+        rootObject.dirChanged.connect(self.direction_change_event)
+        rootObject.pressedHoverChanged.connect(self.pressed_hover_changed_event)
+        #keyboard control
+        for k in self._widget.children():
+            try:
+                k.keyPressEvent = self.on_key_press
+                k.keyReleaseEvent = self.on_key_release
+            except:
+                pass
+
+    def on_key_release(self, e):
+        if e.isAutoRepeat():
+            return
+        else:
+            self._stop()
+
+    def on_key_press(self, e):
+        linear = 0
+        angular = 0
+        if self.UP_KEY == e.key():
+            linear = self.LINEAR_V
+        if self.DOWN_KEY == e.key():
+            linear = -self.LINEAR_V
+        if self.RIGHT_KEY == e.key():
+            angular = -self.ANGULAR_V
+        if self.LEFT_KEY == e.key():
+            angular = self.ANGULAR_V
+        self._set_cmf_vel(linear, angular)
+
+    def direction_change_event(self, direction):
+        self.direction = direction
+
+    def pressed_hover_changed_event(self, ishover):
+        if ishover:
+            self.timer_contorl.start(self.CONTROL_INTERVAL)
+        else:
+            self._stop()
+            self.timer_contorl.stop()
+
+    def _on_move(self):
+        linear = 0
+        angular = 0
+        if "U" in self.direction:
+            linear = self.LINEAR_V
+        if "D" in self.direction:
+            linear = -self.LINEAR_V
+        if "R" in self.direction:
+            angular = -self.ANGULAR_V
+        if "L" in self.direction:
+            angular = self.ANGULAR_V
+        self._set_cmf_vel(linear, angular)
 
     def _exit(self):
         if self.current_captured_robot:
@@ -203,29 +255,8 @@ class TeleopApp(Plugin):
             robot_item.setText(0, k["name"].string)
             self.robot_item_list[robot_item] = k
 
-    def _backward(self):
-        if self._widget.backward_btn.isDown():
-            self.teleop_app_info._request_teleop_cmd_vel(-self.LINEAR_V, 0)
-        else:
-            self._stop()
-
-    def _forward(self):
-        if self._widget.forward_btn.isDown():
-            self.teleop_app_info._request_teleop_cmd_vel(self.LINEAR_V, 0)
-        else:
-            self._stop()
-
-    def _left_turn(self):
-        if self._widget.left_turn_btn.isDown():
-            self.teleop_app_info._request_teleop_cmd_vel(0, self.ANGULAR_V)
-        else:
-            self._stop()
-
-    def _right_turn(self):
-        if self._widget.right_turn_btn.isDown():
-            self.teleop_app_info._request_teleop_cmd_vel(0, -self.ANGULAR_V)
-        else:
-            self._stop()
+    def _set_cmf_vel(self, linear, angular):
+        self.teleop_app_info._request_teleop_cmd_vel(linear, angular)
 
     def _stop(self):
         self.teleop_app_info._request_teleop_cmd_vel(0, 0)
