@@ -401,6 +401,8 @@ class RemoconInfo():
             return 'google-chrome'
         elif rocon_python_utils.system.which("google-chrome-unstable"):
             return 'google-chrome-unstable'
+        elif rocon_python_utils.system.which("chromium-browser"):
+            return 'chromium-browser'
         return None
 
     def _stop_app(self, app_hash):
