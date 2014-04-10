@@ -9,6 +9,7 @@
 #system
 from __future__ import division
 import os
+import math
 #pyqt
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal
@@ -24,6 +25,8 @@ import rospkg
 from teleop_app_info import TeleopAppInfo
 #rqt
 from qt_gui.plugin import Plugin
+
+import rospy
 
 ##############################################################################
 # Teleop App
@@ -100,12 +103,13 @@ class TeleopApp(Plugin):
         self.current_captured_robot = None
 
         #virtual joystick controll
-        self.direction = ""
-        vj_path = os.path.join(rospack.get_path('concert_teleop_app'), 'ui', 'virtual_jostick.qml')
+        self.last_linear_command = 0.0
+        self.last_angular_command = 0.0
+        vj_path = os.path.join(rospack.get_path('concert_teleop_app'), 'ui', 'virtual_joystick.qml')
         self._widget.vj_view.setSource(QUrl(vj_path))
         self._widget.vj_view.setResizeMode(QDeclarativeView.SizeRootObjectToView)
         rootObject = self._widget.vj_view.rootObject()
-        rootObject.dirChanged.connect(self.direction_change_event)
+        rootObject.feedback.connect(self.joystick_feedback_event)
         rootObject.pressedHoverChanged.connect(self.pressed_hover_changed_event)
         #keyboard control
         for k in self._widget.children():
@@ -122,20 +126,37 @@ class TeleopApp(Plugin):
             self._stop()
 
     def on_key_press(self, e):
-        linear = 0
-        angular = 0
+        self.last_linear_command = 0
+        self.last_angular_command = 0
         if self.UP_KEY == e.key():
-            linear = self.LINEAR_V
+            self.last_linear_command = self.LINEAR_V
         if self.DOWN_KEY == e.key():
-            linear = -self.LINEAR_V
+            self.last_linear_command = -self.LINEAR_V
         if self.RIGHT_KEY == e.key():
-            angular = -self.ANGULAR_V
+            self.last_angular_command = -self.ANGULAR_V
         if self.LEFT_KEY == e.key():
-            angular = self.ANGULAR_V
-        self._set_cmf_vel(linear, angular)
+            self.last_angular_command = self.ANGULAR_V
+        self._set_cmf_vel(self.last_linear_command, self.last_angular_command)
 
-    def direction_change_event(self, direction):
-        self.direction = direction
+    def joystick_feedback_event(self, x, y):
+        '''
+        Takes a normalised double pair coming in with which we can apply to our
+        velocity bounds.
+
+        We also use a narrow dead zone along each x and y axis.
+
+        :param double x: normalised (-1.0, 1.0) left to right position
+        :param double y: normalised (-1.0, 1.0) bottom to top position
+        '''
+        dead_zone_radius = 0.05
+        if math.fabs(x) < dead_zone_radius:
+            self.last_angular_command = 0.0
+        else:
+            self.last_angular_command = -x * self.ANGULAR_V
+        if  math.fabs(y) < dead_zone_radius:
+            self.last_linear_command = 0.0
+        else:
+            self.last_linear_command = y * self.LINEAR_V
 
     def pressed_hover_changed_event(self, ishover):
         if ishover:
@@ -145,17 +166,7 @@ class TeleopApp(Plugin):
             self.timer_contorl.stop()
 
     def _on_move(self):
-        linear = 0
-        angular = 0
-        if "U" in self.direction:
-            linear = self.LINEAR_V
-        if "D" in self.direction:
-            linear = -self.LINEAR_V
-        if "R" in self.direction:
-            angular = -self.ANGULAR_V
-        if "L" in self.direction:
-            angular = self.ANGULAR_V
-        self._set_cmf_vel(linear, angular)
+        self._set_cmf_vel(self.last_linear_command, self.last_angular_command)
 
     def _exit(self):
         if self.current_captured_robot:
