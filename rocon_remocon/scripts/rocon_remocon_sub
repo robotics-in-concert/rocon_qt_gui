@@ -38,10 +38,8 @@ def signal_handler(signum, f):
 ##############################################################################.
 
 if __name__ == "__main__":
-    print "rocon_remocon_sub: Signal Registration"
     signal.signal(signal.SIGINT, signal_handler)
 
-    print sys.argv
     index = sys.argv[1]  # name
     name = sys.argv[2]  # ip
     ip = sys.argv[3]  # ip
@@ -56,4 +54,3 @@ if __name__ == "__main__":
 
     myapp = rocon_remocon.RemoconSub(None, "Rocon Remocon Sub", app, index, name, ip, host_name)
     app.exec_()
-    print "rocon_remocon_sub: Main end"

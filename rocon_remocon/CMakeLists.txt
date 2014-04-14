@@ -121,12 +121,14 @@ catkin_package(
 #    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 #    )
 
-install(DIRECTORY 
+install(DIRECTORY ui
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-install(DIRECTORY ui
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(PROGRAMS 
+    scripts/rocon_remocon_check_up
+    scripts/rocon_remocon_sub
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 

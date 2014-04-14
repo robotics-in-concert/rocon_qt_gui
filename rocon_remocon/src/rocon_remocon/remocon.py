@@ -21,7 +21,7 @@ from PyQt4.QtGui import QIcon, QWidget, QLabel  # QFileDialog, QGraphicsScene, Q
 from PyQt4.QtGui import QSizePolicy, QTextEdit, QPushButton, QDialog  # QCompleter, QBrush, QColor, QPen
 from PyQt4.QtGui import QMainWindow, QCheckBox
 
-from PyQt4.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout  # QMessageBox, QTabWidget, QPlainTextEdit
+from PyQt4.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox  # QMessageBox, QTabWidget, QPlainTextEdit
 #from PyQt4.QtSvg import QSvgGenerator
 
 import rospkg
@@ -109,12 +109,12 @@ class RemoconSub(QMainWindow):
         return True
 
     def _uninit_role_list(self):
-        print "[RemoconSub]_uninit_role_list"
+
         self.remocon_info._shutdown()
         self.cur_selected_role = 0
 
     def _select_role_list(self, Item):
-        print '_select_role_list: ' + Item.text()
+
         self.cur_selected_role = str(Item.text())
 
         self.remocon_info._select_role(self.cur_selected_role)
@@ -129,7 +129,6 @@ class RemoconSub(QMainWindow):
         execute_path = self.scripts_path + 'rocon_remocon'  # command
         execute_path += " " + "'" + self.host_name + "'"  # arg1
         os.execv(self.scripts_path + 'rocon_remocon', ['', self.host_name])
-        print "Spawning: %s" % (execute_path)
 
     def _refresh_role_list(self):
         self._widget_role_list.role_list_widget.clear()
@@ -174,7 +173,6 @@ class RemoconSub(QMainWindow):
             #setting the icon
 
             app_icon = k['icon']
-            print("Icon: %s" % app_icon)
             if app_icon == "unknown.png":
                 icon = QIcon(self.icon_paths['unknown'])
                 self._widget_app_list.app_list_widget.item(0).setIcon(icon)
@@ -182,7 +180,8 @@ class RemoconSub(QMainWindow):
                 icon = QIcon(os.path.join(utils.get_icon_cache_home(), app_icon))
                 self._widget_app_list.app_list_widget.item(0).setIcon(icon)
             else:
-                print self.rocon_master_name + ': No icon'
+                print 
+                console.logdebug("%s : No icon" % str(self.rocon_master_name))
             pass
 
     def _select_app_list(self, Item):
@@ -229,13 +228,13 @@ class RemoconSub(QMainWindow):
             pass  # do nothing
 
     def _stop_app(self):
-        print "Stop app: " + str(self.cur_selected_app['name'])
+        console.logdebug("Remocon : Stop app %s " % str(self.cur_selected_app['name']))
         if self.remocon_info._stop_app(self.cur_selected_app['hash']):
             self._set_stop_app_button()
             #self._widget_app_list.stop_app_btn.setDisabled(True)
 
     def _start_app(self):
-        print "Start app: " + str(self.cur_selected_app['name'])
+        console.logdebug("Remocon : Start app %s " % str(self.cur_selected_app['name']))
         if self.remocon_info._start_app(self.cur_selected_app['hash']):
             self._widget_app_list.stop_app_btn.setDisabled(False)
 
@@ -291,7 +290,7 @@ class RemoconMain(QMainWindow):
         self._widget_main.add_concert_btn.pressed.connect(self._set_add_rocon_master)  # add button event
         self._widget_main.delete_btn.pressed.connect(self._delete_rocon_master)  # delete button event
         self._widget_main.delete_all_btn.pressed.connect(self._delete_all_rocon_masters)  # delete all button event
-        self._widget_main.refresh_btn.pressed.connect(self._refresh_rocon_master_list)  # refresh all button event
+        self._widget_main.refresh_btn.pressed.connect(self._refresh_all_rocon_master_list)  # refresh all button event
 
         #init
         self._init()
@@ -300,34 +299,65 @@ class RemoconMain(QMainWindow):
         self._widget_main.raise_()          # make sure it is on top
 
     def __del__(self):
-        print '[RemoconMain]: Destroy'
+        console.loginfo("RemoconMain: Destroy")
 
     def _init(self):
 
         self._connect_dlg_isValid = False
         self.cur_selected_rocon_master = None
-        self._refresh_rocon_master_list()
+        self._refresh_all_rocon_master_list()
         self.is_init = True
         pass
 
-    def _check_up(self):
+    def _check_up_one(self, rocon_master):
+        rocon_master_uri = rocon_master['master_uri']
+        host_name = rocon_master['host_name']
+        output = subprocess.Popen([self.scripts_path + "rocon_remocon_check_up", rocon_master_uri, host_name], stdout=subprocess.PIPE)
+        time_out_cnt = 0
+        while True:
+            result = output.poll()
+            if time_out_cnt > 30:
+                console.logdebug("timeout: %s" % (str(rocon_master_uri)))
+                try:
+                    output.terminate()
+                except:
+                    console.logdebug("Error: output.terminate()")
+
+                rocon_master['name'] = "Unknown"
+                rocon_master['description'] = "Unknown."
+                rocon_master['icon'] = "unknown.png"
+                rocon_master['flag'] = '0'
+                break
+
+            elif result == 0:
+                args = output.communicate()[0]
+                rocon_master['name'] = args.split('\n')[0]
+                rocon_master['description'] = args.split('\n')[1]
+                rocon_master['icon'] = args.split('\n')[2]
+
+                if rocon_master['name'] == "Unknown":
+                    rocon_master['flag'] = '0'
+                else:
+                    rocon_master['flag'] = '1'
+                break
+
+            time.sleep(0.1)
+            time_out_cnt += 1
+
+    def _check_up_all(self):
         for k in self.rocon_master_list.values():
-            print("Concert: %s" % k)
             rocon_master_uri = k['master_uri']
             host_name = k['host_name']
-            print "[_check_up]:MASTER_URI[%s], HOST_NAME[%s]" % (rocon_master_uri, host_name)
-
             output = subprocess.Popen([self.scripts_path + "rocon_remocon_check_up", rocon_master_uri, host_name], stdout=subprocess.PIPE)
             time_out_cnt = 0
             while True:
-                print "checking: " + rocon_master_uri
                 result = output.poll()
                 if time_out_cnt > 30:
-                    print "timeout: " + rocon_master_uri
+                    console.logdebug("timeout: %s" % (str(rocon_master_uri)))
                     try:
                         output.terminate()
                     except:
-                        print "Error: output.terminate()"
+                        console.logdebug("Error: output.terminate()")
 
                     k['name'] = "Unknown"
                     k['description'] = "Unknown."
@@ -336,6 +366,7 @@ class RemoconMain(QMainWindow):
                     break
 
                 elif result == 0:
+                    console.logdebug("find: %s" % (str(rocon_master_uri)))
                     args = output.communicate()[0]
                     k['name'] = args.split('\n')[0]
                     k['description'] = args.split('\n')[1]
@@ -401,13 +432,12 @@ class RemoconMain(QMainWindow):
         self.rocon_master_list[rocon_master_index]['description'] = ""
         self.rocon_master_list[rocon_master_index]['flag'] = "0"
 
-        self._update_rocon_master_list()
-        self._refresh_rocon_master_list()
+        self._refresh_rocon_master(self.rocon_master_list[rocon_master_index])
 
     def _set_add_rocon_master(self):
-        print '_add_rocon_master'
+
         if self._connect_dlg_isValid:
-            print "Dialog is live!!"
+            console.logdebug("Dialog is live!!")
             self._connect_dlg.done(0)
 
         #dialog
@@ -497,23 +527,26 @@ class RemoconMain(QMainWindow):
         self._connect_dlg.finished.connect(self._destroy_connect_dlg)
         self._connect_dlg_isValid = True
 
-    def _refresh_rocon_master_list(self):
-        print '_refresh_rocon_master_list'
-        if self.is_init:
-            self._update_rocon_master_list()
-        self._read_cache()
+    def _refresh_rocon_master(self, rocon_master):
+        self._check_up_one(rocon_master)
         self._widget_main.list_info_widget.clear()
-        self._check_up()
+        self._update_rocon_master_list()
+        pass
+
+    def _refresh_all_rocon_master_list(self):
+        self._read_cache()
+        if self.is_init:
+            self._check_up_all()
+        self._widget_main.list_info_widget.clear()
         self._update_rocon_master_list()
 
     def _update_rocon_master_list(self):
 
-        print '_update_rocon_master_list'
         self._widget_main.list_widget.clear()
         try:
             cache_rocon_master_info_list = open(self.rocon_master_list_cache_path, 'w')
         except:
-            print "No directory or file: %s" % (self.rocon_master_list_cache_path)
+            console.logdebug("No directory or file: %s" % (self.rocon_master_list_cache_path))
             return
         for k in self.rocon_master_list.values():
             self._add_rocon_master_list_item(k)
@@ -539,7 +572,7 @@ class RemoconMain(QMainWindow):
         cache_rocon_master_info_list.close()
 
     def _add_rocon_master_list_item(self, rocon_master):
-        print('_add_rocon_master_list_item [%s]' % rocon_master['name'])
+
         rocon_master_index = rocon_master['index']
         rocon_master_name = rocon_master['name']
         rocon_master_uri = rocon_master['master_uri']
@@ -574,7 +607,7 @@ class RemoconMain(QMainWindow):
             icon = QIcon(os.path.join(utils.get_icon_cache_home(), rocon_master_icon))
             self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setIcon(icon)
         else:
-            print rocon_master_name + ': No icon'
+            console.logdebug("%s : No icon" % rocon_master_name)
         pass
 
     def _select_rocon_master(self, Item):
@@ -595,7 +628,6 @@ class RemoconMain(QMainWindow):
         self._widget_main.list_info_widget.appendHtml(info_text)
 
     def _destroy_connect_dlg(self):
-        print "[Dialog] Destroy!!!"
         self._connect_dlg_isValid = False
 
     def _connect_rocon_master(self):
@@ -604,10 +636,10 @@ class RemoconMain(QMainWindow):
         rocon_master_host_name = str(self.rocon_master_list[self.cur_selected_rocon_master]['host_name'])
 
         rocon_master_index = str(self.cur_selected_rocon_master)
-
+        self._check_up_one(self.rocon_master_list[rocon_master_index])
         if self.rocon_master_list[rocon_master_index]['flag'] == '0':
             # DJS: unused reply box?
-            # reply = QMessageBox.warning(self, 'ERROR', "YOU SELECT NO CONCERT", QMessageBox.Ok|QMessageBox.Ok)
+            QMessageBox.warning(self, 'ERROR', "YOU SELECT NO CONCERT", QMessageBox.Ok | QMessageBox.Ok)
             return
 
         execute_path = self.scripts_path + 'rocon_remocon_sub'  # command
@@ -618,4 +650,4 @@ class RemoconMain(QMainWindow):
 
         self._widget_main.hide()
         os.execv(self.scripts_path + 'rocon_remocon_sub', ["", rocon_master_index, rocon_master_name, rocon_master_uri, rocon_master_host_name])
-        print "Spawning: %s" % (execute_path)
+        console.logdebug("Spawning: %s" % str(execute_path))
