@@ -5,13 +5,13 @@
     </description>
     <qtgui>
       <group>
-        <label>Rocon</label>
+        <label>Concert</label>
         <icon type="theme">folder</icon>
-        <statustip>Plugins related to robotics-in-concert components.</statustip>
+        <statustip>Concert plugins for ROCON.</statustip>
       </group>
-      <label>Concert Administration</label>
+      <label>Solution Administration</label>
       <icon type="file">./resources/images/rocon_logo.png</icon>
-      <statustip>Administrator application for managing concert services</statustip>
+      <statustip>Administrator application for concert solution management.</statustip>
     </qtgui>
   </class>
 </library>

@@ -1,17 +1,17 @@
 <library path="src">
   <class name="Teleop App" type="concert_teleop_app.teleop_app.TeleopApp" base_class_type="rqt_gui_py::Plugin">
     <description>
-        concert teleop application
+        Select and teleop a robot in the concert.
     </description>
     <qtgui>
       <group>
-        <label>Rocon</label>
+        <label>Concert</label>
         <icon type="theme">folder</icon>
-        <statustip>Plugins related to robotics-in-concert components.</statustip>
+        <statustip>Concert plugins for ROCON.</statustip>
       </group>
-      <label>Teleop App</label>
+      <label>Robot Teleop</label>
       <icon type="file">./resources/images/rocon_logo.png</icon>
-      <statustip>teleop application </statustip>
+      <statustip>Select and teleop a robot in the concert.</statustip>
     </qtgui>
   </class>
 </library>

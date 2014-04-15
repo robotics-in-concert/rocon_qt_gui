@@ -1,7 +1,7 @@
 <library path="src">
-  <class name="Gateway Graph" type="rocon_gateway_graph.gateway_graph.GatewayGraph" base_class_type="rqt_gui_py::Plugin">
+  <class name="Master Info" type="rocon_qt_master_info.master_info.MasterInfo" base_class_type="rqt_gui_py::Plugin">
     <description>
-      Display the current rocon gateway network as a graph.
+        View information provided by a rocon master.
     </description>
     <qtgui>
       <group>
@@ -9,9 +9,9 @@
         <icon type="theme">folder</icon>
         <statustip>General plugins for ROCON.</statustip>
       </group>
-      <label>Gateway Graph</label>
+      <label>Master Info</label>
       <icon type="file">./resources/images/rocon_logo.png</icon>
-      <statustip>Display the current rocon gateway network as a graph.</statustip>
+      <statustip>Information about the rocon master.</statustip>
     </qtgui>
   </class>
 </library>
