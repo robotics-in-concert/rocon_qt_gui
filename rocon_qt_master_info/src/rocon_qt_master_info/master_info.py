@@ -11,14 +11,12 @@ import os
 
 from python_qt_binding import loadUi
 
-
-#from PyQt4 import uic
 # QtCore
 #    SIGNAL, SLOT,  pyqtSlot, pyqtSignal
 #    QString, QStringList,
 #    QPoint, QEvent, QFile, QIODevice,
 #    QAbstractListModel
-#from PyQt4.QtCore import Qt, QAbstractListModel
+#from python_qt_binding.QtCore import Qt, QAbstractListModel
 # QtGui
 #    QMainWindow,
 #    QCheckBox, QComboBox,
@@ -26,7 +24,7 @@ from python_qt_binding import loadUi
 #    QFileDialog,
 #    QPushButton
 #    QGraphicsScene, QImage, QPainter, QBrush, QColor, QPen, QPixmap
-from PyQt4.QtGui import QWidget, QPixmap
+from python_qt_binding.QtGui import QWidget, QPixmap
 # QtSvg
 #    QSvgGenerator
 
@@ -62,11 +60,8 @@ class MasterInfo(Plugin):
         pixmap.loadFromData(self._master_info.icon.data, format=self._master_info.icon.format)
         self._widget.icon_label.setPixmap(pixmap)
         self._widget.icon_label.resize(pixmap.width(), pixmap.height())
-        #self._widget.icon_label.setGeometry(10, 10, pixmap.width(), pixmap.height())
 
-        print("Setting text information: %s" % self._master_info.name)
         self._widget.info_label.resize(200, pixmap.height())
-        #self._widget.info_label.move(pixmap.width() + 10, 0)
         self._widget.info_label.setText("<b>Name:</b> %s<br/><b>Rocon Version:</b> %s<br/><b>Description:</b> %s" % (self._master_info.name, self._master_info.version, self._master_info.description))
         self._widget.adjustSize()
 
@@ -74,8 +69,3 @@ class MasterInfo(Plugin):
 
     def shutdown_plugin(self):
         pass
-
-#
-#     def _fit_in_view(self):
-#         self._widget.graphics_view.fitInView(self._scene.itemsBoundingRect(), Qt.KeepAspectRatio)
-
