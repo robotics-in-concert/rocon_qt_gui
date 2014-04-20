@@ -20,7 +20,7 @@ import rospkg
 import rospy
 from rocon_std_msgs.msg import Remapping
 from rocon_std_msgs.srv import GetPlatformInfo
-from rocon_app_manager_msgs.srv import Status, Invite, StartApp, StopApp
+from rocon_app_manager_msgs.srv import GetStatus, Invite, StartRapp, StopRapp
 
 ###########################
 
@@ -310,15 +310,15 @@ class ConductorGraph(Plugin):
         service=self._graph._client_info_list[node_name]['gateway_name']+"/"+service_name  
         info_text='' 
         
-        if service_name=='status':
-            service_handle=rospy.ServiceProxy(service, Status)
+        if service_name=='get_status':
+            service_handle=rospy.ServiceProxy(service, GetStatus)
             call_result=service_handle()
             
             info_text="<html>"
             info_text +="<p>-------------------------------------------</p>"
             info_text +="<p><b>application_namespace: </b>" +call_result.application_namespace+"</p>"
             info_text +="<p><b>remote_controller: </b>" +call_result.remote_controller+"</p>"
-            info_text +="<p><b>application_status: </b>" +call_result.application_status+"</p>"
+            info_text +="<p><b>application_status: </b>" +call_result.rapp_status+"</p>"
             info_text +="</html>"
             self._client_list_update_signal.emit()
 
@@ -352,10 +352,10 @@ class ConductorGraph(Plugin):
             #button
             button_hor_sub_widget=QWidget()
             button_hor_layout=QHBoxLayout(button_hor_sub_widget)   
-                   
+
             btn_call=QPushButton("Call")
             btn_cancel=QPushButton("cancel")
-            
+
             btn_call.clicked.connect(lambda: dlg.done(0))
             btn_call.clicked.connect(lambda : self._call_invite_service(service,service_handle,dynamic_arg))
 
@@ -366,11 +366,10 @@ class ConductorGraph(Plugin):
             #add button layout            
             ver_layout.addWidget(button_hor_sub_widget)
 
-            dlg.setVisible(True)        
+            dlg.setVisible(True)
 
-        elif service_name=='start_app':
-            #sesrvice
-            service_handle=rospy.ServiceProxy(service, StartApp) 
+        elif service_name == 'start_rapp':
+            service_handle = rospy.ServiceProxy(service, StartRapp)
             #dialog
             dlg=QDialog(self._widget) 
             dlg.setMinimumSize(400,0)
@@ -391,7 +390,7 @@ class ConductorGraph(Plugin):
             btn_cancel=QPushButton("cancel")
             
             btn_call.clicked.connect(lambda: dlg.done(0))
-            btn_call.clicked.connect(lambda : self._call_start_app_service(service,service_handle,dynamic_arg))
+            btn_call.clicked.connect(lambda : self._call_start_rapp_service(service,service_handle,dynamic_arg))
             
             btn_cancel.clicked.connect(lambda: dlg.done(0))
             #add button
@@ -402,8 +401,8 @@ class ConductorGraph(Plugin):
 
             dlg.setVisible(True)        
 
-        elif service_name=='stop_app':
-            service_handle=rospy.ServiceProxy(service, StopApp)
+        elif service_name=='stop_rapp':
+            service_handle=rospy.ServiceProxy(service, StopRapp)
             call_result=service_handle()
 
             info_text="<html>"
@@ -417,7 +416,7 @@ class ConductorGraph(Plugin):
         else:
             print 'has no service'
             return
-        
+
         # display the result of calling service  
         # get tab widget handle
         service_text_widget=None
@@ -485,7 +484,7 @@ class ConductorGraph(Plugin):
 
         pass
     
-    def _call_start_app_service(self,service,service_handle,dynamic_arg):
+    def _call_start_rapp_service(self,service,service_handle,dynamic_arg):
         name=""
         remappings=[]
         for k in dynamic_arg:
@@ -508,7 +507,7 @@ class ConductorGraph(Plugin):
         info_text +="<p><b>started: </b>" +str(call_result.started)+"</p>"
         info_text +="<p><b>error_code: </b>" +str(call_result.error_code)+"</p>"
         info_text +="<p><b>message: </b>" +call_result.message+"</p>"
-        info_text +="<p><b>app_namespace: </b>" +call_result.app_namespace+"</p>"
+        info_text +="<p><b>app_namespace: </b>" +call_result.application_namespace+"</p>"
         info_text +="</html>"
         # get tab widget handle
         service_text_widget=None
@@ -522,7 +521,7 @@ class ConductorGraph(Plugin):
                 break
         if service_text_widget==None:
             return
-            
+
         service_text_widget.clear()
         service_text_widget.appendHtml(info_text)
 
@@ -554,8 +553,8 @@ class ConductorGraph(Plugin):
             invite_btn=QPushButton("Invite")
             platform_info_btn=QPushButton("Get Platform Info")
             status_btn=QPushButton("Get Status")
-            start_app_btn=QPushButton("Start App")
-            stop_app_btn=QPushButton("Stop App")              
+            start_app_btn=QPushButton("Start Rapp")
+            stop_app_btn=QPushButton("Stop Rapp")              
 
             invite_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"invite"))
             platform_info_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"platform_info"))  
