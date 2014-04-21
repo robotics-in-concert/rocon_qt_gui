@@ -26,6 +26,7 @@ from qt_app_manager_info import QtAppManagerInfo
 #rqt
 from qt_gui.plugin import Plugin
 
+
 ##############################################################################
 # QtAppManager
 ##############################################################################
@@ -53,10 +54,11 @@ class QtAppManager(Plugin):
         #button event connection
         self._widget.start_app_btn.pressed.connect(self._start_app)
         self._widget.stop_app_btn.pressed.connect(self._stop_app)
-
         #signal event connection
         self._widget.destroyed.connect(self._exit)
         self._update_apps_signal.connect(self._update_app_list)
+        #combo box change event
+        self._widget.namespace_cbox.currentIndexChanged.connect(self._change_namespace)
         context.add_widget(self._widget)
 
         #init
@@ -67,22 +69,35 @@ class QtAppManager(Plugin):
         self.current_app = None
         self.current_captured_robot = None
 
+        self._get_name_space()
+
+    def _change_namespace(self, event):
+        self.qt_app_manager_info._get_apps(self._widget.namespace_cbox.currentText(), '/list_apps')
+        pass
+
+    def _get_name_space(self):
+        for namespace in self.qt_app_manager_info._get_namespace():
+            ns = namespace[:namespace.find('list_apps')]
+            self._widget.namespace_cbox.addItem(ns)
+        self.qt_app_manager_info._get_apps(self._widget.namespace_cbox.currentText(), '/list_apps')
+
     def _exit(self):
         print "Exit"
         pass
 
     def _start_app(self):
-        result = self.qt_app_manager_info._start_app(self.current_app['name'])
+        ns = self._widget.namespace_cbox.currentText()
+        result = self.qt_app_manager_info._start_app(ns, self.current_app['name'])
         self._widget.service_result_text.appendHtml(result)
         pass
 
     def _stop_app(self):
-        result = self.qt_app_manager_info._stop_app()
+        ns = self._widget.namespace_cbox.currentText()
+        result = self.qt_app_manager_info._stop_app(ns)
         self._widget.service_result_text.appendHtml(result)
         pass
 
     def _update_app_list(self):
-        print "_update_app_list"
         self._widget.app_tree_widget.clear()
         apps = self.qt_app_manager_info.apps
         for k in apps.values():

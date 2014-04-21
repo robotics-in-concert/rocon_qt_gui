@@ -10,11 +10,13 @@
 import os
 #ros
 import rospy
+import rocon_python_comms
 #rocon
 from rocon_std_msgs.msg import Remapping
 from rocon_app_manager_msgs.msg import AppList
 from rocon_app_manager_msgs.srv import StartApp
 from rocon_app_manager_msgs.srv import StopApp
+from rocon_app_manager_msgs.srv import GetAppList
 
 ##############################################################################
 # QtAppManagerInfo
@@ -26,7 +28,7 @@ class QtAppManagerInfo(object):
         self.apps = {}
         self.running_apps = {}
         self._update_apps_callback = None
-        rospy.Subscriber('/app_manager/app_list', AppList, self._update_apps)
+        #rospy.Subscriber('/app_manager/app_list', AppList, self._update_apps)
 
     def _update_apps(self, data):
         """
@@ -60,6 +62,23 @@ class QtAppManagerInfo(object):
         #Call update callback
         self._update_apps_callback()
 
+    def _get_namespace(self):
+        get_app_list_service_names = rocon_python_comms.find_service('rocon_app_manager_msgs/GetAppList', timeout=rospy.rostime.Duration(5.0), unique=False)
+        return get_app_list_service_names
+
+    def _get_apps(self, namespace, service_name):
+        """
+        Getting the app list using service calling
+        @param namespace: namespace of running app
+        @type String
+
+        @param service_name: service_name
+        @type String
+        """
+        service_handle = rospy.ServiceProxy(namespace + service_name, GetAppList)
+        self._update_apps(service_handle())
+        pass
+
     def _get_app_info(self, app):
         app_info = "<html>"
         app_info += "<p>-------------------------------------------</p>"
@@ -70,16 +89,20 @@ class QtAppManagerInfo(object):
         app_info += "</html>"
         return app_info
 
-    def _start_app(self, app_name):
+    def _start_app(self, namespace, app_name):
         """
         Start App
+
         @param app_name: app to start
+        @type String
+
+        @param namespace: name space of running app
         @type String
         """
         #not yet
         remapping = Remapping()
 
-        service_handle = rospy.ServiceProxy('/app_manager/start_app', StartApp)
+        service_handle = rospy.ServiceProxy(namespace + 'start_app', StartApp)
         call_result = service_handle(app_name, [remapping, ])
         call_result_html = "<html>"
         call_result_html += "<p>-------------------------------------------</p>"
@@ -90,11 +113,14 @@ class QtAppManagerInfo(object):
         call_result_html += "</html>"
         return call_result_html
 
-    def _stop_app(self):
+    def _stop_app(self, namespace):
         """
         Stop App
+
+        @param namespace: name space of running app
+        @type String
         """
-        service_handle = rospy.ServiceProxy('/app_manager/stop_app', StopApp)
+        service_handle = rospy.ServiceProxy(namespace + 'stop_app', StopApp)
         call_result = service_handle()
         call_result_html = "<html>"
         call_result_html += "<p>-------------------------------------------</p>"

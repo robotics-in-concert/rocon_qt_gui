@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>878</width>
-    <height>605</height>
+    <height>609</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -44,6 +44,13 @@
         <widget class="QPushButton" name="stop_app_btn">
          <property name="text">
           <string>Stop App</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="test_btn">
+         <property name="text">
+          <string>Test</string>
          </property>
         </widget>
        </item>
@@ -85,23 +92,33 @@
       <number>9</number>
      </property>
      <item>
-      <widget class="QTreeWidget" name="app_tree_widget">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="margin">
+        <number>9</number>
        </property>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="maximumSize">
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>NameSapce</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="namespace_cbox"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QTreeWidget" name="app_tree_widget">
        <column>
         <property name="text">
          <string>App List</string>
-        </property>
-        <property name="background">
-         <color>
-          <red>0</red>
-          <green>0</green>
-          <blue>0</blue>
-         </color>
         </property>
        </column>
       </widget>
@@ -110,7 +127,7 @@
       <widget class="QTreeWidget" name="running_app_tree_widget">
        <column>
         <property name="text">
-         <string>Runnig App List</string>
+         <string>Running App List</string>
         </property>
        </column>
       </widget>
