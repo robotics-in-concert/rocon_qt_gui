@@ -6,6 +6,6 @@ from catkin_pkg.python_setup import generate_distutils_setup
 d = generate_distutils_setup(
     packages=['concert_conductor_graph'],
     package_dir={'': 'src'},
-    scripts=['scripts/concert_conductor_graph'],
+    scripts=['scripts/concert_qt_conductor_graph'],
 )
 setup(**d)
