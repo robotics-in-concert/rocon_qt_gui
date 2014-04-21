@@ -42,14 +42,13 @@ class ConductorGraphInfo(object):
             try:
                 graph_topic_name = rocon_python_comms.find_topic('concert_msgs/ConductorGraph', timeout=rospy.rostime.Duration(0.1), unique=True)
                 (namespace, unused_topic_name) = graph_topic_name.rsplit('/', 1)
-                changes_topic_name = namespace + "/concert_client_changes"  # this is assuming they didn't remap this bugger.
+                clients_topic_name = namespace + "/concert_clients"  # this is assuming they didn't remap this bugger.
                 break
             except rocon_python_comms.NotFoundException:
                 time.sleep(0.1)  # just loop around
         rospy.logwarn("Setting up subscribers inside %s" % namespace)
-        #rospy.Subscriber(graph_topic_name, concert_msgs.ConductorGraph, self.update_client_list)
-        rospy.Subscriber(namespace + "/concert_clients", concert_msgs.ConcertClients, self.update_client_list)
-        rospy.Subscriber(changes_topic_name, concert_msgs.ConcertClients, self._update_callback)
+        rospy.Subscriber(graph_topic_name, concert_msgs.ConductorGraph, self._update_callback)
+        rospy.Subscriber(clients_topic_name, concert_msgs.ConcertClients, self.update_client_list)
 
         self._client_info_list = {}
         self._pre_client_info_list = {}
@@ -76,11 +75,9 @@ class ConductorGraphInfo(object):
 
         client_list = []
 
-        #for k in data.available:
         for k in data.clients:
             client_list.append((k, True))
         for k in data.uninvited_clients:
-        #for k in data.uninvited:
             client_list.append((k, False))
 
         for client in client_list:
@@ -192,7 +189,7 @@ class ConductorGraphInfo(object):
         cur = self._client_info_list
         for k in cur.values():
             client_name = k["name"]
-            if not pre.has_key(client_name):
+            if not client_name in pre.keys():
                 continue
             if pre[client_name]["state"] != cur[client_name]["state"]:
                 result = False
