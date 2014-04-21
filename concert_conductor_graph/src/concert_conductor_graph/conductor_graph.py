@@ -20,7 +20,8 @@ import rospkg
 import rospy
 from rocon_std_msgs.msg import Remapping
 from rocon_std_msgs.srv import GetPlatformInfo
-from rocon_app_manager_msgs.srv import GetStatus, Invite, StartRapp, StopRapp
+import rocon_console.console as console
+from rocon_app_manager_msgs.srv import GetStatus, Invite
 
 ###########################
 
@@ -152,49 +153,49 @@ class DynamicArgumentLayer():
     def _update_item(self):
         widget_layout = self.arg_ver_layout
         item_list = self.params_list
-        
-        widget_list=widget_layout.parentWidget().children()
+
+        widget_list = widget_layout.parentWidget().children()
         while len(widget_list) > 2:
-            added_arg_widget=widget_list.pop()
+            added_arg_widget = widget_list.pop()
             widget_layout.removeWidget(added_arg_widget)
-            added_arg_widget.setParent(None)   
+            added_arg_widget.setParent(None)
             added_arg_widget.deleteLater()
 
         #resize
-        dialog_widget=widget_layout.parentWidget().parentWidget()             
-        dialog_widget.resize(dialog_widget.minimumSize())        
+        dialog_widget = widget_layout.parentWidget().parentWidget()
+        dialog_widget.resize(dialog_widget.minimumSize())
         for l in item_list:
-            params_hor_sub_widget=QWidget()
-            params_hor_layout=QHBoxLayout(params_hor_sub_widget)   
+            params_hor_sub_widget = QWidget()
+            params_hor_layout = QHBoxLayout(params_hor_sub_widget)
             for k in l:
-                param_name=k[0]
-                param_type=k[2]
-                name_widget=QLabel(param_name+": ")
+                param_name = k[0]
+                param_type = k[2]
+                name_widget = QLabel(param_name + ": ")
                 if param_type == 'string' or param_type == 'int':
-                    k[1]=QTextEdit()
-                    k[1].setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
-                    k[1].setMinimumSize(0,30)
+                    k[1] = QTextEdit()
+                    k[1].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
+                    k[1].setMinimumSize(0, 30)
                     k[1].append("")
                 elif param_type == 'bool':
-                    k[1]=QTextEdit()
-                    k[1] = QComboBox() 
-                    k[1].setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Ignored)
-                    k[1].setMinimumSize(0,30)
-                    
-                    k[1].addItem("True",True)
-                    k[1].addItem("False",False)
+                    k[1] = QTextEdit()
+                    k[1] = QComboBox()
+                    k[1].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
+                    k[1].setMinimumSize(0, 30)
+
+                    k[1].addItem("True", True)
+                    k[1].addItem("False", False)
 
                 params_hor_layout.addWidget(name_widget)
                 params_hor_layout.addWidget(k[1])
             widget_layout.addWidget(params_hor_sub_widget)
-        
+
     def _push_param(self):
-        params_item=[]
+        params_item = []
         for k in self.params:
-            param_name=k[0]
-            param_type=k[1]
-            param_widget=None
-            params_item.append([param_name,param_widget,param_type])
+            param_name = k[0]
+            param_type = k[1]
+            param_widget = None
+            params_item.append([param_name, param_widget, param_type])
         self.params_list.append(params_item)
 
     def _pop_param(self):
@@ -202,7 +203,7 @@ class DynamicArgumentLayer():
             self.params_list.pop()
         else:
             pass
-            
+
     def _get_param_list(self):
         return self.params_list
         pass
@@ -210,46 +211,47 @@ class DynamicArgumentLayer():
 ##############################################################################
 # ConductorGraph Classes
 ##############################################################################
-        
+
+
 class ConductorGraph(Plugin):
 
-    _deferred_fit_in_view=Signal()
-    _client_list_update_signal=Signal()
-    
+    _deferred_fit_in_view = Signal()
+    _client_list_update_signal = Signal()
+
     def __init__(self, context):
-        self._context=context
+        self._context = context
         super(ConductorGraph, self).__init__(context)
-        self.initialised=False
+        self.initialised = False
         self.setObjectName('Conductor Graph')
-        self._current_dotcode=None
-        self._node_items=None
-        self._edge_items=None
-        self._node_item_events={}
-        self._edge_item_events={}
-        self._client_info_list={}
-        self._widget=QWidget()
+        self._current_dotcode = None
+        self._node_items = None
+        self._edge_items = None
+        self._node_item_events = {}
+        self._edge_item_events = {}
+        self._client_info_list = {}
+        self._widget = QWidget()
         self.cur_selected_client_name = ""
         self.pre_selected_client_name = ""
-            
+
         # factory builds generic dotcode items
-        self.dotcode_factory=PydotFactory()
+        self.dotcode_factory = PydotFactory()
         # self.dotcode_factory=PygraphvizFactory()
-        self.dotcode_generator=RosGraphDotcodeGenerator()
-        self.dot_to_qt=DotToQtGenerator()
-        
-        self._graph=ConductorGraphInfo()
+        self.dotcode_generator = RosGraphDotcodeGenerator()
+        self.dot_to_qt = DotToQtGenerator()
+
+        self._graph = ConductorGraphInfo()
         self._graph._reg_event_callback(self._update_client_list)
         self._graph._reg_period_callback(self._set_network_statisics)
-        
-        rospack=rospkg.RosPack()
-        ui_file=os.path.join(rospack.get_path('concert_conductor_graph'), 'ui', 'conductor_graph.ui')
+
+        rospack = rospkg.RosPack()
+        ui_file = os.path.join(rospack.get_path('concert_conductor_graph'), 'ui', 'conductor_graph.ui')
         loadUi(ui_file, self._widget, {'InteractiveGraphicsView': InteractiveGraphicsView})
         self._widget.setObjectName('ConductorGraphUi')
 
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
-        self._scene=QGraphicsScene()
+        self._scene = QGraphicsScene()
         self._scene.setBackgroundBrush(Qt.white)
         self._widget.graphics_view.setScene(self._scene)
 
@@ -264,20 +266,21 @@ class ConductorGraph(Plugin):
 
         self._deferred_fit_in_view.connect(self._fit_in_view, Qt.QueuedConnection)
         self._deferred_fit_in_view.emit()
-        
+
         self._widget.tabWidget.currentChanged.connect(self._change_client_tab)
         self._client_list_update_signal.connect(self._update_conductor_graph)
-        
+
         #rospy.Subscriber(concert_msgs.Strings.CONCERT_CLIENT_CHANGES, ConcertClients, self._update_client_list)
-        
+
         context.add_widget(self._widget)
-    
+
     def restore_settings(self, plugin_settings, instance_settings):
-        self.initialised=True
+        self.initialised = True
         self._refresh_rosgraph()
+
     def shutdown_plugin(self):
         pass
-    
+
     def _update_conductor_graph(self):
         # re-enable controls customizing fetched ROS graph
 
@@ -288,43 +291,44 @@ class ConductorGraph(Plugin):
         if not self.initialised:
             return
         self._update_graph_view(self._generate_dotcode())
-        
+
     def _generate_dotcode(self):
         return self.dotcode_generator.generate_dotcode(rosgraphinst=self._graph,
                                                        dotcode_factory=self.dotcode_factory,
                                                        orientation='LR'
                                                        )
-    def _update_graph_view(self, dotcode): 
+
+    def _update_graph_view(self, dotcode):
         #if dotcode==self._current_dotcode:
         #    return
-        self._current_dotcode=dotcode
+        self._current_dotcode = dotcode
         self._redraw_graph_view()
-   
+
     def _update_client_list(self):
-        print "[conductor graph]: _update_client_list"       
+        print "[conductor graph]: _update_client_list"
         self._client_list_update_signal.emit()
         pass
-    
-    def _start_service(self,node_name,service_name):
-        
-        service=self._graph._client_info_list[node_name]['gateway_name']+"/"+service_name  
-        info_text='' 
-        
-        if service_name=='get_status':
-            service_handle=rospy.ServiceProxy(service, GetStatus)
-            call_result=service_handle()
-            
-            info_text="<html>"
-            info_text +="<p>-------------------------------------------</p>"
-            info_text +="<p><b>application_namespace: </b>" +call_result.application_namespace+"</p>"
-            info_text +="<p><b>remote_controller: </b>" +call_result.remote_controller+"</p>"
-            info_text +="<p><b>application_status: </b>" +call_result.rapp_status+"</p>"
-            info_text +="</html>"
+
+    def _start_service(self, node_name, service_name):
+
+        service = self._graph._client_info_list[node_name]['gateway_name'] + "/" + service_name
+        info_text = ''
+
+        if service_name == 'get_status':
+            service_handle = rospy.ServiceProxy(service, GetStatus)
+            call_result = service_handle()
+
+            info_text = "<html>"
+            info_text += "<p>-------------------------------------------</p>"
+            info_text += "<p><b>application_namespace: </b>" + call_result.application_namespace + "</p>"
+            info_text += "<p><b>remote_controller: </b>" + call_result.remote_controller + "</p>"
+            info_text += "<p><b>application_status: </b>" + call_result.rapp_status + "</p>"
+            info_text += "</html>"
             self._client_list_update_signal.emit()
 
-        elif service_name=='platform_info':
-            service_handle=rospy.ServiceProxy(service, GetPlatformInfo)
-            call_result=service_handle()
+        elif service_name == 'platform_info':
+            service_handle = rospy.ServiceProxy(service, GetPlatformInfo)
+            call_result = service_handle()
 
             info_text = "<html>"
             info_text += "<p>-------------------------------------------</p>"
@@ -332,194 +336,126 @@ class ConductorGraph(Plugin):
             info_text += "<p><b>concert_version: </b>" + call_result.platform_info.version + "</p>"
             info_text += "</html>"
             self._client_list_update_signal.emit()
-            
-        elif service_name=='invite':
+
+        elif service_name == 'invite':
             #sesrvice
-            service_handle=rospy.ServiceProxy(service, Invite) 
+            service_handle = rospy.ServiceProxy(service, Invite)
             #dialog
-            dlg=QDialog(self._widget) 
-            dlg.setMinimumSize(400,0)
-            dlg.setMaximumSize(400,0)
-            dlg.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Expanding)
+            dlg = QDialog(self._widget)
+            dlg.setMinimumSize(400, 0)
+            dlg.setMaximumSize(400, 0)
+            dlg.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
             #dialog layout
-            ver_layout=QVBoxLayout(dlg)           
-            ver_layout.setContentsMargins (0,0,0,0)
+            ver_layout = QVBoxLayout(dlg)
+            ver_layout.setContentsMargins(0, 0, 0, 0)
 
-            dynamic_arg=[]
-            dynamic_arg.append(DynamicArgumentLayer(ver_layout,'Remote Target Name',False,[('remote_target_name','string')]))
-            dynamic_arg.append(DynamicArgumentLayer(ver_layout,'Application Namespace',False,[('application_namespace','string')]))
-            dynamic_arg.append(DynamicArgumentLayer(ver_layout,'Cancel',False,[('cancel','bool')]))
+            dynamic_arg = []
+            dynamic_arg.append(DynamicArgumentLayer(ver_layout, 'Remote Target Name', False, [('remote_target_name', 'string')]))
+            dynamic_arg.append(DynamicArgumentLayer(ver_layout, 'Application Namespace', False, [('application_namespace', 'string')]))
+            dynamic_arg.append(DynamicArgumentLayer(ver_layout, 'Cancel', False, [('cancel', 'bool')]))
             #button
-            button_hor_sub_widget=QWidget()
-            button_hor_layout=QHBoxLayout(button_hor_sub_widget)   
+            button_hor_sub_widget = QWidget()
+            button_hor_layout = QHBoxLayout(button_hor_sub_widget)
 
-            btn_call=QPushButton("Call")
-            btn_cancel=QPushButton("cancel")
+            btn_call = QPushButton("Call")
+            btn_cancel = QPushButton("cancel")
 
             btn_call.clicked.connect(lambda: dlg.done(0))
-            btn_call.clicked.connect(lambda : self._call_invite_service(service,service_handle,dynamic_arg))
+            btn_call.clicked.connect(lambda: self._call_invite_service(service, service_handle, dynamic_arg))
 
             btn_cancel.clicked.connect(lambda: dlg.done(0))
             #add button
-            button_hor_layout.addWidget(btn_call)            
+            button_hor_layout.addWidget(btn_call)
             button_hor_layout.addWidget(btn_cancel)
-            #add button layout            
+            #add button layout
             ver_layout.addWidget(button_hor_sub_widget)
 
             dlg.setVisible(True)
 
-        elif service_name == 'start_rapp':
-            service_handle = rospy.ServiceProxy(service, StartRapp)
-            #dialog
-            dlg=QDialog(self._widget) 
-            dlg.setMinimumSize(400,0)
-            dlg.setMaximumSize(400,0)
-            dlg.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Expanding)
-            #dialog layout
-            ver_layout=QVBoxLayout(dlg)           
-            ver_layout.setContentsMargins (0,0,0,0)
-
-            dynamic_arg=[]
-            dynamic_arg.append(DynamicArgumentLayer(ver_layout,'Name',False,[('name','string')]))
-            dynamic_arg.append(DynamicArgumentLayer(ver_layout,'Remappings',True,[('remap to','string'),('remap from','string')]))
-            #button
-            button_hor_sub_widget=QWidget()
-            button_hor_layout=QHBoxLayout(button_hor_sub_widget)   
-                   
-            btn_call=QPushButton("Call")
-            btn_cancel=QPushButton("cancel")
-            
-            btn_call.clicked.connect(lambda: dlg.done(0))
-            btn_call.clicked.connect(lambda : self._call_start_rapp_service(service,service_handle,dynamic_arg))
-            
-            btn_cancel.clicked.connect(lambda: dlg.done(0))
-            #add button
-            button_hor_layout.addWidget(btn_call)            
-            button_hor_layout.addWidget(btn_cancel)
-            #add button layout            
-            ver_layout.addWidget(button_hor_sub_widget)
-
-            dlg.setVisible(True)        
-
-        elif service_name=='stop_rapp':
-            service_handle=rospy.ServiceProxy(service, StopRapp)
-            call_result=service_handle()
-
-            info_text="<html>"
-            info_text +="<p>-------------------------------------------</p>"
-            info_text +="<p><b>stopped: </b>" +str(call_result.stopped)+"</p>"
-            info_text +="<p><b>error_code: </b>" +str(call_result.error_code)+"</p>"
-            info_text +="<p><b>message: </b>" +call_result.message+"</p>"
-            info_text +="</html>"
-
-            self._update_client_tab()
         else:
             print 'has no service'
             return
 
-        # display the result of calling service  
+        # display the result of calling service
         # get tab widget handle
-        service_text_widget=None
-        cur_tab_widget=self._widget.tabWidget.currentWidget()        
-        
-        if cur_tab_widget==None:
+        service_text_widget = None
+        cur_tab_widget = self._widget.tabWidget.currentWidget()
+
+        if cur_tab_widget == None:
             return
-            
-        object_name='services_text_widget'
-        for k in cur_tab_widget.children():
-            if k.objectName().count(object_name) >=1 :
-                service_text_widget=k
-                break
-        if service_text_widget==None:
-            return
-            
+
         service_text_widget.clear()
         service_text_widget.appendHtml(info_text)
 
-    def _call_invite_service(self,service,service_handle,dynamic_arg):        
-        remote_target_name=""
-        application_namespace=""
-        cancel=False
+    def _call_invite_service(self, service, service_handle, dynamic_arg):
+        remote_target_name = ""
+        application_namespace = ""
+        cancel = False
 
         for k in dynamic_arg:
-            if k.name=='Remote Target Name':
-                item_widget=k._get_param_list()[0][0][1]
-                remote_target_name=item_widget.toPlainText()
-            
-            elif k.name=='Application Namespace':
-                item_widgetwidget=k._get_param_list()[0][0][1]
-                application_namespace=item_widget.toPlainText()
-            
-            elif k.name=='Cancel':
-                item_widget=k._get_param_list()[0][0][1]    
-                cancel=item_widget.itemData(item_widget.currentIndex())
+            if k.name == 'Remote Target Name':
+                item_widget = k._get_param_list()[0][0][1]
+                remote_target_name = item_widget.toPlainText()
+
+            elif k.name == 'Application Namespace':
+                item_widget = k._get_param_list()[0][0][1]
+                application_namespace = item_widget.toPlainText()
+
+            elif k.name == 'Cancel':
+                item_widget = k._get_param_list()[0][0][1]
+                cancel = item_widget.itemData(item_widget.currentIndex())
         #calling service
-        call_result=service_handle(remote_target_name,application_namespace,cancel)
+        call_result = service_handle(remote_target_name, application_namespace, cancel)
         #status update
         self._client_list_update_signal.emit()
-        # display the result of calling service  
+        # display the result of calling service
 
-        info_text="<html>"
-        info_text +="<p>-------------------------------------------</p>"
-        info_text +="<p><b>result: </b>" +str(call_result.result)+"</p>"
-        info_text +="<p><b>error_code: </b>" +str(call_result.error_code)+"</p>"
-        info_text +="<p><b>message: </b>" +call_result.message+"</p>"
-        info_text +="</html>"        
+        info_text = "<html>"
+        info_text += "<p>-------------------------------------------</p>"
+        info_text += "<p><b>result: </b>" + str(call_result.result) + "</p>"
+        info_text += "<p><b>error_code: </b>" + str(call_result.error_code) + "</p>"
+        info_text += "<p><b>message: </b>" + call_result.message + "</p>"
+        info_text += "</html>"
         # get tab widget handle
-        service_text_widget=None
-        cur_tab_widget=self._widget.tabWidget.currentWidget()        
-        if cur_tab_widget==None:
+        service_text_widget = None
+        cur_tab_widget = self._widget.tabWidget.currentWidget()
+        if cur_tab_widget == None:
             return
 
-        object_name='services_text_widget'
-        for k in cur_tab_widget.children():
-            if k.objectName().count(object_name) >=1 :
-                service_text_widget=k
-                break
-        if service_text_widget==None:
-            return
-            
         service_text_widget.clear()
         service_text_widget.appendHtml(info_text)
 
         pass
-    
-    def _call_start_rapp_service(self,service,service_handle,dynamic_arg):
-        name=""
-        remappings=[]
+
+    def _call_start_rapp_service(self, service, service_handle, dynamic_arg):
+        print(console.red + "call start rapp service" + console.reset)
+        name = ""
+        remappings = []
         for k in dynamic_arg:
-            if k.name=='Name':
-                name=k._get_param_list()[0][0][1].toPlainText()
-            elif k.name=='Remappings':    
+            if k.name == 'Name':
+                name = k._get_param_list()[0][0][1].toPlainText()
+            elif k.name == 'Remappings':
                 for l in k._get_param_list():
-                    remap_to=l[0][1].toPlainText()
-                    remap_from=l[1][1].toPlainText()
-                    remappings.append(Remapping(remap_to,remap_from))
+                    remap_to = l[0][1].toPlainText()
+                    remap_from = l[1][1].toPlainText()
+                    remappings.append(Remapping(remap_to, remap_from))
         #calling service
-        call_result=service_handle(name,remappings)
+        call_result = service_handle(name, remappings)
         #status update
         self._client_list_update_signal.emit()
 
-        # display the result of calling service          
-        info_text = ''
-        info_text="<html>"
-        info_text +="<p>-------------------------------------------</p>"
-        info_text +="<p><b>started: </b>" +str(call_result.started)+"</p>"
-        info_text +="<p><b>error_code: </b>" +str(call_result.error_code)+"</p>"
-        info_text +="<p><b>message: </b>" +call_result.message+"</p>"
-        info_text +="<p><b>app_namespace: </b>" +call_result.application_namespace+"</p>"
-        info_text +="</html>"
+        # display the result of calling service
+        info_text = "<html>"
+        info_text += "<p>-------------------------------------------</p>"
+        info_text += "<p><b>started: </b>" + str(call_result.started) + "</p>"
+        info_text += "<p><b>error_code: </b>" + str(call_result.error_code) + "</p>"
+        info_text += "<p><b>message: </b>" + call_result.message + "</p>"
+        info_text += "<p><b>app_namespace: </b>" + call_result.application_namespace + "</p>"
+        info_text += "</html>"
         # get tab widget handle
-        service_text_widget=None
-        cur_tab_widget=self._widget.tabWidget.currentWidget()        
-        if cur_tab_widget==None:
-            return
-        object_name='services_text_widget'
-        for k in cur_tab_widget.children():
-            if k.objectName().count(object_name) >=1 :
-                service_text_widget=k
-                break
-        if service_text_widget==None:
+        service_text_widget = None
+        cur_tab_widget = self._widget.tabWidget.currentWidget()
+        if cur_tab_widget == None:
             return
 
         service_text_widget.clear()
@@ -530,190 +466,165 @@ class ConductorGraph(Plugin):
     def _update_client_tab(self):
         print '[_update_client_tab]'
         self.pre_selected_client_name = self.cur_selected_client_name
-        self._widget.tabWidget.clear()   
-        
-        for k in self._graph._client_info_list.values(): 
-            main_widget=QWidget()
-           
-            ver_layout=QVBoxLayout(main_widget)
-           
-            ver_layout.setContentsMargins (9,9,9,9)
-            ver_layout.setSizeConstraint (ver_layout.SetDefaultConstraint)
-            
+        self._widget.tabWidget.clear()
+
+        for k in self._graph._client_info_list.values():
+            main_widget = QWidget()
+
+            ver_layout = QVBoxLayout(main_widget)
+
+            ver_layout.setContentsMargins(9, 9, 9, 9)
+            ver_layout.setSizeConstraint(ver_layout.SetDefaultConstraint)
+
             #button layout
-            sub_widget=QWidget()
+            sub_widget = QWidget()
             sub_widget.setAccessibleName('sub_widget')
-            btn_grid_layout=QGridLayout(sub_widget)
+            btn_grid_layout = QGridLayout(sub_widget)
 
-            btn_grid_layout.setContentsMargins (9,9,9,9)
+            btn_grid_layout.setContentsMargins(9, 9, 9, 9)
 
-            btn_grid_layout.setColumnStretch (1, 0)
-            btn_grid_layout.setRowStretch (2, 0)
+            btn_grid_layout.setColumnStretch(1, 0)
+            btn_grid_layout.setRowStretch(2, 0)
 
-            invite_btn=QPushButton("Invite")
-            platform_info_btn=QPushButton("Get Platform Info")
-            status_btn=QPushButton("Get Status")
-            start_app_btn=QPushButton("Start Rapp")
-            stop_app_btn=QPushButton("Stop Rapp")              
+            invite_btn = QPushButton("Invite")
+            platform_info_btn = QPushButton("Get Platform Info")
+            status_btn = QPushButton("Get Status")
 
-            invite_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"invite"))
-            platform_info_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"platform_info"))  
-            status_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"status"))  
-            start_app_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"start_app"))  
-            stop_app_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()),"stop_app"))
-                    
+            invite_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()), "invite"))
+            platform_info_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()), "platform_info"))
+            status_btn.clicked.connect(lambda: self._start_service(self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex()), "status"))
+
             btn_grid_layout.addWidget(invite_btn)
             btn_grid_layout.addWidget(platform_info_btn)
             btn_grid_layout.addWidget(status_btn)
-            btn_grid_layout.addWidget(start_app_btn)
-            btn_grid_layout.addWidget(stop_app_btn)             
-            ver_layout.addWidget(sub_widget)            
+            ver_layout.addWidget(sub_widget)
 
             #client information layout
             context_label = QLabel()
             context_label.setText("Client information")
             ver_layout.addWidget(context_label)
-            
-            app_context_widget=QPlainTextEdit()
-            app_context_widget.setObjectName(k["name"]+'_'+'app_context_widget')
+
+            app_context_widget = QPlainTextEdit()
+            app_context_widget.setObjectName(k["name"] + '_' + 'app_context_widget')
             app_context_widget.setAccessibleName('app_context_widget')
             app_context_widget.appendHtml(k["app_context"])
-            app_context_widget.setReadOnly(True) 
-            
+            app_context_widget.setReadOnly(True)
+
             cursor = app_context_widget.textCursor()
-            cursor.movePosition(QTextCursor.Start,QTextCursor.MoveAnchor,0)
+            cursor.movePosition(QTextCursor.Start, QTextCursor.MoveAnchor, 0)
             app_context_widget.setTextCursor(cursor)
             ver_layout.addWidget(app_context_widget)
-            
-            #service layout
-            context_label = QLabel()
-            context_label.setText("Service result")
-            ver_layout.addWidget(context_label)
-            
-            services_text_widget=QPlainTextEdit()
-            services_text_widget.setObjectName(k["name"]+'_'+'services_text_widget')
-            services_text_widget.setReadOnly(True) 
-            cursor = services_text_widget.textCursor()
-            cursor.movePosition(QTextCursor.Start,QTextCursor.MoveAnchor,0)
-            services_text_widget.setTextCursor(cursor)            
-            ver_layout.addWidget(services_text_widget)
-            
+
             # new icon
-            path=""
-            if k["is_new"]==True:
-                path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"../../resources/images/new.gif")            
+            path = ""
+            if k["is_new"] == True:
+                path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../resources/images/new.gif")
 
             #add tab
-            self._widget.tabWidget.addTab(main_widget,QIcon(path), k["name"]);
+            self._widget.tabWidget.addTab(main_widget, QIcon(path), k["name"])
 
         #set previous selected tab
         for k in range(self._widget.tabWidget.count()):
-            tab_text=self._widget.tabWidget.tabText(k)
+            tab_text = self._widget.tabWidget.tabText(k)
             if tab_text == self.pre_selected_client_name:
                 self._widget.tabWidget.setCurrentIndex(k)
 
-    def _change_client_tab(self,index):
+    def _change_client_tab(self, index):
         self.cur_selected_client_name = self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex())
-        if self._widget.tabWidget.widget(index) !=None:
-            for k in  self._widget.tabWidget.widget(index).children():
-                if k.objectName().count("services_text_widget"):
-                    k.clear()
-        pass    
-        
+
     def _set_network_statisics(self):
         if self._edge_items == None:
             return
         else:
             for edge_items in self._edge_items.itervalues():
                 for edge_item in edge_items:
-                     edge_dst_name=edge_item.to_node._label.text()
-                     edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name]['conn_stats']))
-                     
+                    edge_dst_name = edge_item.to_node._label.text()
+                    edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name]['conn_stats']))
+
     def _redraw_graph_view(self):
         self._scene.clear()
-        self._node_item_events={}
-        self._edge_item_events={}
-        self._node_items=None
-        self._edge_items=None
+        self._node_item_events = {}
+        self._edge_item_events = {}
+        self._node_items = None
+        self._edge_items = None
 
         if self._widget.highlight_connections_check_box.isChecked():
-            highlight_level=3
+            highlight_level = 3
         else:
-            highlight_level=1
-            
-        highlight_level=3 if self._widget.highlight_connections_check_box.isChecked() else 1
+            highlight_level = 1
+
+        highlight_level = 3 if self._widget.highlight_connections_check_box.isChecked() else 1
 
         # layout graph and create qt items
-        (nodes, edges)=self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
+        (nodes, edges) = self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
                                                             highlight_level=highlight_level,
                                                             same_label_siblings=True)
-        self._node_items=nodes
-        self._edge_items=edges
+        self._node_items = nodes
+        self._edge_items = edges
 
         # if we wish to make special nodes, do that here (maybe subclass GraphItem, just like NodeItem does)
         #node
         for node_item in nodes.itervalues():
-            # set the color of conductor to orange           
-            if node_item._label.text()==self._graph._concert_conductor_name:
-                royal_blue=QColor(65, 105, 255)
-                node_item._default_color=royal_blue
+            # set the color of conductor to orange
+            if node_item._label.text() == self._graph._conductor_name:
+                royal_blue = QColor(65, 105, 255)
+                node_item._default_color = royal_blue
                 node_item.set_color(royal_blue)
 
             # redefine mouse event
-            self._node_item_events[node_item._label.text()]=GraphEventHandler(self._widget.tabWidget,node_item,node_item.mouseDoubleClickEvent);
-            node_item.mouseDoubleClickEvent=self._node_item_events[node_item._label.text()].NodeEvent;
-            
+            self._node_item_events[node_item._label.text()] = GraphEventHandler(self._widget.tabWidget, node_item, node_item.mouseDoubleClickEvent)
+            node_item.mouseDoubleClickEvent = self._node_item_events[node_item._label.text()].NodeEvent
+
             self._scene.addItem(node_item)
-            
+
         #edge
         for edge_items in edges.itervalues():
             for edge_item in edge_items:
                 #redefine the edge hover event
-                
-                self._edge_item_events[edge_item._label.text()]=GraphEventHandler(self._widget.tabWidget,edge_item,edge_item._label.hoverEnterEvent);
-                edge_item._label.hoverEnterEvent =self._edge_item_events[edge_item._label.text()].EdgeEvent;
-                
+
+                self._edge_item_events[edge_item._label.text()] = GraphEventHandler(self._widget.tabWidget, edge_item, edge_item._label.hoverEnterEvent)
+                edge_item._label.hoverEnterEvent = self._edge_item_events[edge_item._label.text()].EdgeEvent
+
                 #self._edge_item_events[edge_item._label.text()]=GraphEventHandler(self._widget.tabWidget,edge_item,edge_item.mouseDoubleClickEvent);
                 #edge_item.mouseDoubleClickEvent=self._edge_item_events[edge_item._label.text()].EdgeEvent;
 
                 edge_item.add_to_scene(self._scene)
 
                 #set the color of node as connection strength one of red, yellow, green
-                edge_dst_name=edge_item.to_node._label.text()
+                edge_dst_name = edge_item.to_node._label.text()
                 if edge_dst_name in self._graph._client_info_list.keys():
-                  connection_strength=self._graph._client_info_list[edge_dst_name]['connection_strength']
-                  if connection_strength=='very_strong':
-                      green=QColor(0, 255, 0)
-                      edge_item._default_color=green
-                      edge_item.set_color(green)
+                    connection_strength = self._graph._client_info_list[edge_dst_name]['connection_strength']
+                    if connection_strength == 'very_strong':
+                        green = QColor(0, 255, 0)
+                        edge_item._default_color = green
+                        edge_item.set_color(green)
 
-                  elif connection_strength=='strong':
-                      green_yellow=QColor(125, 255,0)
-                      edge_item._default_color=green_yellow
-                      edge_item.set_color(green_yellow)
-                        
-                  elif connection_strength=='normal':
-                      yellow=QColor(238, 238,0)
-                      edge_item._default_color=yellow
-                      edge_item.set_color(yellow)
+                    elif connection_strength == 'strong':
+                        green_yellow = QColor(125, 255, 0)
+                        edge_item._default_color = green_yellow
+                        edge_item.set_color(green_yellow)
 
-                  elif connection_strength=='weak':
-                      yellow_red=QColor(255, 125,0)
-                      edge_item._default_color=yellow_red
-                      edge_item.set_color(yellow_red)
-                      
-                  elif connection_strength=='very_weak':
-                      red=QColor(255, 0,0)
-                      edge_item._default_color=red
-                      edge_item.set_color(red)
+                    elif connection_strength == 'normal':
+                        yellow = QColor(238, 238, 0)
+                        edge_item._default_color = yellow
+                        edge_item.set_color(yellow)
+
+                    elif connection_strength == 'weak':
+                        yellow_red = QColor(255, 125, 0)
+                        edge_item._default_color = yellow_red
+                        edge_item.set_color(yellow_red)
+
+                    elif connection_strength == 'very_weak':
+                        red = QColor(255, 0, 0)
+                        edge_item._default_color = red
+                        edge_item.set_color(red)
                 #set the tooltip about network information
-                edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name]['conn_stats']))    
+                edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name]['conn_stats']))
 
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
-  
+
         if self._widget.auto_fit_graph_check_box.isChecked():
             self._fit_in_view()
 
     def _fit_in_view(self):
         self._widget.graphics_view.fitInView(self._scene.itemsBoundingRect(), Qt.KeepAspectRatio)
-
