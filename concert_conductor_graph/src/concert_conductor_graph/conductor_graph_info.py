@@ -7,13 +7,13 @@
 ##############################################################################
 
 import copy
+import time
 
 import rospy
 from rosgraph.impl.graph import Edge, EdgeList
 import concert_msgs.msg as concert_msgs
-from concert_msgs.msg import ConcertClients
 from gateway_msgs.msg import ConnectionStatistics
-import rocon_uri
+import rocon_python_comms
 
 ##############################################################################
 # Graph
@@ -38,8 +38,18 @@ class ConductorGraphInfo(object):
         self._period_callback = None
         self.is_first_update = False
 
-        rospy.Subscriber(concert_msgs.Strings.CONCERT_CLIENTS, ConcertClients, self.update_client_list)
-        rospy.Subscriber(concert_msgs.Strings.CONCERT_CLIENT_CHANGES, ConcertClients, self._update_callback)
+        while not rospy.is_shutdown():
+            try:
+                graph_topic_name = rocon_python_comms.find_topic('concert_msgs/ConductorGraph', timeout=rospy.rostime.Duration(0.1), unique=True)
+                (namespace, unused_topic_name) = graph_topic_name.rsplit('/', 1)
+                changes_topic_name = namespace + "/concert_client_changes"  # this is assuming they didn't remap this bugger.
+                break
+            except rocon_python_comms.NotFoundException:
+                time.sleep(0.1)  # just loop around
+        rospy.logwarn("Setting up subscribers inside %s" % namespace)
+        #rospy.Subscriber(graph_topic_name, concert_msgs.ConductorGraph, self.update_client_list)
+        rospy.Subscriber(namespace + "/concert_clients", concert_msgs.ConcertClients, self.update_client_list)
+        rospy.Subscriber(changes_topic_name, concert_msgs.ConcertClients, self._update_callback)
 
         self._client_info_list = {}
         self._pre_client_info_list = {}
@@ -49,7 +59,7 @@ class ConductorGraphInfo(object):
             self._event_callback()
 
     def update_client_list(self, data):
-        print "[conductor_graph_info]: update_client_list"
+        print("[conductor_graph_info]: update_client_list")
 
         if self.is_first_update == False:
             if self._event_callback != None:
@@ -66,9 +76,11 @@ class ConductorGraphInfo(object):
 
         client_list = []
 
+        #for k in data.available:
         for k in data.clients:
             client_list.append((k, True))
         for k in data.uninvited_clients:
+        #for k in data.uninvited:
             client_list.append((k, False))
 
         for client in client_list:
@@ -170,11 +182,9 @@ class ConductorGraphInfo(object):
 
     def _reg_event_callback(self, func):
         self._event_callback = func
-        pass
 
     def _reg_period_callback(self, func):
         self._period_callback = func
-        pass
 
     def _compare_client_info_list(self):
         result = True
