@@ -26,7 +26,6 @@ from qt_app_manager_info import QtAppManagerInfo
 #rqt
 from qt_gui.plugin import Plugin
 
-
 ##############################################################################
 # QtAppManager
 ##############################################################################
@@ -69,20 +68,21 @@ class QtAppManager(Plugin):
         self.current_app = None
         self.current_captured_robot = None
 
-        self._get_name_space()
+        self._get_name_spaces()
 
     def _change_namespace(self, event):
-        self.qt_app_manager_info._get_apps(self._widget.namespace_cbox.currentText(), '/list_apps')
+        self.qt_app_manager_info._get_apps(self._widget.namespace_cbox.currentText())
+        self.qt_app_manager_info._set_update_status(self._widget.namespace_cbox.currentText())
         pass
 
-    def _get_name_space(self):
-        for namespace in self.qt_app_manager_info._get_namespace():
-            ns = namespace[:namespace.find('list_apps')]
+    def _get_name_spaces(self):
+        for namespace in self.qt_app_manager_info._get_namespaces():
+            ns = namespace[:namespace.find('list_rapps')]
             self._widget.namespace_cbox.addItem(ns)
-        self.qt_app_manager_info._get_apps(self._widget.namespace_cbox.currentText(), '/list_apps')
+        self.qt_app_manager_info._get_apps(self._widget.namespace_cbox.currentText())
+        self.qt_app_manager_info._set_update_status(self._widget.namespace_cbox.currentText())
 
     def _exit(self):
-        print "Exit"
         pass
 
     def _start_app(self):
@@ -98,7 +98,9 @@ class QtAppManager(Plugin):
         pass
 
     def _update_app_list(self):
+        self._widget.app_info_text.clear()
         self._widget.app_tree_widget.clear()
+        self.apps = {}
         apps = self.qt_app_manager_info.apps
         for k in apps.values():
             app = QTreeWidgetItem(self._widget.app_tree_widget)
