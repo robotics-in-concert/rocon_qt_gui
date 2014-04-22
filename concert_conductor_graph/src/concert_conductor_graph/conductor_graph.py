@@ -21,7 +21,6 @@ import rospy
 from rocon_std_msgs.msg import Remapping
 from rocon_std_msgs.srv import GetPlatformInfo
 import rocon_console.console as console
-from rocon_app_manager_msgs.srv import GetStatus, Invite
 
 ###########################
 
