@@ -7,12 +7,13 @@
 ##############################################################################
 
 import copy
+import time
 
 import rospy
 from rosgraph.impl.graph import Edge, EdgeList
 import concert_msgs.msg as concert_msgs
-from concert_msgs.msg import ConcertClients
 from gateway_msgs.msg import ConnectionStatistics
+import rocon_python_comms
 
 ##############################################################################
 # Graph
@@ -27,7 +28,7 @@ class ConductorGraphInfo(object):
         '''
         self._last_update = 0
         self._gateway_namespace = None
-        self._concert_conductor_name = "concert_conductor"
+        self._conductor_name = "conductor"
         self.gateway_nodes = []  # Gateway nodes
         self.gateway_edges = []  # Gateway-Gateway edges
         self.bad_nodes = []  # Gateway nodes
@@ -37,8 +38,17 @@ class ConductorGraphInfo(object):
         self._period_callback = None
         self.is_first_update = False
 
-        rospy.Subscriber(concert_msgs.Strings.CONCERT_CLIENTS, ConcertClients, self.update_client_list)
-        rospy.Subscriber(concert_msgs.Strings.CONCERT_CLIENT_CHANGES, ConcertClients, self._update_callback)
+        while not rospy.is_shutdown():
+            try:
+                graph_topic_name = rocon_python_comms.find_topic('concert_msgs/ConductorGraph', timeout=rospy.rostime.Duration(0.1), unique=True)
+                (namespace, unused_topic_name) = graph_topic_name.rsplit('/', 1)
+                clients_topic_name = namespace + "/concert_clients"  # this is assuming they didn't remap this bugger.
+                break
+            except rocon_python_comms.NotFoundException:
+                time.sleep(0.1)  # just loop around
+        rospy.logwarn("Setting up subscribers inside %s" % namespace)
+        rospy.Subscriber(graph_topic_name, concert_msgs.ConductorGraph, self._update_callback)
+        rospy.Subscriber(clients_topic_name, concert_msgs.ConcertClients, self.update_client_list)
 
         self._client_info_list = {}
         self._pre_client_info_list = {}
@@ -48,7 +58,7 @@ class ConductorGraphInfo(object):
             self._event_callback()
 
     def update_client_list(self, data):
-        print "[conductor_graph_info]: update_client_list"
+        print("[conductor_graph_info]: update_client_list")
 
         if self.is_first_update == False:
             if self._event_callback != None:
@@ -60,7 +70,7 @@ class ConductorGraphInfo(object):
 
         #update dotgraph info
         self.gateway_nodes = []
-        self.gateway_nodes.append(self._concert_conductor_name)
+        self.gateway_nodes.append(self._conductor_name)
         self.gateway_edges = EdgeList()
 
         client_list = []
@@ -74,7 +84,7 @@ class ConductorGraphInfo(object):
             k = client[0]
             client_name = client[0].name
 
-            if self._client_info_list.has_key(client_name):
+            if client_name in self._client_info_list.keys():
                 self._client_info_list[client_name]["is_new"] = False
             else:
                 self._client_info_list[client_name] = {}
@@ -86,11 +96,9 @@ class ConductorGraphInfo(object):
             self._client_info_list[client_name]["name"] = client[0].name
             self._client_info_list[client_name]["gateway_name"] = client[0].gateway_name
             self._client_info_list[client_name]["platform_info"] = client[0].platform_info
-            self._client_info_list[client_name]["client_status"] = client[0].client_status
-            self._client_info_list[client_name]["app_status"] = client[0].app_status
 
             self._client_info_list[client_name]["is_local_client"] = client[0].is_local_client
-            self._client_info_list[client_name]["status"] = client[0].status
+            self._client_info_list[client_name]["state"] = client[0].state
 
             self._client_info_list[client_name]["conn_stats"] = client[0].conn_stats
             self._client_info_list[client_name]["gateway_available"] = client[0].conn_stats.gateway_available
@@ -107,28 +115,25 @@ class ConductorGraphInfo(object):
             self._client_info_list[client_name]["wireless_signal_level"] = client[0].conn_stats.wireless_signal_level
             self._client_info_list[client_name]["wireless_noise_level"] = client[0].conn_stats.wireless_noise_level
 
-            self._client_info_list[client_name]["apps"]={}
+            self._client_info_list[client_name]["rapps"] = {}
 
-            for l in client[0].apps:
+            for l in client[0].rapps:
                 app_name = l.name
-                self._client_info_list[client_name]["apps"][app_name] = {}
-                self._client_info_list[client_name]["apps"][app_name]['name'] = l.name
-                self._client_info_list[client_name]["apps"][app_name]['display_name'] = l.display_name
-                self._client_info_list[client_name]["apps"][app_name]['description'] = l.description
-                self._client_info_list[client_name]["apps"][app_name]['compatibility'] = l.compatibility
-                self._client_info_list[client_name]["apps"][app_name]['status'] = l.status
+                self._client_info_list[client_name]["rapps"][app_name] = {}
+                self._client_info_list[client_name]["rapps"][app_name]['name'] = l.name
+                self._client_info_list[client_name]["rapps"][app_name]['display_name'] = l.display_name
+                self._client_info_list[client_name]["rapps"][app_name]['description'] = l.description
+                self._client_info_list[client_name]["rapps"][app_name]['compatibility'] = l.compatibility
+                self._client_info_list[client_name]["rapps"][app_name]['status'] = l.status
 
             #text info
             app_context = "<html>"
             app_context += "<p>-------------------------------------------</p>"
-            app_context += "<p><b>name: </b>" + client[0].name + "</p>"
+            app_context += "<p><b>concert_alias: </b>" + client[0].name + "</p>"
             app_context += "<p><b>gateway_name: </b>" + client[0].gateway_name + "</p>"
             app_context += "<p><b>rocon_uri: </b>" + client[0].platform_info.uri + "</p>"
-            app_context += "<p><b>concert_version: </b>" + client[0].platform_info.version + "</p>"
-            app_context += "<p>-------------------------------------------</p>"
-            app_context += "<p><b>client_status: </b>" + client[0].client_status + "</p>"
-            app_context += "<p><b>app_status: </b>" + client[0].app_status + "</p>"
-            for l in self._client_info_list[client_name]["apps"].values():
+            app_context += "<p><b>state: </b>" + client[0].state + "</p>"
+            for l in self._client_info_list[client_name]["rapps"].values():
                 app_context += "<p>-------------------------------------------</p>"
                 app_context += "<p><b>app_name: </b>" + l['name'] + "</p>"
                 app_context += "<p><b>app_display_name: </b>" + l['display_name'] + "</p>"
@@ -147,11 +152,11 @@ class ConductorGraphInfo(object):
                 continue
             if client[0].conn_stats.gateway_available == True:
                 if client[0].is_local_client == True:
-                    self.gateway_edges.add(Edge(self._concert_conductor_name, client[0].name, "local"))
+                    self.gateway_edges.add(Edge(self._conductor_name, client[0].name, "local"))
                 elif client[0].conn_stats.network_type == ConnectionStatistics.WIRED:
-                    self.gateway_edges.add(Edge(self._concert_conductor_name, client[0].name, "wired"))
+                    self.gateway_edges.add(Edge(self._conductor_name, client[0].name, "wired"))
                 elif client[0].conn_stats.network_type == ConnectionStatistics.WIRELESS:
-                    self.gateway_edges.add(Edge(self._concert_conductor_name, client[0].name, "wireless"))
+                    self.gateway_edges.add(Edge(self._conductor_name, client[0].name, "wireless"))
                 else:
                     print "[conductor_graph_info]: Unknown network type"
             else:
@@ -174,11 +179,9 @@ class ConductorGraphInfo(object):
 
     def _reg_event_callback(self, func):
         self._event_callback = func
-        pass
 
     def _reg_period_callback(self, func):
         self._period_callback = func
-        pass
 
     def _compare_client_info_list(self):
         result = True
@@ -186,11 +189,9 @@ class ConductorGraphInfo(object):
         cur = self._client_info_list
         for k in cur.values():
             client_name = k["name"]
-            if not pre.has_key(client_name):
+            if not client_name in pre.keys():
                 continue
-            if pre[client_name]["client_status"] != cur[client_name]["client_status"]:
-                result = False
-            elif pre[client_name]["app_status"] != cur[client_name]["app_status"]:
+            if pre[client_name]["state"] != cur[client_name]["state"]:
                 result = False
             elif pre[client_name]["connection_strength"] != cur[client_name]["connection_strength"]:
                 result = False
