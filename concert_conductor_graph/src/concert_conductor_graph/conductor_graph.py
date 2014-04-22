@@ -10,16 +10,14 @@ from __future__ import division
 import os
 
 from python_qt_binding import loadUi
-from PyQt4.QtCore import Qt, QAbstractListModel, Signal
-from PyQt4.QtGui import QGraphicsScene, QIcon, QWidget, QLabel, QComboBox
-from PyQt4.QtGui import QSizePolicy, QTextEdit, QCompleter, QColor, QPushButton
-from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QPlainTextEdit
-from PyQt4.QtGui import QGridLayout, QTextCursor, QDialog
+from python_qt_binding.QtCore import Qt, QAbstractListModel, Signal
+from python_qt_binding.QtGui import QGraphicsScene, QIcon, QWidget, QLabel, QComboBox
+from python_qt_binding.QtGui import QSizePolicy, QTextEdit, QCompleter, QColor, QPushButton
+from python_qt_binding.QtGui import QVBoxLayout, QHBoxLayout, QPlainTextEdit
+from python_qt_binding.QtGui import QGridLayout, QTextCursor, QDialog
 
 import rospkg
 import rospy
-from rocon_std_msgs.msg import Remapping
-from rocon_std_msgs.srv import GetPlatformInfo
 import rocon_console.console as console
 
 ###########################
