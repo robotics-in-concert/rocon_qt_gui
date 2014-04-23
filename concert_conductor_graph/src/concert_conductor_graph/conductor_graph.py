@@ -237,8 +237,8 @@ class ConductorGraph(Plugin):
         self.dot_to_qt = DotToQtGenerator()
 
         self._graph = ConductorGraphInfo()
-        self._graph._reg_event_callback(self._update_client_list)
-        self._graph._reg_period_callback(self._set_network_statisics)
+        self._graph._register_event_callback(self._update_client_list)
+        self._graph._register_period_callback(self._set_network_statisics)
 
         rospack = rospkg.RosPack()
         ui_file = os.path.join(rospack.get_path('concert_conductor_graph'), 'ui', 'conductor_graph.ui')
@@ -300,12 +300,11 @@ class ConductorGraph(Plugin):
         self._redraw_graph_view()
 
     def _update_client_list(self):
-        print "[conductor graph]: _update_client_list"
+        print("[conductor graph]: _update_client_list")
         self._client_list_update_signal.emit()
-        pass
 
     def _update_client_tab(self):
-        print '[_update_client_tab]'
+        print('[_update_client_tab]')
         self.pre_selected_client_name = self.cur_selected_client_name
         self._widget.tabWidget.clear()
 
@@ -329,9 +328,9 @@ class ConductorGraph(Plugin):
             ver_layout.addWidget(context_label)
 
             app_context_widget = QPlainTextEdit()
-            app_context_widget.setObjectName(k["name"] + '_' + 'app_context_widget')
+            app_context_widget.setObjectName(k.concert_alias + '_' + 'app_context_widget')
             app_context_widget.setAccessibleName('app_context_widget')
-            app_context_widget.appendHtml(k["app_context"])
+            app_context_widget.appendHtml(k.get_rapp_context())
             app_context_widget.setReadOnly(True)
 
             cursor = app_context_widget.textCursor()
@@ -341,11 +340,11 @@ class ConductorGraph(Plugin):
 
             # new icon
             path = ""
-            if k["is_new"] == True:
+            if k.is_new:
                 path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../resources/images/new.gif")
 
             #add tab
-            self._widget.tabWidget.addTab(main_widget, QIcon(path), k["name"])
+            self._widget.tabWidget.addTab(main_widget, QIcon(path), k.concert_alias)
 
         #set previous selected tab
         for k in range(self._widget.tabWidget.count()):
@@ -363,7 +362,7 @@ class ConductorGraph(Plugin):
             for edge_items in self._edge_items.itervalues():
                 for edge_item in edge_items:
                     edge_dst_name = edge_item.to_node._label.text()
-                    edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name]['conn_stats']))
+                    edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name].msg.conn_stats))
 
     def _redraw_graph_view(self):
         self._scene.clear()
@@ -417,7 +416,7 @@ class ConductorGraph(Plugin):
                 #set the color of node as connection strength one of red, yellow, green
                 edge_dst_name = edge_item.to_node._label.text()
                 if edge_dst_name in self._graph._client_info_list.keys():
-                    connection_strength = self._graph._client_info_list[edge_dst_name]['connection_strength']
+                    connection_strength = self._graph._client_info_list[edge_dst_name].get_connection_strength()
                     if connection_strength == 'very_strong':
                         green = QColor(0, 255, 0)
                         edge_item._default_color = green
@@ -443,7 +442,7 @@ class ConductorGraph(Plugin):
                         edge_item._default_color = red
                         edge_item.set_color(red)
                 #set the tooltip about network information
-                edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name]['conn_stats']))
+                edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name].msg.conn_stats))
 
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
 
