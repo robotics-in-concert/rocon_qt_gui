@@ -253,7 +253,8 @@ class RemoconInfo():
           (well reasonably) parsing of that string.
            - ros launcher (by .launch extension)
            - ros runnable (by roslib find_resource success)
-           - web app      (by urlparse scheme check against http)
+           - web app      (by web_interactions.parse and urlparse scheme check against http)
+           - web url      (by web_interactions.parse and by urlparse scheme check against http)
            - global executable (fallback option)
         '''
         try:
