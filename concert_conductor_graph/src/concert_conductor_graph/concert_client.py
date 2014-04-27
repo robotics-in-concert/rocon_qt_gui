@@ -114,6 +114,10 @@ class ConcertClient(object):
         return self.msg.state
 
     @property
+    def ip(self):
+        return self.msg.ip.replace('.', '_')
+
+    @property
     def gateway_name(self):
         return self.msg.gateway_name
 

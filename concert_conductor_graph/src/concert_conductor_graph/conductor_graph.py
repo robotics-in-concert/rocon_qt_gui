@@ -17,8 +17,6 @@ from python_qt_binding.QtGui import QVBoxLayout, QHBoxLayout, QPlainTextEdit
 from python_qt_binding.QtGui import QGridLayout, QTextCursor, QDialog
 
 import rospkg
-import rospy
-import rocon_console.console as console
 import concert_msgs.msg as concert_msgs
 
 # Delete this once we upgrade (hopefully anything after precise)
@@ -45,24 +43,6 @@ from conductor_graph_info import ConductorGraphInfo
 ##############################################################################
 
 
-class RepeatedWordCompleter(QCompleter):
-    """A completer that completes multiple times from a list"""
-
-    def init(self, parent=None):
-        QCompleter.init(self, parent)
-
-    def pathFromIndex(self, index):
-        path = QCompleter.pathFromIndex(self, index)
-        lst = str(self.widget().text()).split(',')
-        if len(lst) > 1:
-            path = '%s, %s' % (','.join(lst[:-1]), path)
-        return path
-
-    def splitPath(self, path):
-        path = str(path.split(',')[-1]).lstrip(' ')
-        return [path]
-
-
 class GraphEventHandler():
 
     def __init__(self, tabWidget, item, callback_func):
@@ -80,27 +60,6 @@ class GraphEventHandler():
         self._callback_func(event)
         self._item.set_color(QColor(0, 0, 255))
 
-
-class NamespaceCompletionModel(QAbstractListModel):
-    """Ros package and stacknames"""
-    def __init__(self, linewidget, topics_only):
-        super(QAbstractListModel, self).__init__(linewidget)
-        self.names = []
-
-    def refresh(self, names):
-        namesset = set()
-        for n in names:
-            namesset.add(str(n).strip())
-            namesset.add("-%s" % (str(n).strip()))
-        self.names = sorted(namesset)
-
-    def rowCount(self, parent):
-        return len(self.names)
-
-    def data(self, index, role):
-        if index.isValid() and (role == Qt.DisplayRole or role == Qt.EditRole):
-            return self.names[index.row()]
-        return None
 
 ##############################################################################
 # Dynamic Argument Layer Classes
@@ -222,6 +181,11 @@ class ConductorGraph(Plugin):
     signal_deferred_fit_in_view = Signal()
     signal_update_conductor_graph = Signal()
 
+    # constants
+    # colour definitions from http://www.w3.org/TR/SVG/types.html#ColorKeywords
+    # see also http://qt-project.org/doc/qt-4.8/qcolor.html#setNamedColor
+    link_strength_colours = {'very_strong': QColor("lime"), 'strong': QColor("chartreuse"), 'normal': QColor("yellow"), 'weak': QColor("orange"), 'very_weak': QColor("red")}
+
     def __init__(self, context):
         self._context = context
         super(ConductorGraph, self).__init__(context)
@@ -256,10 +220,9 @@ class ConductorGraph(Plugin):
         self._scene.setBackgroundBrush(Qt.white)
         self._widget.graphics_view.setScene(self._scene)
 
-        #self._widget.unused_push_button.pressed.connect(self._update_conductor_graph)
-
         self._widget.highlight_connections_check_box.toggled.connect(self._redraw_graph_view)
         self._widget.auto_fit_graph_check_box.toggled.connect(self._redraw_graph_view)
+        self._widget.clusters_check_box.toggled.connect(self._redraw_graph_view)
 
         self.signal_deferred_fit_in_view.connect(self._fit_in_view, Qt.QueuedConnection)
         self.signal_deferred_fit_in_view.emit()
@@ -277,7 +240,6 @@ class ConductorGraph(Plugin):
         pass
 
     def _update_conductor_graph(self):
-        print("[conductor graph]: _update_conductor graph")
         if self.initialised:
             self._redraw_graph_view()
             self._update_client_tab()
@@ -357,12 +319,14 @@ class ConductorGraph(Plugin):
                     edge_item.setToolTip(str(self._graph.concert_clients[edge_dst_name].msg.conn_stats))
 
     def _redraw_graph_view(self):
+        print("[conductor graph]: _redraw_graph_view")
         # regenerate the dotcode
-        current_dotcode = self.dotcode_generator.generate_dotcode(rosgraphinst=self._graph,
+        current_dotcode = self.dotcode_generator.generate_dotcode(
+                                                       conductor_graph_instance=self._graph,
                                                        dotcode_factory=self.dotcode_factory,
-                                                       orientation='LR'
+                                                       clusters=self._widget.clusters_check_box.isChecked()
                                                        )
-        print("Dotgraph: \n%s" % current_dotcode)
+        #print("Dotgraph: \n%s" % current_dotcode)
         self._scene.clear()
         self._node_item_events = {}
         self._edge_item_events = {}
@@ -378,17 +342,17 @@ class ConductorGraph(Plugin):
         self._node_items = nodes
         self._edge_items = edges
 
-        # if we wish to make special nodes, do that here (maybe subclass GraphItem, just like NodeItem does)
-        #node
+        #nodes - if we wish to make special nodes, do that here (maybe subclass GraphItem, just like NodeItem does
         for node_item in nodes.itervalues():
-
             # redefine mouse event
-            self._node_item_events[node_item._label.text()] = GraphEventHandler(self._widget.tabWidget, node_item, node_item.mouseDoubleClickEvent)
-            node_item.mouseDoubleClickEvent = self._node_item_events[node_item._label.text()].NodeEvent
+            #self._node_item_events[node_item._label.text()] = GraphEventHandler(self._widget.tabWidget, node_item, node_item.mouseDoubleClickEvent)
+            #node_item.mouseDoubleClickEvent = self._node_item_events[node_item._label.text()].NodeEvent
+            self._node_item_events[node_item._label.text()] = GraphEventHandler(self._widget.tabWidget, node_item, node_item.hoverEnterEvent)
+            node_item.hoverEnterEvent = self._node_item_events[node_item._label.text()].NodeEvent
 
             self._scene.addItem(node_item)
 
-        #edge
+        #edges
         for edge_items in edges.itervalues():
             for edge_item in edge_items:
                 #redefine the edge hover event
@@ -404,31 +368,9 @@ class ConductorGraph(Plugin):
                 #set the color of node as connection strength one of red, yellow, green
                 edge_dst_name = edge_item.to_node._label.text()
                 if edge_dst_name in self._graph.concert_clients.keys():
-                    connection_strength = self._graph.concert_clients[edge_dst_name].get_connection_strength()
-                    if connection_strength == 'very_strong':
-                        green = QColor(0, 255, 0)
-                        edge_item._default_color = green
-                        edge_item.set_color(green)
-
-                    elif connection_strength == 'strong':
-                        green_yellow = QColor(125, 255, 0)
-                        edge_item._default_color = green_yellow
-                        edge_item.set_color(green_yellow)
-
-                    elif connection_strength == 'normal':
-                        yellow = QColor(238, 238, 0)
-                        edge_item._default_color = yellow
-                        edge_item.set_color(yellow)
-
-                    elif connection_strength == 'weak':
-                        yellow_red = QColor(255, 125, 0)
-                        edge_item._default_color = yellow_red
-                        edge_item.set_color(yellow_red)
-
-                    elif connection_strength == 'very_weak':
-                        red = QColor(255, 0, 0)
-                        edge_item._default_color = red
-                        edge_item.set_color(red)
+                    link_strength_colour = ConductorGraph.link_strength_colours[self._graph.concert_clients[edge_dst_name].get_connection_strength()]
+                    edge_item._default_color = link_strength_colour
+                    edge_item.set_color(link_strength_colour)
                 #set the tooltip about network information
                 edge_item.setToolTip(str(self._graph.concert_clients[edge_dst_name].msg.conn_stats))
 

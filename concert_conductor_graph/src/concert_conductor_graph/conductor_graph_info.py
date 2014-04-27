@@ -6,12 +6,8 @@
 # Imports
 ##############################################################################
 
-import copy
-import time
-
 import rospy
 import concert_msgs.msg as concert_msgs
-from gateway_msgs.msg import ConnectionStatistics
 import rocon_python_comms
 import rocon_console.console as console
 from .concert_client import ConcertClient
@@ -96,26 +92,26 @@ class ConductorGraphInfo(object):
         self._change_callback()
         self._periodic_callback()
 
-    def _compare_client_info_list(self):
-        """
-          Not currently using this, but would be a more optimal way of indentifying when the graph
-          changes so we can tell the drawing functions when to update rather than at every step.
-
-          You would insert this logic into the update_connection_statistics to flag when you would
-          want a change and/or a period callback.
-        """
-        result = True
-        pre = self._pre_client_info_list
-        cur = self._client_info_list
-        for k in cur.values():
-            client_name = k.msg.name
-            if not client_name in pre.keys():
-                continue
-            if pre[client_name].msg.state != cur[client_name].msg.state:
-                result = False
-            elif pre[client_name].get_connection_strength() != cur[client_name].get_connection_strength():
-                result = False
-            elif pre[client_name].msg.conn_stats.gateway_available != cur[client_name].msg.conn_stats.gateway_available:
-                result = False
-
-        return result
+#     def _compare_client_info_list(self):
+#         """
+#           Not currently using this, but would be a more optimal way of indentifying when the graph
+#           changes so we can tell the drawing functions when to update rather than at every step.
+#
+#           You would insert this logic into the update_connection_statistics to flag when you would
+#           want a change and/or a period callback.
+#         """
+#         result = True
+#         pre = self._pre_client_info_list
+#         cur = self._client_info_list
+#         for k in cur.values():
+#             client_name = k.msg.name
+#             if not client_name in pre.keys():
+#                 continue
+#             if pre[client_name].msg.state != cur[client_name].msg.state:
+#                 result = False
+#             elif pre[client_name].get_connection_strength() != cur[client_name].get_connection_strength():
+#                 result = False
+#             elif pre[client_name].msg.conn_stats.gateway_available != cur[client_name].msg.conn_stats.gateway_available:
+#                 result = False
+#
+#         return result
