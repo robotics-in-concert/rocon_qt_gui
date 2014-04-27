@@ -19,10 +19,16 @@ from python_qt_binding.QtGui import QGridLayout, QTextCursor, QDialog
 import rospkg
 import rospy
 import rocon_console.console as console
+import concert_msgs.msg as concert_msgs
+
+# Delete this once we upgrade (hopefully anything after precise)
+# Refer to https://github.com/robotics-in-concert/rocon_multimaster/issues/248
+import threading
+threading._DummyThread._Thread__stop = lambda x: 42
 
 ###########################
 
-from .dotcode import RosGraphDotcodeGenerator
+from .dotcode import ConductorGraphDotcodeGenerator
 from .interactive_graphics_view import InteractiveGraphicsView
 from qt_dotgraph.dot_to_qt import DotToQtGenerator
 from qt_gui.plugin import Plugin
@@ -212,15 +218,15 @@ class DynamicArgumentLayer():
 
 class ConductorGraph(Plugin):
 
-    _deferred_fit_in_view = Signal()
-    _client_list_update_signal = Signal()
+    # pyqt signals are always defined as class attributes
+    signal_deferred_fit_in_view = Signal()
+    signal_update_conductor_graph = Signal()
 
     def __init__(self, context):
         self._context = context
         super(ConductorGraph, self).__init__(context)
         self.initialised = False
         self.setObjectName('Conductor Graph')
-        self._current_dotcode = None
         self._node_items = None
         self._edge_items = None
         self._node_item_events = {}
@@ -233,12 +239,10 @@ class ConductorGraph(Plugin):
         # factory builds generic dotcode items
         self.dotcode_factory = PydotFactory()
         # self.dotcode_factory=PygraphvizFactory()
-        self.dotcode_generator = RosGraphDotcodeGenerator()
+        self.dotcode_generator = ConductorGraphDotcodeGenerator()
         self.dot_to_qt = DotToQtGenerator()
 
-        self._graph = ConductorGraphInfo()
-        self._graph._register_event_callback(self._update_client_list)
-        self._graph._register_period_callback(self._set_network_statisics)
+        self._graph = ConductorGraphInfo(self._update_conductor_graph_relay, self._set_network_statisics)
 
         rospack = rospkg.RosPack()
         ui_file = os.path.join(rospack.get_path('concert_conductor_graph'), 'ui', 'conductor_graph.ui')
@@ -252,63 +256,50 @@ class ConductorGraph(Plugin):
         self._scene.setBackgroundBrush(Qt.white)
         self._widget.graphics_view.setScene(self._scene)
 
-        #self._widget.refresh_graph_push_button.setIcon(QIcon.fromTheme('view-refresh'))
-        self._widget.refresh_graph_push_button.setIcon(QIcon.fromTheme('window-new'))
-        self._widget.refresh_graph_push_button.pressed.connect(self._update_conductor_graph)
+        #self._widget.unused_push_button.pressed.connect(self._update_conductor_graph)
 
         self._widget.highlight_connections_check_box.toggled.connect(self._redraw_graph_view)
         self._widget.auto_fit_graph_check_box.toggled.connect(self._redraw_graph_view)
-        self._widget.fit_in_view_push_button.setIcon(QIcon.fromTheme('zoom-original'))
-        self._widget.fit_in_view_push_button.pressed.connect(self._fit_in_view)
 
-        self._deferred_fit_in_view.connect(self._fit_in_view, Qt.QueuedConnection)
-        self._deferred_fit_in_view.emit()
+        self.signal_deferred_fit_in_view.connect(self._fit_in_view, Qt.QueuedConnection)
+        self.signal_deferred_fit_in_view.emit()
 
         self._widget.tabWidget.currentChanged.connect(self._change_client_tab)
-        self._client_list_update_signal.connect(self._update_conductor_graph)
+        self.signal_update_conductor_graph.connect(self._update_conductor_graph)
 
         context.add_widget(self._widget)
 
     def restore_settings(self, plugin_settings, instance_settings):
         self.initialised = True
-        self._refresh_rosgraph()
+        self._update_conductor_graph()
 
     def shutdown_plugin(self):
         pass
 
     def _update_conductor_graph(self):
-        # re-enable controls customizing fetched ROS graph
+        print("[conductor graph]: _update_conductor graph")
+        if self.initialised:
+            self._redraw_graph_view()
+            self._update_client_tab()
 
-        self._refresh_rosgraph()
-        self._update_client_tab()
-
-    def _refresh_rosgraph(self):
-        if not self.initialised:
-            return
-        self._update_graph_view(self._generate_dotcode())
-
-    def _generate_dotcode(self):
-        return self.dotcode_generator.generate_dotcode(rosgraphinst=self._graph,
-                                                       dotcode_factory=self.dotcode_factory,
-                                                       orientation='LR'
-                                                       )
-
-    def _update_graph_view(self, dotcode):
-        #if dotcode==self._current_dotcode:
-        #    return
-        self._current_dotcode = dotcode
-        self._redraw_graph_view()
-
-    def _update_client_list(self):
-        print("[conductor graph]: _update_client_list")
-        self._client_list_update_signal.emit()
+    def _update_conductor_graph_relay(self):
+        """
+        This seems a bit obtuse, but we can't just dump the _update_conductor_graph callback on the underlying
+        conductor graph info and trigger it from there since that trigger will operate from a ros thread and pyqt
+        will crash trying to co-ordinate gui changes from an external thread. We need to relay via a signal.
+        """
+        self.signal_update_conductor_graph.emit()
 
     def _update_client_tab(self):
-        print('[_update_client_tab]')
+        print('[conductor graph]: _update_client_tab')
         self.pre_selected_client_name = self.cur_selected_client_name
         self._widget.tabWidget.clear()
 
-        for k in self._graph._client_info_list.values():
+        for k in self._graph.concert_clients.values():
+            # Only pull in information from connected or connectable clients
+            if k.state not in [concert_msgs.ConcertClientState.AVAILABLE, concert_msgs.ConcertClientState.MISSING, concert_msgs.ConcertClientState.UNINVITED]:
+                continue
+
             main_widget = QWidget()
 
             ver_layout = QVBoxLayout(main_widget)
@@ -341,6 +332,7 @@ class ConductorGraph(Plugin):
             # new icon
             path = ""
             if k.is_new:
+                # This only changes when the concert client changes topic publishes anew
                 path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../resources/images/new.gif")
 
             #add tab
@@ -362,24 +354,25 @@ class ConductorGraph(Plugin):
             for edge_items in self._edge_items.itervalues():
                 for edge_item in edge_items:
                     edge_dst_name = edge_item.to_node._label.text()
-                    edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name].msg.conn_stats))
+                    edge_item.setToolTip(str(self._graph.concert_clients[edge_dst_name].msg.conn_stats))
 
     def _redraw_graph_view(self):
+        # regenerate the dotcode
+        current_dotcode = self.dotcode_generator.generate_dotcode(rosgraphinst=self._graph,
+                                                       dotcode_factory=self.dotcode_factory,
+                                                       orientation='LR'
+                                                       )
+        print("Dotgraph: \n%s" % current_dotcode)
         self._scene.clear()
         self._node_item_events = {}
         self._edge_item_events = {}
         self._node_items = None
         self._edge_items = None
 
-        if self._widget.highlight_connections_check_box.isChecked():
-            highlight_level = 3
-        else:
-            highlight_level = 1
-
         highlight_level = 3 if self._widget.highlight_connections_check_box.isChecked() else 1
 
         # layout graph and create qt items
-        (nodes, edges) = self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
+        (nodes, edges) = self.dot_to_qt.dotcode_to_qt_items(current_dotcode,
                                                             highlight_level=highlight_level,
                                                             same_label_siblings=True)
         self._node_items = nodes
@@ -388,11 +381,6 @@ class ConductorGraph(Plugin):
         # if we wish to make special nodes, do that here (maybe subclass GraphItem, just like NodeItem does)
         #node
         for node_item in nodes.itervalues():
-            # set the color of conductor to orange
-            if node_item._label.text() == self._graph._conductor_name:
-                royal_blue = QColor(65, 105, 255)
-                node_item._default_color = royal_blue
-                node_item.set_color(royal_blue)
 
             # redefine mouse event
             self._node_item_events[node_item._label.text()] = GraphEventHandler(self._widget.tabWidget, node_item, node_item.mouseDoubleClickEvent)
@@ -415,8 +403,8 @@ class ConductorGraph(Plugin):
 
                 #set the color of node as connection strength one of red, yellow, green
                 edge_dst_name = edge_item.to_node._label.text()
-                if edge_dst_name in self._graph._client_info_list.keys():
-                    connection_strength = self._graph._client_info_list[edge_dst_name].get_connection_strength()
+                if edge_dst_name in self._graph.concert_clients.keys():
+                    connection_strength = self._graph.concert_clients[edge_dst_name].get_connection_strength()
                     if connection_strength == 'very_strong':
                         green = QColor(0, 255, 0)
                         edge_item._default_color = green
@@ -442,7 +430,7 @@ class ConductorGraph(Plugin):
                         edge_item._default_color = red
                         edge_item.set_color(red)
                 #set the tooltip about network information
-                edge_item.setToolTip(str(self._graph._client_info_list[edge_dst_name].msg.conn_stats))
+                edge_item.setToolTip(str(self._graph.concert_clients[edge_dst_name].msg.conn_stats))
 
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
 

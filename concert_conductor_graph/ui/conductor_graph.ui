@@ -56,16 +56,12 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QPushButton" name="refresh_graph_push_button">
+         <widget class="QPushButton" name="unused_push_button">
           <property name="toolTip">
            <string>Refresh ROS graph</string>
           </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="fit_in_view_push_button">
-          <property name="toolTip">
-           <string>Fit graph in view</string>
+          <property name="text">
+           <string>unused</string>
           </property>
          </widget>
         </item>

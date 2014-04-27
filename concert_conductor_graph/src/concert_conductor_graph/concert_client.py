@@ -88,6 +88,15 @@ class ConcertClient(object):
             else:
                 return None
 
+    def update(self, msg):
+        '''
+        Update with new information that gets periodically published by the concert
+        conductor. This currently includes the platform info (which can highlight
+        the rapp that is running), the connection statistics and the state.
+        '''
+        # could pull the individual bits, but just easy to drop the new msg in place
+        self.msg = msg
+
     ##############################################################################
     # Conveniences
     ##############################################################################
@@ -99,6 +108,10 @@ class ConcertClient(object):
     @concert_alias.setter
     def concert_alias(self, value):
         self.msg.name = value
+
+    @property
+    def state(self):
+        return self.msg.state
 
     @property
     def gateway_name(self):
