@@ -237,7 +237,7 @@ class ConductorGraph(Plugin):
         self._update_conductor_graph()
 
     def shutdown_plugin(self):
-        pass
+        self._graph.shutdown()
 
     def _update_conductor_graph(self):
         if self.initialised:

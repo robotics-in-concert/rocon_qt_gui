@@ -6,6 +6,8 @@
 # Imports
 ##############################################################################
 
+import threading
+
 import rospy
 import concert_msgs.msg as concert_msgs
 import rocon_python_comms
@@ -25,14 +27,25 @@ class ConductorGraphInfo(object):
         '''
         self._last_update = 0
         self.concert_clients = {}  # dictionary of .concert_client.ConcertClient objects keyed by concert alias
+        self.is_conductor = False
+        self._trigger_shutdown = False
 
         #Rubbish to clear out once rocon_gateway_graph is integrated
         self._change_callback = change_callback
         self._periodic_callback = periodic_callback
-        self.is_first_update = False
+        self._thread = threading.Thread(target=self._setup_subscribers)
+        self._thread.start()
 
+    def shutdown(self):
+        self._trigger_shutdown = True
+        self._thread.join()
+
+    def _setup_subscribers(self):
+        """
+        Hunt for the conductor's namespace and setup subscribers.
+        """
         print(console.green + "Searching for the conductor's ros topics..." + console.reset)
-        while not rospy.is_shutdown():
+        while not rospy.is_shutdown() and not self._trigger_shutdown:
             try:
                 graph_topic_name = rocon_python_comms.find_topic('concert_msgs/ConductorGraph', timeout=rospy.rostime.Duration(0.1), unique=True)
                 (namespace, unused_topic_name) = graph_topic_name.rsplit('/', 1)
@@ -40,10 +53,11 @@ class ConductorGraphInfo(object):
                 break
             except rocon_python_comms.NotFoundException:
                 pass  # just loop around
-#         if rospy.is_shutdown():
-#             return
+        if rospy.is_shutdown() or self._trigger_shutdown:
+            return
+        self.is_conductor = True
 
-        rospy.logwarn("Setting up subscribers inside %s" % namespace)
+        print(console.yellow + "Found the conductor, setting up subscribers inside %s" % namespace + console.reset)
         # get data on all clients, even those not connected
         rospy.Subscriber(graph_topic_name, concert_msgs.ConductorGraph, self._update_clients_callback)
         # get the periodic data of connected clients

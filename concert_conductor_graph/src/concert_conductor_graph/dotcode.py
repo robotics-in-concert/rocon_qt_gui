@@ -121,7 +121,8 @@ class ConductorGraphDotcodeGenerator:
                                              rankdir=orientation)
 
         ip_clusters = {}
-        self._add_conductor_node(dotcode_factory=dotcode_factory, dotgraph=dotgraph)
+        if conductor_graph_instance.is_conductor:
+            self._add_conductor_node(dotcode_factory=dotcode_factory, dotgraph=dotgraph)
         if nodes is not None:
             for node in nodes:
                 if clusters:
