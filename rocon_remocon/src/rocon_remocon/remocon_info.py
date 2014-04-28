@@ -28,6 +28,7 @@ import rocon_std_msgs.msg as rocon_std_msgs
 from rocon_app_manager_msgs.msg import ErrorCodes
 import rocon_interaction_msgs.msg as rocon_interaction_msgs
 import rocon_interaction_msgs.srv as rocon_interaction_srvs
+import rocon_interactions.web_interactions as web_interactions
 import rocon_python_comms
 
 from . import utils
@@ -44,13 +45,11 @@ class RemoconInfo():
           @type method with no args
         '''
         self._stop_app_postexec_fn = stop_app_postexec_fn
-        self.app_list = {}
+        self.interactions = {}
         self.rocon_master_info = {}
         self.is_connect = False
         self.is_app_running = False
         self.key = uuid.uuid4()
-
-        self.app_pid = 0
 
         # this might be naive and only work well on ubuntu...
         os_codename = OsDetect().get_codename()
@@ -118,10 +117,10 @@ class RemoconInfo():
             console.logwarn("RemoconInfo : tried to shutdown already disconnected remocon")
         else:
             console.logdebug("RemoconInfo : shutting down all apps")
-            for app_hash in self.app_list.keys():
+            for app_hash in self.interactions.keys():
                 self._stop_app(app_hash)
 
-            self.app_list = {}
+            self.interactions = {}
             self.is_connect = False
 
             rospy.signal_shutdown("shut down remocon_info")
@@ -158,33 +157,33 @@ class RemoconInfo():
 
         call_result = self.get_interactions_service_proxy(roles, self.platform_info.uri)
         print "[remocon_info]: call result"
-        self.app_list = {}
+        self.interactions = {}
         for interaction in call_result.interactions:
             if(interaction.role == role_name):
-                app_hash = interaction.hash
-                #if self.app_list.has_key(app_hash):
+                # TODO should create a class out of this mash, dicts of dicts are prone to mistakes and hard to introspect.
+                #if self.interactions.has_key(interaction.hash):
                 #    pass
                 #else:
-                #    self.app_list[app_hash]={}
-                #    self.app_list[app_hash]['launch_list'] ={}
-                self.app_list[app_hash] = {}
-                self.app_list[app_hash]['launch_list'] = {}
+                #    self.interactions[interaction.hash]={}
+                #    self.interactions[interaction.hash]['launch_list'] ={}
+                self.interactions[interaction.hash] = {}
+                self.interactions[interaction.hash]['launch_list'] = {}
 
-                self.app_list[app_hash]['name'] = interaction.name
-                self.app_list[app_hash]['compatibility'] = interaction.compatibility
+                self.interactions[interaction.hash]['name'] = interaction.name
+                self.interactions[interaction.hash]['compatibility'] = interaction.compatibility
                 icon_name = interaction.icon.resource_name.split('/').pop()
                 if interaction.icon.data:
                     icon = open(os.path.join(utils.get_icon_cache_home(), icon_name), 'w')
                     icon.write(interaction.icon.data)
                     icon.close()
-                self.app_list[app_hash]['icon'] = icon_name
-                self.app_list[app_hash]['display_name'] = interaction.display_name
-                self.app_list[app_hash]['description'] = interaction.description
-                self.app_list[app_hash]['namespace'] = interaction.namespace
-                self.app_list[app_hash]['max'] = interaction.max
-                self.app_list[app_hash]['remappings'] = interaction.remappings
-                self.app_list[app_hash]['parameters'] = interaction.parameters
-                self.app_list[app_hash]['hash'] = interaction.hash
+                self.interactions[interaction.hash]['icon'] = icon_name
+                self.interactions[interaction.hash]['display_name'] = interaction.display_name
+                self.interactions[interaction.hash]['description'] = interaction.description
+                self.interactions[interaction.hash]['namespace'] = interaction.namespace
+                self.interactions[interaction.hash]['max'] = interaction.max
+                self.interactions[interaction.hash]['remappings'] = interaction.remappings
+                self.interactions[interaction.hash]['parameters'] = interaction.parameters
+                self.interactions[interaction.hash]['hash'] = interaction.hash
 
     def get_rocon_master_info(self):
         console.logdebug("RemoconInfo : retrieving rocon master information")
@@ -219,12 +218,8 @@ class RemoconInfo():
 
         self.is_valid_info = True
 
-    def _get_app_list(self):
-        return self.app_list
-        pass
-
     def _start_app(self, app_hash):
-        if not app_hash in self.app_list.keys():
+        if not app_hash in self.interactions.keys():
             print "[remocon_info] HAS NO KEY"
             return False
 
@@ -232,7 +227,7 @@ class RemoconInfo():
             print "[remocon_info] APP ALREADY RUNNING NOW "
             return  False
 
-        app = self.app_list[app_hash]
+        app = self.interactions[app_hash]
         #get the permission
         call_result = self.request_interaction_service_proxy(app['hash'])
 
@@ -253,8 +248,8 @@ class RemoconInfo():
           (well reasonably) parsing of that string.
            - ros launcher (by .launch extension)
            - ros runnable (by roslib find_resource success)
-           - web app      (by web_interactions.parse and urlparse scheme check against http)
-           - web url      (by web_interactions.parse and by urlparse scheme check against http)
+           - web app      (by web_interactions.parse)
+           - web url      (by web_interactions.parse)
            - global executable (fallback option)
         '''
         try:
@@ -271,10 +266,14 @@ class RemoconInfo():
             pass
         except Exception:
             pass
-        o = urlparse(app_name)
-        if o.scheme == 'http':
-            console.logdebug("RemoconInfo : start_app_webapp [%s]")
-            return (app_name, self._start_app_webapp)
+        web_interaction = web_interactions.parse(app_name)
+        if web_interaction is not None:
+            if web_interaction.is_web_url():
+                console.logdebug("RemoconInfo : start_app_weburl [%s]" % web_interaction.url)
+                return (web_interaction.url, self._start_app_weburl)
+            elif web_interaction.is_web_app():
+                console.logdebug("RemoconInfo : start_app_webapp [%s]" % web_interaction.url)
+                return (web_interaction.url, self._start_app_webapp)
         else:
             console.logdebug("RemoconInfo : start_app_global_executable [%s]")
             return (app_name, self._start_app_global_executable)
@@ -358,10 +357,12 @@ class RemoconInfo():
         app['launch_list'][anonymous_name]['shutdown'] = partial(process.send_signal, signal.SIGINT)
         return True
 
-    def _start_app_webapp(self, app, rosrunnable_filename):
+    def _start_app_weburl(self, app, url):
+        """
+        We only need the url here and then do a system check for a web browser.
+        """
         web_browser = self._check_webbrowser()
         if web_browser is not None:
-            url = self._get_webapp_url(app)
             name = os.path.basename(web_browser).replace('.', '_')
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self.process_listeners, anonymous_name, 1)
@@ -375,7 +376,30 @@ class RemoconInfo():
         else:
             return False
 
-    def _get_webapp_url(self, app):
+    def _start_app_webapp(self, app, base_url):
+        """
+        Need to work out the extended url (with args, parameters and remappings) here and then feed that to a
+        detected browser.
+
+        :param base_url str: the web app url without all of the attached variables.
+        """
+        web_browser = self._check_webbrowser()
+        if web_browser is not None:
+            url = self._get_webapp_url(app, base_url)
+            name = os.path.basename(web_browser).replace('.', '_')
+            anonymous_name = name + "_" + uuid.uuid4().hex
+            process_listener = partial(self.process_listeners, anonymous_name, 1)
+            process = rocon_python_utils.system.Popen([web_browser, "--new-window", url], postexec_fn=process_listener)
+            app['launch_list'][anonymous_name] = {}
+            app['launch_list'][anonymous_name]['name'] = anonymous_name
+            app['launch_list'][anonymous_name]['running'] = str(True)
+            app['launch_list'][anonymous_name]['process'] = process
+            app['launch_list'][anonymous_name]['shutdown'] = partial(process.send_signal, signal.SIGINT)
+            return True
+        else:
+            return False
+
+    def _get_webapp_url(self, app, base_url):
         """
            url syntheiser for sending remappings and parameters information.
            We convert the interaction parameter (yaml string) and remapping (rocon_std_msgs.Remapping[])
@@ -395,7 +419,7 @@ class RemoconInfo():
         query_string_mappings = {}
         query_string_mappings['interaction_data'] = json.dumps(interaction_data)
         # constructing the url
-        return app['name'] + "?" + urllib.urlencode(query_string_mappings)
+        return base_url + "?" + urllib.urlencode(query_string_mappings)
 
     def _check_webbrowser(self):
         if rocon_python_utils.system.which("google-chrome"):
@@ -407,29 +431,29 @@ class RemoconInfo():
         return None
 
     def _stop_app(self, app_hash):
-        if not app_hash in self.app_list:
+        if not app_hash in self.interactions:
             print "[remocon_info] HAS NO KEY"
             return False
-        print "[remocon_info]Launched App List- %s" % str(self.app_list[app_hash]["launch_list"])
+        print "[remocon_info]Launched App List- %s" % str(self.interactions[app_hash]["launch_list"])
         try:
-            for k in self.app_list[app_hash]["launch_list"].values():
+            for k in self.interactions[app_hash]["launch_list"].values():
                 process_name = k["name"]
                 is_app_running = k["running"]
                 if is_app_running == "True":
                     k['shutdown']()
-                    del self.app_list[app_hash]["launch_list"][k["name"]]
+                    del self.interactions[app_hash]["launch_list"][k["name"]]
                     print "[remocon_info] %s APP STOP" % (process_name)
                 elif k['process'] == None:
                     k["running"] = "False"
-                    del self.app_list[app_hash]["launch_list"][k["name"]]
+                    del self.interactions[app_hash]["launch_list"][k["name"]]
                     print "[remocon_info] %s APP LAUNCH IS NONE" % (process_name)
                 else:
-                    del self.app_list[app_hash]["launch_list"][k["name"]]
+                    del self.interactions[app_hash]["launch_list"][k["name"]]
                     print "[remocon_info] %s APP IS ALREADY STOP" % (process_name)
         except Exception as e:
             print "[remocon_info] APP STOP PROCESS IS FAILURE %s %s" % (str(e), type(e))
             return False
-        print "[remocon_info] updated app list- %s" % str(self.app_list[app_hash]["launch_list"])
+        print "[remocon_info] updated app list- %s" % str(self.interactions[app_hash]["launch_list"])
         self._pub_remocon_status(app_hash, False)
         return True
 
@@ -437,13 +461,13 @@ class RemoconInfo():
         '''
           Callback function used to catch terminating applications and cleanup appropriately.
 
-          @param name : name of the launched process stored in the app_list index.
+          @param name : name of the launched process stored in the interactions index.
           @type str
 
           @param exit_code : could be utilised from roslaunched processes but not currently used.
           @type int
         '''
-        for app_hash, v in self.app_list.iteritems():
+        for app_hash, v in self.interactions.iteritems():
             if name in v['launch_list']:
                 del v['launch_list'][name]
                 if not v['launch_list']:

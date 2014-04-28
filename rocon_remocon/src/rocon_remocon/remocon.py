@@ -27,6 +27,7 @@ from PyQt4.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox  # QM
 import rospkg
 import rocon_python_utils
 from rocon_console import console
+import rocon_interactions.web_interactions as web_interactions
 
 from .remocon_info import RemoconInfo
 from . import utils
@@ -48,40 +49,40 @@ class RemoconSub(QMainWindow):
         super(RemoconSub, self).__init__(parent)
         self.initialised = False
 
-        self._widget_app_list = QWidget()
-        self._widget_role_list = QWidget()
+        self.interactions_widget = QWidget()
+        self.roles_widget = QWidget()
 
         self.rocon_master_list = {}
         self.cur_selected_role = 0
 
-        self.app_list = {}
+        self.interactions = {}
         self.cur_selected_app = None
 
         self.remocon_info = RemoconInfo(stop_app_postexec_fn=self._set_stop_app_button)
 
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/applist.ui")
-        uic.loadUi(path, self._widget_app_list)
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/interactions_list.ui")
+        uic.loadUi(path, self.interactions_widget)
 
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/rolelist.ui")
-        uic.loadUi(path, self._widget_role_list)
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/role_list.ui")
+        uic.loadUi(path, self.roles_widget)
 
         utils.setup_home_dirs()
         self.rocon_master_list_cache_path = os.path.join(utils.get_settings_cache_home(), "rocon_master.cache")
         self.scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../scripts/")
 
         #role list widget
-        self._widget_role_list.role_list_widget.setIconSize(QSize(50, 50))
-        self._widget_role_list.role_list_widget.itemDoubleClicked.connect(self._select_role_list)
-        self._widget_role_list.back_btn.pressed.connect(self._back_role_list)
-        self._widget_role_list.refresh_btn.pressed.connect(self._refresh_role_list)
+        self.roles_widget.role_list_widget.setIconSize(QSize(50, 50))
+        self.roles_widget.role_list_widget.itemDoubleClicked.connect(self._select_role_list)
+        self.roles_widget.back_btn.pressed.connect(self._back_role_list)
+        self.roles_widget.refresh_btn.pressed.connect(self._refresh_role_list)
         #app list widget
-        self._widget_app_list.app_list_widget.setIconSize(QSize(50, 50))
-        self._widget_app_list.app_list_widget.itemDoubleClicked.connect(self._start_app)
-        self._widget_app_list.back_btn.pressed.connect(self._uninit_app_list)
-        self._widget_app_list.app_list_widget.itemClicked.connect(self._select_app_list)  # rocon master item click event
-        self._widget_app_list.stop_app_btn.pressed.connect(self._stop_app)
-        self._widget_app_list.refresh_btn.pressed.connect(self._refresh_app_list)
-        self._widget_app_list.stop_app_btn.setDisabled(True)
+        self.interactions_widget.interactions_list_widget.setIconSize(QSize(50, 50))
+        self.interactions_widget.interactions_list_widget.itemDoubleClicked.connect(self._start_app)
+        self.interactions_widget.back_btn.pressed.connect(self._uninit_app_list)
+        self.interactions_widget.interactions_list_widget.itemClicked.connect(self._select_app_list)  # rocon master item click event
+        self.interactions_widget.stop_interactions_button.pressed.connect(self._stop_app)
+        self.interactions_widget.refresh_btn.pressed.connect(self._refresh_app_list)
+        self.interactions_widget.stop_interactions_button.setDisabled(True)
 
         #init
         self._init()
@@ -93,8 +94,8 @@ class RemoconSub(QMainWindow):
         # is getting confused when the original program doesn't have the focus.
         #
         # Taking control of it ourselves works...
-        self._widget_app_list.stop_app_btn.setStyleSheet(QString.fromUtf8("QPushButton:disabled { color: gray }"))
-        self._widget_role_list.show()
+        self.interactions_widget.stop_interactions_button.setStyleSheet(QString.fromUtf8("QPushButton:disabled { color: gray }"))
+        self.roles_widget.show()
         self.initialised = True
 
 ################################################################################################################
@@ -119,9 +120,9 @@ class RemoconSub(QMainWindow):
 
         self.remocon_info._select_role(self.cur_selected_role)
 
-        self._widget_app_list.show()
-        self._widget_app_list.move(self._widget_role_list.pos())
-        self._widget_role_list.hide()
+        self.interactions_widget.show()
+        self.interactions_widget.move(self.roles_widget.pos())
+        self.roles_widget.hide()
         self._init_app_list()
 
     def _back_role_list(self):
@@ -131,17 +132,17 @@ class RemoconSub(QMainWindow):
         os.execv(self.scripts_path + 'rocon_remocon', ['', self.host_name])
 
     def _refresh_role_list(self):
-        self._widget_role_list.role_list_widget.clear()
+        self.roles_widget.role_list_widget.clear()
 
         role_list = self.remocon_info.get_role_list()
 
         #set list widget item (reverse order because we push them on the top)
         for role in reversed(role_list):
-            self._widget_role_list.role_list_widget.insertItem(0, role)
+            self.roles_widget.role_list_widget.insertItem(0, role)
             #setting the list font
-            font = self._widget_role_list.role_list_widget.item(0).font()
+            font = self.roles_widget.role_list_widget.item(0).font()
             font.setPointSize(13)
-            self._widget_role_list.role_list_widget.item(0).setFont(font)
+            self.roles_widget.role_list_widget.item(0).setFont(font)
 
 ################################################################################################################
 ##app list widget
@@ -151,50 +152,50 @@ class RemoconSub(QMainWindow):
         self._refresh_app_list()
 
     def _uninit_app_list(self):
-        self._widget_role_list.show()
-        self._widget_role_list.move(self._widget_app_list.pos())
-        self._widget_app_list.hide()
+        self.roles_widget.show()
+        self.roles_widget.move(self.interactions_widget.pos())
+        self.interactions_widget.hide()
 
     def _refresh_app_list(self):
-        self.app_list = {}
-        self.app_list = self.remocon_info._get_app_list()
-        self._widget_app_list.app_list_widget.clear()
+        self.interactions = {}
+        self.interactions = self.remocon_info.interactions
+        self.interactions_widget.interactions_list_widget.clear()
 
         index = 0
-        for k in self.app_list.values():
+        for k in self.interactions.values():
             k['index'] = index
             index = index + 1
 
-            self._widget_app_list.app_list_widget.insertItem(0, k['display_name'])
+            self.interactions_widget.interactions_list_widget.insertItem(0, k['display_name'])
             #setting the list font
-            font = self._widget_app_list.app_list_widget.item(0).font()
+            font = self.interactions_widget.interactions_list_widget.item(0).font()
             font.setPointSize(13)
-            self._widget_app_list.app_list_widget.item(0).setFont(font)
+            self.interactions_widget.interactions_list_widget.item(0).setFont(font)
             #setting the icon
 
             app_icon = k['icon']
             if app_icon == "unknown.png":
                 icon = QIcon(self.icon_paths['unknown'])
-                self._widget_app_list.app_list_widget.item(0).setIcon(icon)
+                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
             elif len(app_icon):
                 icon = QIcon(os.path.join(utils.get_icon_cache_home(), app_icon))
-                self._widget_app_list.app_list_widget.item(0).setIcon(icon)
+                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
             else:
-                print 
                 console.logdebug("%s : No icon" % str(self.rocon_master_name))
-            pass
 
     def _select_app_list(self, Item):
         list_widget = Item.listWidget()
         cur_index = list_widget.count() - list_widget.currentRow() - 1
-        for k in self.app_list.values():
+        for k in self.interactions.values():
             if(k['index'] == cur_index):
                 self.cur_selected_app = k
                 break
-        self._widget_app_list.app_info.clear()
+        self.interactions_widget.app_info.clear()
         info_text = "<html>"
         info_text += "<p>-------------------------------------------</p>"
-        info_text += "<p><b>name: </b>" + self.cur_selected_app['name'] + "</p>"
+        web_interaction = web_interactions.parse(self.cur_selected_app['name'])
+        name = self.cur_selected_app['name'] if web_interaction is None else web_interaction.url
+        info_text += "<p><b>name: </b>" + name + "</p>"
         info_text += "<p><b>  ---------------------</b>" + "</p>"
         info_text += "<p><b>compatibility: </b>" + self.cur_selected_app['compatibility'] + "</p>"
         info_text += "<p><b>display name: </b>" + self.cur_selected_app['display_name'] + "</p>"
@@ -206,7 +207,7 @@ class RemoconSub(QMainWindow):
         info_text += "<p><b>parameters: </b>" + str(self.cur_selected_app['parameters']) + "</p>"
         info_text += "</html>"
 
-        self._widget_app_list.app_info.appendHtml(info_text)
+        self.interactions_widget.app_info.appendHtml(info_text)
         self._set_stop_app_button()
 
     def _set_stop_app_button(self):
@@ -215,15 +216,15 @@ class RemoconSub(QMainWindow):
           toggle the state of the stop app button whenever a running app
           terminates itself.
         '''
-        if not self.app_list:
+        if not self.interactions:
             return
         try:
             if self.cur_selected_app["launch_list"]:
                 console.logdebug("Remocon : enabling stop app button")
-                self._widget_app_list.stop_app_btn.setDisabled(False)
+                self.interactions_widget.stop_interactions_button.setDisabled(False)
             else:
                 console.logdebug("Remocon : disabling stop app button")
-                self._widget_app_list.stop_app_btn.setEnabled(False)
+                self.interactions_widget.stop_interactions_button.setEnabled(False)
         except KeyError:
             pass  # do nothing
 
@@ -231,12 +232,12 @@ class RemoconSub(QMainWindow):
         console.logdebug("Remocon : Stop app %s " % str(self.cur_selected_app['name']))
         if self.remocon_info._stop_app(self.cur_selected_app['hash']):
             self._set_stop_app_button()
-            #self._widget_app_list.stop_app_btn.setDisabled(True)
+            #self.interactions_widget.stop_interactions_button.setDisabled(True)
 
     def _start_app(self):
         console.logdebug("Remocon : Start app %s " % str(self.cur_selected_app['name']))
         if self.remocon_info._start_app(self.cur_selected_app['hash']):
-            self._widget_app_list.stop_app_btn.setDisabled(False)
+            self.interactions_widget.stop_interactions_button.setDisabled(False)
 
 #################################################################
 ##Remocon Main
