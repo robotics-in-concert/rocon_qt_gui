@@ -31,6 +31,7 @@ import rocon_interactions.web_interactions as web_interactions
 
 from .remocon_info import RemoconInfo
 from . import utils
+from .rocon_masters import RoconMasters
 
 ##############################################################################
 # Remocon
@@ -52,7 +53,6 @@ class RemoconSub(QMainWindow):
         self.interactions_widget = QWidget()
         self.roles_widget = QWidget()
 
-        self.rocon_master_list = {}
         self.cur_selected_role = 0
 
         self.interactions = {}
@@ -67,7 +67,6 @@ class RemoconSub(QMainWindow):
         uic.loadUi(path, self.roles_widget)
 
         utils.setup_home_dirs()
-        self.rocon_master_list_cache_path = os.path.join(utils.get_settings_cache_home(), "rocon_master.cache")
         self.scripts_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../scripts/")
 
         #role list widget
@@ -265,7 +264,7 @@ class RemoconMain(QMainWindow):
         self.application = application
         self._widget_main = QWidget()
 
-        self.rocon_master_list = {}
+        self.rocon_masters = RoconMasters()
         self.cur_selected_rocon_master = None
         self.is_init = False
 
@@ -273,7 +272,6 @@ class RemoconMain(QMainWindow):
         uic.loadUi(path, self._widget_main)
 
         utils.setup_home_dirs()
-        self.rocon_master_list_cache_path = os.path.join(utils.get_settings_cache_home(), "rocon_master.cache")
 
         self.icon_paths = {}
         try:
@@ -310,8 +308,8 @@ class RemoconMain(QMainWindow):
         self.is_init = True
 
     def _check_up_one(self, rocon_master):
-        rocon_master_uri = rocon_master['master_uri']
-        host_name = rocon_master['host_name']
+        rocon_master_uri = rocon_master.uri
+        host_name = rocon_master.host_name
         output = subprocess.Popen([self.scripts_path + "rocon_remocon_check_up", rocon_master_uri, host_name], stdout=subprocess.PIPE)
         time_out_cnt = 0
         while True:
@@ -323,31 +321,33 @@ class RemoconMain(QMainWindow):
                 except:
                     console.logdebug("Error: output.terminate()")
 
-                rocon_master['name'] = "Unknown"
-                rocon_master['description'] = "Unknown."
-                rocon_master['icon'] = "unknown.png"
-                rocon_master['flag'] = '0'
+                rocon_master.name = "Unknown"
+                rocon_master.description = "Unknown."
+                rocon_master.icon = "unknown.png"
+                rocon_master.flag = '0'
                 break
 
             elif result == 0:
                 args = output.communicate()[0]
-                rocon_master['name'] = args.split('\n')[0]
-                rocon_master['description'] = args.split('\n')[1]
-                rocon_master['icon'] = args.split('\n')[2]
+                rocon_master.name = args.split('\n')[0]
+                rocon_master.description = args.split('\n')[1]
+                rocon_master.icon = args.split('\n')[2]
 
-                if rocon_master['name'] == "Unknown":
-                    rocon_master['flag'] = '0'
+                if rocon_master.name == "Unknown":
+                    rocon_master.flag = '0'
                 else:
-                    rocon_master['flag'] = '1'
+                    rocon_master.flag = '1'
                 break
 
             time.sleep(0.1)
             time_out_cnt += 1
 
     def _check_up_all(self):
-        for k in self.rocon_master_list.values():
-            rocon_master_uri = k['master_uri']
-            host_name = k['host_name']
+        print("Check up all")
+        print("%s" % self.rocon_masters)
+        for k in self.rocon_masters.values():
+            rocon_master_uri = k.uri
+            host_name = k.host_name
             output = subprocess.Popen([self.scripts_path + "rocon_remocon_check_up", rocon_master_uri, host_name], stdout=subprocess.PIPE)
             time_out_cnt = 0
             while True:
@@ -359,80 +359,42 @@ class RemoconMain(QMainWindow):
                     except:
                         console.logdebug("Error: output.terminate()")
 
-                    k['name'] = "Unknown"
-                    k['description'] = "Unknown."
-                    k['icon'] = "unknown.png"
-                    k['flag'] = '0'
+                    k.name = "Unknown"
+                    k.description = "Unknown."
+                    k.icon = "unknown.png"
+                    k.flag = '0'
                     break
 
                 elif result == 0:
                     console.logdebug("find: %s" % (str(rocon_master_uri)))
                     args = output.communicate()[0]
-                    k['name'] = args.split('\n')[0]
-                    k['description'] = args.split('\n')[1]
-                    k['icon'] = args.split('\n')[2]
+                    k.name = args.split('\n')[0]
+                    k.description = args.split('\n')[1]
+                    k.icon = args.split('\n')[2]
 
-                    if k['name'] == "Unknown":
-                        k['flag'] = '0'
+                    if k.name == "Unknown":
+                        k.flag = '0'
                     else:
-                        k['flag'] = '1'
+                        k.flag = '1'
                     break
 
                 time.sleep(0.1)
                 time_out_cnt += 1
 
-    def _read_cache(self):
-        #read cache and display the rocon master list
-        try:
-            cache_rocon_master_info_list = open(self.rocon_master_list_cache_path, 'r')
-        except:
-            console.logdebug("Remocon : no cached settings found, moving on.")
-            return
-        lines = cache_rocon_master_info_list.readlines()
-        for line in lines:
-            if line.count("[index="):
-                rocon_master_index = line[string.find(line, "[index=") + len("[index="):string.find(line, ",name=")]
-                rocon_master_name = line[string.find(line, "name=") + len("name="):string.find(line, ",master_uri=")]
-                rocon_master_uri = line[string.find(line, ",master_uri=") + len(",master_uri="):string.find(line, ",host_name=")]
-                rocon_master_host_name = line[string.find(line, ",host_name=") + len(",host_name="):string.find(line, ",description=")]
-                rocon_master_description = line[string.find(line, ",description=") + len(",description="):string.find(line, ",icon=")]
-                rocon_master_icon = line[string.find(line, ",icon=") + len(",icon="):string.find(line, ",flag=")]
-                rocon_master_flag = line[string.find(line, ",flag=") + len(",flag="):string.find(line, "]")]
-
-                self.rocon_master_list[rocon_master_index] = {}
-                self.rocon_master_list[rocon_master_index]['index'] = rocon_master_index
-                self.rocon_master_list[rocon_master_index]['name'] = rocon_master_name
-                self.rocon_master_list[rocon_master_index]['master_uri'] = rocon_master_uri
-                self.rocon_master_list[rocon_master_index]['host_name'] = rocon_master_host_name
-                self.rocon_master_list[rocon_master_index]['icon'] = rocon_master_icon
-                self.rocon_master_list[rocon_master_index]['description'] = rocon_master_description
-                self.rocon_master_list[rocon_master_index]['flag'] = rocon_master_flag
-        cache_rocon_master_info_list.close()
-
     def _delete_all_rocon_masters(self):
-        for k in self.rocon_master_list.values():
-            del self.rocon_master_list[k["index"]]
+        self.rocon_masters.clear()
         self._update_rocon_master_list()
+        self._widget_main.list_info_widget.clear()
 
     def _delete_rocon_master(self):
-        if self.cur_selected_rocon_master in self.rocon_master_list.keys():
-            del self.rocon_master_list[self.cur_selected_rocon_master]
+        if self.cur_selected_rocon_master in self.rocon_masters.keys():
+            self.rocon_masters.delete(self.cur_selected_rocon_master)
         self._update_rocon_master_list()
+        self._widget_main.list_info_widget.clear()
 
-    def _add_rocon_master(self, params):
-        rocon_master_uri = str(params['param1'].toPlainText())
-        rocon_master_host_name = str(params['param2'].toPlainText())
-        rocon_master_index = str(uuid.uuid4())
-        self.rocon_master_list[rocon_master_index] = {}
-        self.rocon_master_list[rocon_master_index]['index'] = rocon_master_index
-        self.rocon_master_list[rocon_master_index]['name'] = "Unknown"
-        self.rocon_master_list[rocon_master_index]['master_uri'] = rocon_master_uri
-        self.rocon_master_list[rocon_master_index]['host_name'] = rocon_master_host_name
-        self.rocon_master_list[rocon_master_index]['icon'] = "unknown.png"
-        self.rocon_master_list[rocon_master_index]['description'] = ""
-        self.rocon_master_list[rocon_master_index]['flag'] = "0"
-
-        self._refresh_rocon_master(self.rocon_master_list[rocon_master_index])
+    def _add_rocon_master(self, uri_text_widget, host_name_text_widget):
+        rocon_master = self.rocon_masters.add(uri_text_widget.toPlainText(), host_name_text_widget.toPlainText())
+        self._refresh_rocon_master(rocon_master)
 
     def _set_add_rocon_master(self):
 
@@ -484,9 +446,8 @@ class RemoconMain(QMainWindow):
         button_hor_sub_widget = QWidget()
         button_hor_layout = QHBoxLayout(button_hor_sub_widget)
 
-        params = {}
-        params['param1'] = context_widget1
-        params['param2'] = context_widget2
+        uri_text_widget = context_widget1
+        host_name_text_widget = context_widget2
 
         #check box
         use_env_var_check = QCheckBox("Use environment variables")
@@ -513,7 +474,7 @@ class RemoconMain(QMainWindow):
         btn_cancel = QPushButton("Cancel")
 
         btn_call.clicked.connect(lambda: self._connect_dlg.done(0))
-        btn_call.clicked.connect(lambda: self._add_rocon_master(params))
+        btn_call.clicked.connect(lambda: self._add_rocon_master(uri_text_widget, host_name_text_widget))
 
         btn_cancel.clicked.connect(lambda: self._connect_dlg.done(0))
 
@@ -531,57 +492,24 @@ class RemoconMain(QMainWindow):
         self._check_up_one(rocon_master)
         self._widget_main.list_info_widget.clear()
         self._update_rocon_master_list()
-        pass
 
     def _refresh_all_rocon_master_list(self):
-        self._read_cache()
         if self.is_init:
             self._check_up_all()
         self._widget_main.list_info_widget.clear()
         self._update_rocon_master_list()
 
     def _update_rocon_master_list(self):
-
         self._widget_main.list_widget.clear()
-        try:
-            cache_rocon_master_info_list = open(self.rocon_master_list_cache_path, 'w')
-        except:
-            console.logdebug("No directory or file: %s" % (self.rocon_master_list_cache_path))
-            return
-        for k in self.rocon_master_list.values():
-            self._add_rocon_master_list_item(k)
-            rocon_master_index = k['index']
-            rocon_master_name = k['name']
-            rocon_master_uri = k['master_uri']
-            rocon_master_host_name = k['host_name']
-            rocon_master_icon = k['icon']
-            rocon_master_description = k['description']
-            rocon_master_flag = k['flag']
-
-            rocon_master_elem = '['
-            rocon_master_elem += 'index=' + str(rocon_master_index) + ','
-            rocon_master_elem += 'name=' + str(rocon_master_name) + ','
-            rocon_master_elem += 'master_uri=' + str(rocon_master_uri) + ','
-            rocon_master_elem += 'host_name=' + str(rocon_master_host_name) + ','
-            rocon_master_elem += 'description=' + str(rocon_master_description) + ','
-            rocon_master_elem += 'icon=' + rocon_master_icon + ','
-            rocon_master_elem += 'flag=' + rocon_master_flag
-            rocon_master_elem += ']\n'
-
-            cache_rocon_master_info_list.write(rocon_master_elem)
-        cache_rocon_master_info_list.close()
+        for rocon_master in self.rocon_masters.values():
+            self._add_rocon_master_list_item(rocon_master)
+        self.rocon_masters.dump()
 
     def _add_rocon_master_list_item(self, rocon_master):
 
-        rocon_master_index = rocon_master['index']
-        rocon_master_name = rocon_master['name']
-        rocon_master_uri = rocon_master['master_uri']
-        rocon_master_host_name = rocon_master['host_name']
-        rocon_master_icon = rocon_master['icon']
-        rocon_master_description = rocon_master['description']
-        rocon_master['cur_row'] = str(self._widget_main.list_widget.count())
+        rocon_master.current_row = str(self._widget_main.list_widget.count())
 
-        display_name = str(rocon_master_name) + "\n" + "[" + str(rocon_master_uri) + "]"
+        display_name = str(rocon_master.name) + "\n" + "[" + str(rocon_master.uri) + "]"
         self._widget_main.list_widget.insertItem(self._widget_main.list_widget.count(), display_name)
 
         #setting the list font
@@ -592,37 +520,37 @@ class RemoconMain(QMainWindow):
 
         #setToolTip
         rocon_master_info = ""
-        rocon_master_info += "rocon_master_index: " + str(rocon_master_index) + "\n"
-        rocon_master_info += "rocon_master_name: " + str(rocon_master_name) + "\n"
-        rocon_master_info += "master_uri:  " + str(rocon_master_uri) + "\n"
-        rocon_master_info += "host_name:  " + str(rocon_master_host_name) + "\n"
-        rocon_master_info += "description:  " + str(rocon_master_description)
+        rocon_master_info += "rocon_master_index: " + str(rocon_master.index) + "\n"
+        rocon_master_info += "rocon_master_name: " + str(rocon_master.name) + "\n"
+        rocon_master_info += "master_uri:  " + str(rocon_master.uri) + "\n"
+        rocon_master_info += "host_name:  " + str(rocon_master.host_name) + "\n"
+        rocon_master_info += "description:  " + str(rocon_master.description)
         self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setToolTip(rocon_master_info)
 
         #set icon
-        if rocon_master_icon == "unknown.png":
+        if rocon_master.icon == "unknown.png":
             icon = QIcon(self.icon_paths['unknown'])
             self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setIcon(icon)
-        elif len(rocon_master_icon):
-            icon = QIcon(os.path.join(utils.get_icon_cache_home(), rocon_master_icon))
+        elif len(rocon_master.icon):
+            icon = QIcon(os.path.join(utils.get_icon_cache_home(), rocon_master.icon))
             self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setIcon(icon)
         else:
-            console.logdebug("%s : No icon" % rocon_master_name)
+            console.logdebug("%s : No icon" % rocon_master.name)
         pass
 
     def _select_rocon_master(self, Item):
         list_widget = Item.listWidget()
-        for k in self.rocon_master_list.values():
-            if k["cur_row"] == str(list_widget.currentRow()):
-                self.cur_selected_rocon_master = k['index']
+        for k in self.rocon_masters.values():
+            if k.current_row == str(list_widget.currentRow()):
+                self.cur_selected_rocon_master = k.index
                 break
         self._widget_main.list_info_widget.clear()
         info_text = "<html>"
         info_text += "<p>-------------------------------------------</p>"
-        info_text += "<p><b>name: </b>" + str(self.rocon_master_list[self.cur_selected_rocon_master]['name']) + "</p>"
-        info_text += "<p><b>master_uri: </b>" + str(self.rocon_master_list[self.cur_selected_rocon_master]['master_uri']) + "</p>"
-        info_text += "<p><b>host_name: </b>" + str(self.rocon_master_list[self.cur_selected_rocon_master]['host_name']) + "</p>"
-        info_text += "<p><b>description: </b>" + str(self.rocon_master_list[self.cur_selected_rocon_master]['description']) + "</p>"
+        info_text += "<p><b>name: </b>" + str(self.rocon_masters[self.cur_selected_rocon_master].name) + "</p>"
+        info_text += "<p><b>master_uri: </b>" + str(self.rocon_masters[self.cur_selected_rocon_master].uri) + "</p>"
+        info_text += "<p><b>host_name: </b>" + str(self.rocon_masters[self.cur_selected_rocon_master].host_name) + "</p>"
+        info_text += "<p><b>description: </b>" + str(self.rocon_masters[self.cur_selected_rocon_master].description) + "</p>"
         info_text += "<p>-------------------------------------------</p>"
         info_text += "</html>"
         self._widget_main.list_info_widget.appendHtml(info_text)
@@ -631,13 +559,13 @@ class RemoconMain(QMainWindow):
         self._connect_dlg_isValid = False
 
     def _connect_rocon_master(self):
-        rocon_master_name = str(self.rocon_master_list[self.cur_selected_rocon_master]['name'])
-        rocon_master_uri = str(self.rocon_master_list[self.cur_selected_rocon_master]['master_uri'])
-        rocon_master_host_name = str(self.rocon_master_list[self.cur_selected_rocon_master]['host_name'])
+        rocon_master_name = str(self.rocon_masters[self.cur_selected_rocon_master].name)
+        rocon_master_uri = str(self.rocon_masters[self.cur_selected_rocon_master].uri)
+        rocon_master_host_name = str(self.rocon_masters[self.cur_selected_rocon_master].host_name)
 
         rocon_master_index = str(self.cur_selected_rocon_master)
-        self._check_up_one(self.rocon_master_list[rocon_master_index])
-        if self.rocon_master_list[rocon_master_index]['flag'] == '0':
+        self._check_up_one(self.rocon_masters[rocon_master_index])
+        if self.rocon_masters[rocon_master_index].flag == '0':
             # DJS: unused reply box?
             QMessageBox.warning(self, 'ERROR', "YOU SELECT NO CONCERT", QMessageBox.Ok | QMessageBox.Ok)
             return
