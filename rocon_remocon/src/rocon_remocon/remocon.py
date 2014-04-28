@@ -308,7 +308,6 @@ class RemoconMain(QMainWindow):
         self.cur_selected_rocon_master = None
         self._refresh_all_rocon_master_list()
         self.is_init = True
-        pass
 
     def _check_up_one(self, rocon_master):
         rocon_master_uri = rocon_master['master_uri']

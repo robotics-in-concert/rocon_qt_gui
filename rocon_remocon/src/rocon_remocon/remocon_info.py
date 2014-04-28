@@ -101,7 +101,7 @@ class RemoconInfo():
         self.request_interaction_service_proxy = rospy.ServiceProxy(request_interaction_service_name, rocon_interaction_srvs.RequestInteraction)
         self.remocon_status_pub = rospy.Publisher("remocons/" + unique_name, rocon_interaction_msgs.RemoconStatus, latch=True)
 
-        self._pub_remocon_status(0, False)
+        self._pub_remocon_status()
         self.is_connect = True
         self.is_valid_info = False
         return True
@@ -135,12 +135,16 @@ class RemoconInfo():
             self.remocon_status_pub = None
             console.logdebug("RemoconInfo : has shutdown.")
 
-    def _pub_remocon_status(self, app_hash, running_app):
+    def _pub_remocon_status(self):
         remocon_status = rocon_interaction_msgs.RemoconStatus()
         remocon_status.platform_info = self.platform_info
         remocon_status.uuid = str(self.key.hex)
-        remocon_status.running_app = running_app
-        remocon_status.hash = app_hash
+        remocon_status.version = rocon_std_msgs.Strings.ROCON_VERSION
+        running_interactions = []
+        for interaction_hash in self.interactions.keys():
+            for unused_process_name in self.interactions[interaction_hash]["launch_list"].keys():
+                running_interactions.append(interaction_hash)
+        remocon_status.running_interactions = running_interactions
         print "[remocon_info] publish remocon status"
         self.remocon_status_pub.publish(remocon_status)
 
@@ -235,7 +239,8 @@ class RemoconInfo():
             print "[remocon_info] permisson ok"
             (app_executable, start_app_handler) = self._determine_app_type(app['name'])
             result = start_app_handler(app, app_executable)
-            self._pub_remocon_status(app_hash, result)
+            if result:
+                self._pub_remocon_status()
             return result
         else:
             print "[remocon_info] permission failure"
@@ -454,7 +459,7 @@ class RemoconInfo():
             print "[remocon_info] APP STOP PROCESS IS FAILURE %s %s" % (str(e), type(e))
             return False
         print "[remocon_info] updated app list- %s" % str(self.interactions[app_hash]["launch_list"])
-        self._pub_remocon_status(app_hash, False)
+        self._pub_remocon_status()
         return True
 
     def process_listeners(self, name, exit_code):
@@ -467,7 +472,7 @@ class RemoconInfo():
           @param exit_code : could be utilised from roslaunched processes but not currently used.
           @type int
         '''
-        for app_hash, v in self.interactions.iteritems():
+        for unused_interaction_hash, v in self.interactions.iteritems():
             if name in v['launch_list']:
                 del v['launch_list'][name]
                 if not v['launch_list']:
@@ -475,4 +480,4 @@ class RemoconInfo():
                     # inform the gui to update if necessary
                     self._stop_app_postexec_fn()
                     # update the rocon interactions handler
-                    self._pub_remocon_status(app_hash, False)
+                    self._pub_remocon_status()
