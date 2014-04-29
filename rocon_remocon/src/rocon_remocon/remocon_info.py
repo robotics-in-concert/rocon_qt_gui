@@ -12,7 +12,6 @@ import uuid
 from functools import partial
 import signal
 import tempfile
-from urlparse import urlparse
 import urllib
 import yaml
 import json
@@ -32,6 +31,7 @@ import rocon_interactions.web_interactions as web_interactions
 import rocon_python_comms
 
 from . import utils
+from .launch import LaunchInfo
 
 ##############################################################################
 # RemoconInfo
@@ -48,7 +48,6 @@ class RemoconInfo():
         self.interactions = {}
         self.rocon_master_info = {}
         self.is_connect = False
-        self.is_app_running = False
         self.key = uuid.uuid4()
 
         # this might be naive and only work well on ubuntu...
@@ -223,10 +222,6 @@ class RemoconInfo():
             print "[remocon_info] HAS NO KEY"
             return False
 
-        if self.is_app_running == True:
-            print "[remocon_info] APP ALREADY RUNNING NOW "
-            return  False
-
         interaction = self.interactions[app_hash]
         #get the permission
         call_result = self.request_interaction_service_proxy(remocon=self.name, hash=interaction['hash'])
@@ -247,18 +242,25 @@ class RemoconInfo():
         '''
           Classifies the app based on the app name string and some intelligent
           (well reasonably) parsing of that string.
+           - paired dummy (by empty name) 
            - ros launcher (by .launch extension)
            - ros runnable (by roslib find_resource success)
            - web app      (by web_interactions.parse)
            - web url      (by web_interactions.parse)
            - global executable (fallback option)
         '''
+        # pairing trigger (i.e. dummy interaction)
+        if not app_name:
+            console.logdebug("RemoconInfo : start a dummy interaction for triggering a pair [%s]")
+            return ('', self._start_dummy_interaction)
+        # roslaunch
         try:
             app_filename = rocon_python_utils.ros.find_resource_from_string(app_name, extension='launch')
             console.logdebug("RemoconInfo : regular start app [%s]")
             return (app_filename, self._start_app_launch)
         except (rospkg.ResourceNotFound, ValueError):
             pass
+        # rosrun
         try:
             app_filename = rocon_python_utils.ros.find_resource_from_string(app_name)
             console.logdebug("RemoconInfo : start_app_rosrunnable [%s]")
@@ -267,6 +269,7 @@ class RemoconInfo():
             pass
         except Exception:
             pass
+        # web url/app
         web_interaction = web_interactions.parse(app_name)
         if web_interaction is not None:
             if web_interaction.is_web_url():
@@ -275,9 +278,12 @@ class RemoconInfo():
             elif web_interaction.is_web_app():
                 console.logdebug("RemoconInfo : start_app_webapp [%s]" % web_interaction.url)
                 return (web_interaction.url, self._start_app_webapp)
-        else:
-            console.logdebug("RemoconInfo : start_app_global_executable [%s]")
-            return (app_name, self._start_app_global_executable)
+        # executable
+        console.logdebug("RemoconInfo : start_app_global_executable [%s]")
+        return (app_name, self._start_app_global_executable)
+
+    def _start_dummy_interaction(self, interaction, unused_filename):
+        console.loginfo("RemoconInfo : starting paired dummy interaction")
 
     def _start_app_launch(self, app, roslaunch_filename):
         '''
@@ -310,11 +316,7 @@ class RemoconInfo():
             _launch.start()
 
             process_name = str(_launch.pm.get_process_names_with_spawn_count()[0][0][0])
-            app['launch_list'][process_name] = {}
-            app['launch_list'][process_name]['name'] = process_name
-            app['launch_list'][process_name]['running'] = str(True)
-            app['launch_list'][process_name]['process'] = _launch
-            app['launch_list'][process_name]['shutdown'] = _launch.shutdown
+            app['launch_list'][process_name] = LaunchInfo(process_name, True, _launch, _launch.shutdown)
             return True
         except Exception, inst:
             print inst
@@ -339,11 +341,7 @@ class RemoconInfo():
             remapping_args.append(remap.remap_from + ":=" + remap.remap_to)
         command_args.extend(remapping_args)
         process = rocon_python_utils.system.Popen(command_args, postexec_fn=process_listener)
-        app['launch_list'][anonymous_name] = {}
-        app['launch_list'][anonymous_name]['name'] = anonymous_name
-        app['launch_list'][anonymous_name]['running'] = str(True)
-        app['launch_list'][anonymous_name]['process'] = process
-        app['launch_list'][anonymous_name]['shutdown'] = partial(process.send_signal, signal.SIGINT)
+        app['launch_list'][anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
         return True
 
     def _start_app_global_executable(self, app, rosrunnable_filename):
@@ -351,11 +349,7 @@ class RemoconInfo():
         anonymous_name = name + "_" + uuid.uuid4().hex
         process_listener = partial(self.process_listeners, anonymous_name, 1)
         process = rocon_python_utils.system.Popen([rosrunnable_filename], postexec_fn=process_listener)
-        app['launch_list'][anonymous_name] = {}
-        app['launch_list'][anonymous_name]['name'] = anonymous_name
-        app['launch_list'][anonymous_name]['running'] = str(True)
-        app['launch_list'][anonymous_name]['process'] = process
-        app['launch_list'][anonymous_name]['shutdown'] = partial(process.send_signal, signal.SIGINT)
+        app['launch_list'][anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
         return True
 
     def _start_app_weburl(self, app, url):
@@ -368,11 +362,7 @@ class RemoconInfo():
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self.process_listeners, anonymous_name, 1)
             process = rocon_python_utils.system.Popen([web_browser, "--new-window", url], postexec_fn=process_listener)
-            app['launch_list'][anonymous_name] = {}
-            app['launch_list'][anonymous_name]['name'] = anonymous_name
-            app['launch_list'][anonymous_name]['running'] = str(True)
-            app['launch_list'][anonymous_name]['process'] = process
-            app['launch_list'][anonymous_name]['shutdown'] = partial(process.send_signal, signal.SIGINT)
+            app['launch_list'][anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
             return True
         else:
             return False
@@ -391,11 +381,7 @@ class RemoconInfo():
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self.process_listeners, anonymous_name, 1)
             process = rocon_python_utils.system.Popen([web_browser, "--new-window", url], postexec_fn=process_listener)
-            app['launch_list'][anonymous_name] = {}
-            app['launch_list'][anonymous_name]['name'] = anonymous_name
-            app['launch_list'][anonymous_name]['running'] = str(True)
-            app['launch_list'][anonymous_name]['process'] = process
-            app['launch_list'][anonymous_name]['shutdown'] = partial(process.send_signal, signal.SIGINT)
+            app['launch_list'][anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
             return True
         else:
             return False
@@ -435,21 +421,21 @@ class RemoconInfo():
         if not app_hash in self.interactions:
             print "[remocon_info] HAS NO KEY"
             return False
-        print "[remocon_info]Launched App List- %s" % str(self.interactions[app_hash]["launch_list"])
+        print("[remocon_info] Launched App List- %s" % str(self.interactions[app_hash]["launch_list"]))
         try:
-            for k in self.interactions[app_hash]["launch_list"].values():
-                process_name = k["name"]
-                is_app_running = k["running"]
-                if is_app_running == "True":
-                    k['shutdown']()
-                    del self.interactions[app_hash]["launch_list"][k["name"]]
+            for launch_info in self.interactions[app_hash]["launch_list"].values():
+                process_name = launch_info.name
+                is_app_running = launch_info.running
+                if is_app_running:
+                    launch_info.shutdown()
+                    del self.interactions[app_hash]["launch_list"][launch_info.name]
                     print "[remocon_info] %s APP STOP" % (process_name)
-                elif k['process'] == None:
-                    k["running"] = "False"
-                    del self.interactions[app_hash]["launch_list"][k["name"]]
+                elif launch_info.process == None:
+                    launch_info.running = False
+                    del self.interactions[app_hash]["launch_list"][launch_info.name]
                     print "[remocon_info] %s APP LAUNCH IS NONE" % (process_name)
                 else:
-                    del self.interactions[app_hash]["launch_list"][k["name"]]
+                    del self.interactions[app_hash]["launch_list"][launch_info.name]
                     print "[remocon_info] %s APP IS ALREADY STOP" % (process_name)
         except Exception as e:
             print "[remocon_info] APP STOP PROCESS IS FAILURE %s %s" % (str(e), type(e))
