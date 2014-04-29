@@ -53,10 +53,10 @@ class RemoconInfo():
 
         # this might be naive and only work well on ubuntu...
         os_codename = OsDetect().get_codename()
-        # this would be great as a configurable parameter
-        name = "rqt_remocon_" + self.key.hex
+        # this would be good as a persistant variable so the user can set something like 'Bob'
+        self.name = "rqt_remocon_" + self.key.hex
         self.rocon_uri = rocon_uri.parse(
-                            "rocon:/pc/" + name + "/" + rocon_std_msgs.Strings.URI_WILDCARD + "/" + os_codename
+                            "rocon:/pc/" + self.name + "/" + rocon_std_msgs.Strings.URI_WILDCARD + "/" + os_codename
                             )
         # be also great to have a configurable icon...with a default
         self.platform_info = rocon_std_msgs.PlatformInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
@@ -69,10 +69,6 @@ class RemoconInfo():
         print("[remocon_info] : info component destroyed")
 
     def _connect(self, rocon_master_name="", ros_master_uri="http://localhost:11311", host_name='localhost'):
-        # remocon name would be good as a persistant configuration variable by the user
-        # so they can set something like 'Bob'.
-        remocon_name = 'rqt_remocon'
-        unique_name = remocon_name + "_" + self.key.hex
 
         # uri is obtained from the user, stored in ros_master_uri
         os.environ["ROS_MASTER_URI"] = ros_master_uri
@@ -80,11 +76,11 @@ class RemoconInfo():
 
         print "[remocon_info] connect RemoconInfo "
         print "[remocon_info] ROS_MASTER_URI: " + str(os.environ["ROS_MASTER_URI"])
-        print "[remocon_info] Node Name: " + str(unique_name)
+        print "[remocon_info] Node Name: " + self.name
         # Need to make sure we give it a unique node name and we need a unique uuid
         # for the remocon-role manager interaction anyway:
 
-        rospy.init_node(unique_name, disable_signals=True)
+        rospy.init_node(self.name, disable_signals=True)
 
         try:
             rocon_master_info_topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
@@ -99,7 +95,7 @@ class RemoconInfo():
         self.get_interactions_service_proxy = rospy.ServiceProxy(get_interactions_service_name, rocon_interaction_srvs.GetInteractions)
         self.get_roles_service_proxy = rospy.ServiceProxy(get_roles_service_name, rocon_interaction_srvs.GetRoles)
         self.request_interaction_service_proxy = rospy.ServiceProxy(request_interaction_service_name, rocon_interaction_srvs.RequestInteraction)
-        self.remocon_status_pub = rospy.Publisher("remocons/" + unique_name, rocon_interaction_msgs.RemoconStatus, latch=True)
+        self.remocon_status_pub = rospy.Publisher("remocons/" + self.name, rocon_interaction_msgs.RemoconStatus, latch=True)
 
         self._pub_remocon_status()
         self.is_connect = True
@@ -231,14 +227,14 @@ class RemoconInfo():
             print "[remocon_info] APP ALREADY RUNNING NOW "
             return  False
 
-        app = self.interactions[app_hash]
+        interaction = self.interactions[app_hash]
         #get the permission
-        call_result = self.request_interaction_service_proxy(app['hash'])
+        call_result = self.request_interaction_service_proxy(remocon=self.name, hash=interaction['hash'])
 
         if call_result.error_code == ErrorCodes.SUCCESS:
             print "[remocon_info] permisson ok"
-            (app_executable, start_app_handler) = self._determine_app_type(app['name'])
-            result = start_app_handler(app, app_executable)
+            (app_executable, start_app_handler) = self._determine_app_type(interaction['name'])
+            result = start_app_handler(interaction, app_executable)
             if result:
                 self._pub_remocon_status()
             return result
