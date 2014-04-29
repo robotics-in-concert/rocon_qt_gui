@@ -9,6 +9,8 @@
 
 import os
 import string
+import subprocess
+import time
 import uuid
 
 import rocon_console.console as console
@@ -40,9 +42,50 @@ class RoconMaster(object):
         'current_row',
     ]
 
+    rocon_remocon_check_up_script = utils.find_rocon_remocon_script('rocon_remocon_check_up')
+
     def __str__(self):
         s = self.name
         return s
+
+    def check(self):
+        '''
+        Given the uri and hostname, this proceeds to try and ping the rocon master to detect if it is available and
+        if available, find the information on the other fields that fully describe a rocon master.
+        '''
+        if not (self.uri and self.host_name):
+            console.logerror("Rocon Master : both uri and host_name should be configured before calling RoconMaster.check()")
+            return
+        # should check that uri and host name have been set
+        output = subprocess.Popen([RoconMaster.rocon_remocon_check_up_script, self.uri, self.host_name], stdout=subprocess.PIPE)
+        time_out_cnt = 0
+        while True:
+            result = output.poll()
+            if time_out_cnt > 30:
+                console.logdebug("timeout: %s" % self.uri)
+                try:
+                    output.terminate()
+                except:
+                    console.logdebug("Error: output.terminate()")
+                self.name = "Unknown"
+                self.description = "Unknown."
+                self.icon = "unknown.png"
+                self.flag = '0'
+                break
+            elif result == 0:
+                args = output.communicate()[0]
+                self.name = args.split('\n')[0]
+                self.description = args.split('\n')[1]
+                self.icon = args.split('\n')[2]
+
+                if self.name == "Unknown":
+                    self.flag = '0'
+                else:
+                    self.flag = '1'
+                break
+
+            time.sleep(0.1)
+            time_out_cnt += 1
 
 
 class RoconMasters(object):
@@ -158,3 +201,10 @@ class RoconMasters(object):
 
             cache_rocon_master_info_list.write(rocon_master_elem)
         cache_rocon_master_info_list.close()
+
+    def check(self):
+        """
+        Ping and update information for all registered rocon masters.
+        """
+        for rocon_master in self.rocon_masters.values():
+            rocon_master.check()

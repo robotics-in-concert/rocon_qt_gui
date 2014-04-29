@@ -8,6 +8,7 @@
 ##############################################################################
 
 import os
+import rocon_python_utils
 import rospkg
 
 ##############################################################################
@@ -53,3 +54,16 @@ def get_settings_cache_home():
       @type str
     '''
     return os.path.join(get_home(), 'cache')
+
+
+def find_rocon_remocon_script(name):
+    """
+    Get the path to the internal script of the specified name. Note that this changes
+    depending on whether you are working in a devel or an install space. Let the
+    find resource handler discover where they are.
+
+    :returns: full absolute pathnmae to the script
+    :rtype: path
+    :raises: `rospgk.ResourceNotFound`
+    """
+    return rocon_python_utils.ros.find_resource('rocon_remocon', name)
