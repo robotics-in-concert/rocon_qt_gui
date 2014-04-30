@@ -1,12 +1,14 @@
 <?xml version="1.0"?>
 <package>
-  <name>concert_teleop_app</name>
+  <name>concert_qt_teleop</name>
   <version>0.6.1</version>
-  <description>The concert_teleop_app package</description>
+  <description>An rqt plugin for teleop'ing concert robots</description>
 
   <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>
   <license>BSD</license>
-
+  <url type="website">http://ros.org/wiki/concert_qt_teleop</url>
+  <url type="repository">https://github.com/robotics-in-concert/rocon_qt_gui</url>
+  <url type="bugtracker">https://github.com/robotics-in-concert/rocon_qt_gui/issues</url>
   <author>Donguk Lee</author>
 
   <buildtool_depend>catkin</buildtool_depend>

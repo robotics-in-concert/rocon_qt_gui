@@ -1,5 +1,5 @@
 <library path="src">
-  <class name="Teleop App" type="concert_teleop_app.teleop_app.TeleopApp" base_class_type="rqt_gui_py::Plugin">
+  <class name="Teleop" type="concert_qt_teleop.teleop_app.TeleopApp" base_class_type="rqt_gui_py::Plugin">
     <description>
         Select and teleop a robot in the concert.
     </description>
