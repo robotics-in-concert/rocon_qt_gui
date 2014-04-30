@@ -11,16 +11,9 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Role List</string>
+   <string>Roles</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Role List</string>
-     </property>
-    </widget>
-   </item>
    <item>
     <widget class="QListWidget" name="role_list_widget">
      <property name="sizePolicy">
