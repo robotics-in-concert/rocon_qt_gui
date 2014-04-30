@@ -56,28 +56,34 @@
         <number>5</number>
        </property>
        <item>
+        <widget class="QPlainTextEdit" name="app_info"/>
+       </item>
+       <item>
         <layout class="QGridLayout" name="gridLayout">
          <property name="margin">
           <number>5</number>
          </property>
-         <item row="0" column="0">
-          <widget class="QPushButton" name="refresh_btn">
-           <property name="text">
-            <string>Refresh List</string>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="1">
           <widget class="QPushButton" name="stop_interactions_button">
            <property name="text">
-            <string>Stop All Interactions</string>
+            <string>Stop Interactions</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QPushButton" name="refresh_btn">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Unused</string>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
         </layout>
-       </item>
-       <item>
-        <widget class="QPlainTextEdit" name="app_info"/>
        </item>
        <item>
         <widget class="QPushButton" name="back_btn">

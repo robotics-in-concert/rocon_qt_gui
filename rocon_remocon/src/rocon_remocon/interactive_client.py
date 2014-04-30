@@ -138,7 +138,7 @@ class InteractiveClient():
         roles.append(role_name)
 
         call_result = self.get_interactions_service_proxy(roles, self.platform_info.uri)
-        print "[remocon_info]: call result"
+        console.logdebug("InteractiveClient : call result")
         self.interactions = {}
         for interaction in call_result.interactions:
             if(interaction.role == role_name):

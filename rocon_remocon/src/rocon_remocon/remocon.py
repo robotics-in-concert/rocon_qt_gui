@@ -80,7 +80,6 @@ class RemoconSub(QMainWindow):
         self.interactions_widget.back_btn.pressed.connect(self._uninit_interactions_list)
         self.interactions_widget.interactions_list_widget.itemClicked.connect(self._select_app_list)  # rocon master item click event
         self.interactions_widget.stop_interactions_button.pressed.connect(self._stop_interaction)
-        self.interactions_widget.refresh_btn.pressed.connect(self._refresh_interactions_list)
         self.interactions_widget.stop_interactions_button.setDisabled(True)
 
         # signals
