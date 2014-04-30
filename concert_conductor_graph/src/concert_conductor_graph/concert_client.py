@@ -42,9 +42,9 @@ class ConcertClient(object):
 #             ):
         if self.msg.is_local_client:
             return 'local'
-        elif self.msgs.conn_stats.network_type == gateway_msgs.ConnectionStatistics.WIRED:
+        elif self.msg.conn_stats.network_type == gateway_msgs.ConnectionStatistics.WIRED:
             return 'wired'
-        elif self.msgs.conn_stats.network_type == gateway_msgs.ConnectionStatistics.WIRELESS:
+        elif self.msg.conn_stats.network_type == gateway_msgs.ConnectionStatistics.WIRELESS:
             return 'wireless'
         else:
             return 'unknown'

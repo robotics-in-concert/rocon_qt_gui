@@ -66,6 +66,8 @@ class ConductorGraphDotcodeGenerator:
             node_colour = "black"
         elif node.state == concert_msgs.ConcertClientState.GONE:
             node_colour = "black"
+        elif node.state == concert_msgs.ConcertClientState.BAD:
+            node_colour = "red"
         dotcode_factory.add_node_to_graph(dotgraph,
                                           nodename=node.concert_alias,
                                           #nodename=rocon_gateway_utils.gateway_basename(node),
