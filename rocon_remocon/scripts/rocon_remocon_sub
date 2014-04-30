@@ -10,8 +10,8 @@
 import sys
 import signal
 
-from PyQt4.QtGui import QApplication
-from PyQt4.QtCore import QTimer
+from python_qt_binding.QtGui import QApplication
+from python_qt_binding.QtCore import QTimer
 
 import rocon_remocon
 

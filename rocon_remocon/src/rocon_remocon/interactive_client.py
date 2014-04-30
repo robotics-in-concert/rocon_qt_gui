@@ -39,6 +39,7 @@ from .launch import LaunchInfo
 
 
 class InteractiveClient():
+
     def __init__(self, stop_interaction_postexec_fn):
         '''
           @param stop_app_postexec_fn : callback to fire when a listener detects an app getting stopped.

@@ -10,14 +10,15 @@
 import os
 import sys
 
-from PyQt4 import uic
-from PyQt4.QtCore import QString  # pyqtSlot, SIGNAL, SLOT, QPoint, QEvent
-from PyQt4.QtCore import Qt, QSize  # QFile, QIODevice, QAbstractListModel, pyqtSignal, QStringList
-from PyQt4.QtGui import QIcon, QWidget, QLabel  # QFileDialog, QGraphicsScene, QImage, QPainter, QComboBox
-from PyQt4.QtGui import QSizePolicy, QTextEdit, QPushButton, QDialog, QColor  # QCompleter, QBrush, QPen
-from PyQt4.QtGui import QMainWindow, QCheckBox
+#from PyQt4 import uic
+from python_qt_binding import loadUi
+from python_qt_binding.QtCore import Signal  # pyqtSlot, QPoint, QEvent
+from python_qt_binding.QtCore import Qt, QSize  # QFile, QIODevice, QAbstractListModel, pyqtSignal, QStringList
+from python_qt_binding.QtGui import QIcon, QWidget, QLabel  # QFileDialog, QGraphicsScene, QImage, QPainter, QComboBox
+from python_qt_binding.QtGui import QSizePolicy, QTextEdit, QPushButton, QDialog, QColor  # QCompleter, QBrush, QPen
+from python_qt_binding.QtGui import QMainWindow, QCheckBox
 
-from PyQt4.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox  #QTabWidget, QPlainTextEdit
+from python_qt_binding.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox  # QTabWidget, QPlainTextEdit
 #from PyQt4.QtSvg import QSvgGenerator
 
 import rospkg
@@ -35,6 +36,9 @@ from .rocon_masters import RoconMasters
 
 
 class RemoconSub(QMainWindow):
+
+    # pyqt signals are always defined as class attributes
+    signal_interactions_updated = Signal()
 
     def __init__(self, parent, title, application, rocon_master_index="", rocon_master_name="", rocon_master_uri='localhost', host_name='localhost'):
         self.rocon_master_index = rocon_master_index
@@ -55,13 +59,13 @@ class RemoconSub(QMainWindow):
         self.interactions = {}
         self.cur_selected_interaction = None
 
-        self.interactive_client = InteractiveClient(stop_interaction_postexec_fn=self.interactions_updated_handler)
+        self.interactive_client = InteractiveClient(stop_interaction_postexec_fn=self.interactions_updated_relay)
 
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/interactions_list.ui")
-        uic.loadUi(path, self.interactions_widget)
+        loadUi(path, self.interactions_widget)
 
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/role_list.ui")
-        uic.loadUi(path, self.roles_widget)
+        loadUi(path, self.roles_widget)
 
         utils.setup_home_dirs()
 
@@ -79,6 +83,10 @@ class RemoconSub(QMainWindow):
         self.interactions_widget.refresh_btn.pressed.connect(self._refresh_interactions_list)
         self.interactions_widget.stop_interactions_button.setDisabled(True)
 
+        # signals
+        self.signal_interactions_updated.connect(self._refresh_interactions_list, Qt.QueuedConnection)
+        self.signal_interactions_updated.connect(self._set_stop_interactions_button, Qt.QueuedConnection)
+
         #init
         self._init()
 
@@ -89,7 +97,7 @@ class RemoconSub(QMainWindow):
         # is getting confused when the original program doesn't have the focus.
         #
         # Taking control of it ourselves works...
-        self.interactions_widget.stop_interactions_button.setStyleSheet(QString.fromUtf8("QPushButton:disabled { color: gray }"))
+        self.interactions_widget.stop_interactions_button.setStyleSheet("QPushButton:disabled { color: gray }")
         self.roles_widget.show()
         self.initialised = True
 
@@ -180,19 +188,28 @@ class RemoconSub(QMainWindow):
     # Gui Updates/Refreshes
     ######################################
 
-    def interactions_updated_handler(self):
+    def interactions_updated_relay(self):
         """
         Called by the underlying interactive client whenever the gui needs to be updated with
-        fresh information.
+        fresh information. Using this relay saves us from having to embed qt functions in the
+        underlying class but makes sure we signal across threads so the gui can update things
+        in its own thread.
 
         Currently this only handles updates caused by termination of an interaction. If we wished to
         handle additional situations, we should use an argument here indicating what kind of interaction
         update occurred.
         """
-        self._refresh_interactions_list()     # redraw the list
-        self._set_stop_interactions_button()  # toggle the stop button if necessary
+        self.signal_interactions_updated.emit()
+        # this connects to:
+        #  - self._refresh_interactions_list()
+        #  - self._set_stop_interactions_button()
 
     def _refresh_interactions_list(self):
+        """
+        This just does a complete redraw of the interactions list with the current state.
+        It's a bit brute force doing this every time the interactions' 'state' changes,
+        but this suffices for now.
+        """
         self.interactions = {}
         self.interactions = self.interactive_client.interactions
         self.interactions_widget.interactions_list_widget.clear()
@@ -205,10 +222,8 @@ class RemoconSub(QMainWindow):
             self.interactions_widget.interactions_list_widget.insertItem(0, interaction['display_name'])
 
             # is it a currently running pairing
-            console.logwarn("Looking for pairing [%s][%s]" % (self.interactive_client.pairing, interaction['display_name']))
             if self.interactive_client.pairing == interaction['hash']:
                 self.interactions_widget.interactions_list_widget.item(0).setBackground(QColor(100, 100, 150))
-                console.logwarn("THIS IS A PAIRING [%s]" % interaction['display_name'])
 
             #setting the list font
             font = self.interactions_widget.interactions_list_widget.item(0).font()
@@ -252,7 +267,7 @@ class RemoconSub(QMainWindow):
         (result, message) = self.interactive_client.start_interaction(self.cur_selected_interaction['hash'])
         if result:
             if self.cur_selected_interaction['pairing']:
-                self._refresh_interactions_list()  # highlight that it is a pairing running
+                self._refresh_interactions_list()  # make sure the highlight is working
             self.interactions_widget.stop_interactions_button.setDisabled(False)
         else:
             QMessageBox.warning(self, 'Start Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
@@ -303,7 +318,7 @@ class RemoconMain(QMainWindow):
         self.is_init = False
 
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/remocon.ui")
-        uic.loadUi(path, self._widget_main)
+        loadUi(path, self._widget_main)
 
         utils.setup_home_dirs()
 
