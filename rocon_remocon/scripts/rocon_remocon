@@ -45,6 +45,6 @@ if __name__ == "__main__":
     timer = QTimer()
     timer.start(200)
     timer.timeout.connect(lambda: None)
-    myapp = rocon_remocon.remocon.RemoconMain(None, "Rocon Remocon", app)
+    myapp = rocon_remocon.QMasterChooser(None, "Rocon Remocon", app)
     app.exec_()
     print "rocon_remocon: Main end"

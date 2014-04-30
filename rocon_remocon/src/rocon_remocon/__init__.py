@@ -7,6 +7,7 @@
 # Imports
 ##############################################################################
 
-from .remocon import *
-from rocon_remocon.interactive_client import *
+from .interactions_chooser import QInteractionsChooser
+from .master_chooser import QMasterChooser
+from .interactive_client import InteractiveClient
 from .utils import *

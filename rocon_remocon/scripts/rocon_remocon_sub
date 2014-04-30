@@ -52,5 +52,5 @@ if __name__ == "__main__":
     timer.start(200)
     timer.timeout.connect(lambda: None)
 
-    myapp = rocon_remocon.RemoconSub(None, "Rocon Remocon Sub", app, index, name, ip, host_name)
+    myapp = rocon_remocon.QInteractionsChooser(None, "Interactions Chooser", app, index, name, ip, host_name)
     app.exec_()
