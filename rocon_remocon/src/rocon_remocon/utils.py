@@ -67,3 +67,20 @@ def find_rocon_remocon_script(name):
     :raises: `rospgk.ResourceNotFound`
     """
     return rocon_python_utils.ros.find_resource('rocon_remocon', name)
+
+
+def get_web_browser(self):
+    """
+    Do a search through preferred browsers which most importantly can handle
+    web apps and return the path to their executables.
+
+    :returns: pathname to the browser
+    :rtype: str
+    """
+    if rocon_python_utils.system.which("google-chrome"):
+        return 'google-chrome'
+    elif rocon_python_utils.system.which("google-chrome-unstable"):
+        return 'google-chrome-unstable'
+    elif rocon_python_utils.system.which("chromium-browser"):
+        return 'chromium-browser'
+    return None

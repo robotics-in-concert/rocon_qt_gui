@@ -46,7 +46,6 @@ class RemoconInfo():
         '''
         self._stop_app_postexec_fn = stop_app_postexec_fn
         self.interactions = {}
-        self.rocon_master_info = {}
         self.is_connect = False
         self.key = uuid.uuid4()
 
@@ -62,10 +61,7 @@ class RemoconInfo():
                                                        uri=str(self.rocon_uri),
                                                        icon=rocon_std_msgs.Icon()
                                                        )
-        print("[remocon_info] info component initialised")
-
-    def __del__(self):
-        print("[remocon_info] : info component destroyed")
+        console.logdebug("RemoconInfo : initialised")
 
     def _connect(self, rocon_master_name="", ros_master_uri="http://localhost:11311", host_name='localhost'):
 
@@ -73,12 +69,13 @@ class RemoconInfo():
         os.environ["ROS_MASTER_URI"] = ros_master_uri
         os.environ["ROS_HOSTNAME"] = host_name
 
-        print "[remocon_info] connect RemoconInfo "
-        print "[remocon_info] ROS_MASTER_URI: " + str(os.environ["ROS_MASTER_URI"])
-        print "[remocon_info] Node Name: " + self.name
-        # Need to make sure we give it a unique node name and we need a unique uuid
-        # for the remocon-role manager interaction anyway:
+        console.logdebug("RemoconInfo : Connection Details")
+        console.logdebug("RemoconInfo :   Node Name: " + self.name)
+        console.logdebug("RemoconInfo :   ROS_MASTER_URI: " + ros_master_uri)
+        console.logdebug("RemoconInfo :   ROS_HOSTNAME: " + host_name)
 
+        # Need to make sure we give init a unique node name and we need a unique uuid
+        # for the remocon-role manager interaction anyway:
         rospy.init_node(self.name, disable_signals=True)
 
         try:
@@ -259,7 +256,7 @@ class RemoconInfo():
         name_space = '/service/' + interaction['namespace']
         temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
         #add parameters
-        launch_text  = '<launch>\n'
+        launch_text  = '<launch>\n'  #@IgnorePep8 noqa
         launch_text += '    <group ns="%s">\n' % (name_space)
         launch_text += '        <rosparam>%s</rosparam>\n' % (interaction['parameters'])
         launch_text += '        <include file="%s"/>\n' % (roslaunch_filename)
@@ -321,7 +318,7 @@ class RemoconInfo():
         """
         We only need the url here and then do a system check for a web browser.
         """
-        web_browser = self._check_webbrowser()
+        web_browser = utils.get_web_browser()
         if web_browser is not None:
             name = os.path.basename(web_browser).replace('.', '_')
             anonymous_name = name + "_" + uuid.uuid4().hex
@@ -372,15 +369,6 @@ class RemoconInfo():
         query_string_mappings['interaction_data'] = json.dumps(interaction_data)
         # constructing the url
         return base_url + "?" + urllib.urlencode(query_string_mappings)
-
-    def _check_webbrowser(self):
-        if rocon_python_utils.system.which("google-chrome"):
-            return 'google-chrome'
-        elif rocon_python_utils.system.which("google-chrome-unstable"):
-            return 'google-chrome-unstable'
-        elif rocon_python_utils.system.which("chromium-browser"):
-            return 'chromium-browser'
-        return None
 
     def _stop_app(self, app_hash):
         if not app_hash in self.interactions:
