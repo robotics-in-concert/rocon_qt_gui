@@ -276,6 +276,8 @@ class RemoconSub(QMainWindow):
         console.logdebug("Remocon : stopping interaction %s " % str(self.cur_selected_interaction['name']))
         (result, message) = self.interactive_client.stop_interaction(self.cur_selected_interaction['hash'])
         if result:
+            if self.cur_selected_interaction['pairing']:
+                self._refresh_interactions_list()  # make sure the highlight is disabled
             self._set_stop_interactions_button()
             #self.interactions_widget.stop_interactions_button.setDisabled(True)
         else:
