@@ -8,5 +8,5 @@
 ##############################################################################
 
 from .remocon import *
-from .remocon_info import *
+from rocon_remocon.interactive_client import *
 from .utils import *

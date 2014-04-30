@@ -17,7 +17,7 @@ from PyQt4.QtGui import QIcon, QWidget, QLabel  # QFileDialog, QGraphicsScene, Q
 from PyQt4.QtGui import QSizePolicy, QTextEdit, QPushButton, QDialog  # QCompleter, QBrush, QColor, QPen
 from PyQt4.QtGui import QMainWindow, QCheckBox
 
-from PyQt4.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox  # QMessageBox, QTabWidget, QPlainTextEdit
+from PyQt4.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox  #QTabWidget, QPlainTextEdit
 #from PyQt4.QtSvg import QSvgGenerator
 
 import rospkg
@@ -25,7 +25,7 @@ import rocon_python_utils
 from rocon_console import console
 import rocon_interactions.web_interactions as web_interactions
 
-from .remocon_info import RemoconInfo
+from rocon_remocon.interactive_client import InteractiveClient
 from . import utils
 from .rocon_masters import RoconMasters
 
@@ -55,7 +55,7 @@ class RemoconSub(QMainWindow):
         self.interactions = {}
         self.cur_selected_interaction = None
 
-        self.remocon_info = RemoconInfo(stop_app_postexec_fn=self._set_stop_app_button)
+        self.remocon_info = InteractiveClient(stop_interaction_postexec_fn=self._set_stop_app_button)
 
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/interactions_list.ui")
         uic.loadUi(path, self.interactions_widget)
@@ -72,10 +72,10 @@ class RemoconSub(QMainWindow):
         self.roles_widget.refresh_btn.pressed.connect(self._refresh_role_list)
         # interactions list widget
         self.interactions_widget.interactions_list_widget.setIconSize(QSize(50, 50))
-        self.interactions_widget.interactions_list_widget.itemDoubleClicked.connect(self._start_app)
+        self.interactions_widget.interactions_list_widget.itemDoubleClicked.connect(self._start_interaction)
         self.interactions_widget.back_btn.pressed.connect(self._uninit_interactions_list)
         self.interactions_widget.interactions_list_widget.itemClicked.connect(self._select_app_list)  # rocon master item click event
-        self.interactions_widget.stop_interactions_button.pressed.connect(self._stop_app)
+        self.interactions_widget.stop_interactions_button.pressed.connect(self._stop_interaction)
         self.interactions_widget.refresh_btn.pressed.connect(self._refresh_interactions_list)
         self.interactions_widget.stop_interactions_button.setDisabled(True)
 
@@ -106,7 +106,7 @@ class RemoconSub(QMainWindow):
 
     def _uninit_role_list(self):
 
-        self.remocon_info._shutdown()
+        self.remocon_info.shutdown()
         self.cur_selected_role = 0
 
     def _select_role_list(self, Item):
@@ -220,16 +220,20 @@ class RemoconSub(QMainWindow):
         except KeyError:
             pass  # do nothing
 
-    def _stop_app(self):
-        console.logdebug("Remocon : Stop app %s " % str(self.cur_selected_interaction['name']))
-        if self.remocon_info._stop_app(self.cur_selected_interaction['hash']):
+    def _start_interaction(self):
+        console.logdebug("Remocon : starting interaction [%s]" % str(self.cur_selected_interaction['name']))
+        (result, message) = self.remocon_info.start_interaction(self.cur_selected_interaction['hash'])
+        if result:
+            self.interactions_widget.stop_interactions_button.setDisabled(False)
+        else:
+            QMessageBox.warning(self, 'Start Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
+            console.logwarn("Remocon : start interaction failed [%s]" % message)
+
+    def _stop_interaction(self):
+        console.logdebug("Remocon : Stop interaction %s " % str(self.cur_selected_interaction['name']))
+        if self.remocon_info.stop_interaction(self.cur_selected_interaction['hash']):
             self._set_stop_app_button()
             #self.interactions_widget.stop_interactions_button.setDisabled(True)
-
-    def _start_app(self):
-        console.logdebug("Remocon : Start app %s " % str(self.cur_selected_interaction['name']))
-        if self.remocon_info._start_app(self.cur_selected_interaction['hash']):
-            self.interactions_widget.stop_interactions_button.setDisabled(False)
 
 #################################################################
 ##Remocon Main
