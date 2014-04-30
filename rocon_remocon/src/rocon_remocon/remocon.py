@@ -14,7 +14,7 @@ from PyQt4 import uic
 from PyQt4.QtCore import QString  # pyqtSlot, SIGNAL, SLOT, QPoint, QEvent
 from PyQt4.QtCore import Qt, QSize  # QFile, QIODevice, QAbstractListModel, pyqtSignal, QStringList
 from PyQt4.QtGui import QIcon, QWidget, QLabel  # QFileDialog, QGraphicsScene, QImage, QPainter, QComboBox
-from PyQt4.QtGui import QSizePolicy, QTextEdit, QPushButton, QDialog  # QCompleter, QBrush, QColor, QPen
+from PyQt4.QtGui import QSizePolicy, QTextEdit, QPushButton, QDialog, QColor  # QCompleter, QBrush, QPen
 from PyQt4.QtGui import QMainWindow, QCheckBox
 
 from PyQt4.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox  #QTabWidget, QPlainTextEdit
@@ -55,7 +55,7 @@ class RemoconSub(QMainWindow):
         self.interactions = {}
         self.cur_selected_interaction = None
 
-        self.remocon_info = InteractiveClient(stop_interaction_postexec_fn=self._set_stop_app_button)
+        self.interactive_client = InteractiveClient(stop_interaction_postexec_fn=self.interactions_updated_handler)
 
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/interactions_list.ui")
         uic.loadUi(path, self.interactions_widget)
@@ -85,7 +85,7 @@ class RemoconSub(QMainWindow):
     def _init(self):
         self._init_role_list()
         # Ugly Hack : our window manager is not graying out the button when an interaction closes itself down and the appropriate
-        # callback (_set_stop_app_button) is fired. It does otherwise though so it looks like the window manager
+        # callback (_set_stop_interactions_button) is fired. It does otherwise though so it looks like the window manager
         # is getting confused when the original program doesn't have the focus.
         #
         # Taking control of it ourselves works...
@@ -99,21 +99,21 @@ class RemoconSub(QMainWindow):
 
     def _init_role_list(self):
 
-        if not self.remocon_info._connect(self.rocon_master_name, self.rocon_master_uri, self.host_name):
+        if not self.interactive_client._connect(self.rocon_master_name, self.rocon_master_uri, self.host_name):
             return False
         self._refresh_role_list()
         return True
 
     def _uninit_role_list(self):
 
-        self.remocon_info.shutdown()
+        self.interactive_client.shutdown()
         self.cur_selected_role = 0
 
     def _select_role_list(self, Item):
 
         self.cur_selected_role = str(Item.text())
 
-        self.remocon_info._select_role(self.cur_selected_role)
+        self.interactive_client._select_role(self.cur_selected_role)
 
         self.interactions_widget.show()
         self.interactions_widget.move(self.roles_widget.pos())
@@ -127,7 +127,7 @@ class RemoconSub(QMainWindow):
     def _refresh_role_list(self):
         self.roles_widget.role_list_widget.clear()
 
-        role_list = self.remocon_info.get_role_list()
+        role_list = self.interactive_client.get_role_list()
 
         #set list widget item (reverse order because we push them on the top)
         for role in reversed(role_list):
@@ -148,33 +148,6 @@ class RemoconSub(QMainWindow):
         self.roles_widget.show()
         self.roles_widget.move(self.interactions_widget.pos())
         self.interactions_widget.hide()
-
-    def _refresh_interactions_list(self):
-        self.interactions = {}
-        self.interactions = self.remocon_info.interactions
-        self.interactions_widget.interactions_list_widget.clear()
-
-        index = 0
-        for k in self.interactions.values():
-            k['index'] = index
-            index = index + 1
-
-            self.interactions_widget.interactions_list_widget.insertItem(0, k['display_name'])
-            #setting the list font
-            font = self.interactions_widget.interactions_list_widget.item(0).font()
-            font.setPointSize(13)
-            self.interactions_widget.interactions_list_widget.item(0).setFont(font)
-            #setting the icon
-
-            app_icon = k['icon']
-            if app_icon == "unknown.png":
-                icon = QIcon(self.icon_paths['unknown'])
-                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
-            elif len(app_icon):
-                icon = QIcon(os.path.join(utils.get_icon_cache_home(), app_icon))
-                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
-            else:
-                console.logdebug("%s : No icon" % str(self.rocon_master_name))
 
     def _select_app_list(self, Item):
         list_widget = Item.listWidget()
@@ -201,9 +174,59 @@ class RemoconSub(QMainWindow):
         info_text += "</html>"
 
         self.interactions_widget.app_info.appendHtml(info_text)
-        self._set_stop_app_button()
+        self._set_stop_interactions_button()
 
-    def _set_stop_app_button(self):
+    ######################################
+    # Gui Updates/Refreshes
+    ######################################
+
+    def interactions_updated_handler(self):
+        """
+        Called by the underlying interactive client whenever the gui needs to be updated with
+        fresh information.
+
+        Currently this only handles updates caused by termination of an interaction. If we wished to
+        handle additional situations, we should use an argument here indicating what kind of interaction
+        update occurred.
+        """
+        self._refresh_interactions_list()     # redraw the list
+        self._set_stop_interactions_button()  # toggle the stop button if necessary
+
+    def _refresh_interactions_list(self):
+        self.interactions = {}
+        self.interactions = self.interactive_client.interactions
+        self.interactions_widget.interactions_list_widget.clear()
+
+        index = 0
+        for interaction in self.interactions.values():
+            interaction['index'] = index
+            index = index + 1
+
+            self.interactions_widget.interactions_list_widget.insertItem(0, interaction['display_name'])
+
+            # is it a currently running pairing
+            console.logwarn("Looking for pairing [%s][%s]" % (self.interactive_client.pairing, interaction['display_name']))
+            if self.interactive_client.pairing == interaction['hash']:
+                self.interactions_widget.interactions_list_widget.item(0).setBackground(QColor(100, 100, 150))
+                console.logwarn("THIS IS A PAIRING [%s]" % interaction['display_name'])
+
+            #setting the list font
+            font = self.interactions_widget.interactions_list_widget.item(0).font()
+            font.setPointSize(13)
+            self.interactions_widget.interactions_list_widget.item(0).setFont(font)
+
+            #setting the icon
+            app_icon = interaction['icon']
+            if app_icon == "unknown.png":
+                icon = QIcon(self.icon_paths['unknown'])
+                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
+            elif len(app_icon):
+                icon = QIcon(os.path.join(utils.get_icon_cache_home(), app_icon))
+                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
+            else:
+                console.logdebug("%s : No icon" % str(self.rocon_master_name))
+
+    def _set_stop_interactions_button(self):
         '''
           Disable or enable the stop button depending on whether the
           selected interaction has any currently launched processes,
@@ -220,20 +243,30 @@ class RemoconSub(QMainWindow):
         except KeyError:
             pass  # do nothing
 
+    ######################################
+    # Start/Stop Interactions
+    ######################################
+
     def _start_interaction(self):
         console.logdebug("Remocon : starting interaction [%s]" % str(self.cur_selected_interaction['name']))
-        (result, message) = self.remocon_info.start_interaction(self.cur_selected_interaction['hash'])
+        (result, message) = self.interactive_client.start_interaction(self.cur_selected_interaction['hash'])
         if result:
+            if self.cur_selected_interaction['pairing']:
+                self._refresh_interactions_list()  # highlight that it is a pairing running
             self.interactions_widget.stop_interactions_button.setDisabled(False)
         else:
             QMessageBox.warning(self, 'Start Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
             console.logwarn("Remocon : start interaction failed [%s]" % message)
 
     def _stop_interaction(self):
-        console.logdebug("Remocon : Stop interaction %s " % str(self.cur_selected_interaction['name']))
-        if self.remocon_info.stop_interaction(self.cur_selected_interaction['hash']):
-            self._set_stop_app_button()
+        console.logdebug("Remocon : stopping interaction %s " % str(self.cur_selected_interaction['name']))
+        (result, message) = self.interactive_client.stop_interaction(self.cur_selected_interaction['hash'])
+        if result:
+            self._set_stop_interactions_button()
             #self.interactions_widget.stop_interactions_button.setDisabled(True)
+        else:
+            QMessageBox.warning(self, 'Stop Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
+            console.logwarn("Remocon : stop interaction failed [%s]" % message)
 
 #################################################################
 ##Remocon Main
@@ -492,8 +525,7 @@ class RemoconMain(QMainWindow):
         rocon_master_index = str(self.cur_selected_rocon_master)
         self.rocon_masters[rocon_master_index].check()
         if self.rocon_masters[rocon_master_index].flag == '0':
-            # DJS: unused reply box?
-            QMessageBox.warning(self, 'ERROR', "YOU SELECT NO CONCERT", QMessageBox.Ok | QMessageBox.Ok)
+            QMessageBox.warning(self, 'Rocon Master Connection Error', "You selected no concert", QMessageBox.Ok)
             return
 
         self._widget_main.hide()

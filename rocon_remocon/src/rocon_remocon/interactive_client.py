@@ -419,7 +419,7 @@ class InteractiveClient():
         self.remocon_status_pub.publish(remocon_status)
 
     def _subscribe_pairing_status_callback(self, msg):
-        console.logdebug("InteractiveClient : pairing status callback for %s [%s][%s]" % (self.name, msg.rapp, msg.remocon))
+        console.logdebug("InteractiveClient : pairing status callback [%s][%s]" % (msg.rapp, msg.remocon))
         if self.pairing:
             if not msg.rapp and msg.remocon == self.name:
                 console.logdebug("InteractiveClient : the rapp in this paired interaction terminated")
