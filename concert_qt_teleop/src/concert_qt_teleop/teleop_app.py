@@ -6,27 +6,26 @@
 ##############################################################################
 # Imports
 ##############################################################################
-#system
-from concert_qt_teleop import division
-import concert_qt_teleop
-import concert_qt_teleop
-#pyqt
-from concert_qt_teleop import loadUi
-from concert_qt_teleop import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal
-from concert_qt_teleop import pyqtSlot, SIGNAL,SLOT, QRectF , QTimer, QEvent, QUrl
-from concert_qt_teleop import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QLabel, QComboBox
-from concert_qt_teleop import QSizePolicy,QTextEdit, QCompleter, QBrush, QDialog, QColor, QPen, QPushButton
-from concert_qt_teleop import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
-from concert_qt_teleop import QTreeWidgetItem, QPixmap, QGraphicsScene
-from concert_qt_teleop import QDeclarativeView
-from concert_qt_teleop import QSvgGenerator
-#ros
-import concert_qt_teleop
-from concert_qt_teleop import TeleopAppInfo
-#rqt
-from concert_qt_teleop import Plugin
 
-import concert_qt_teleop
+from __future__ import division
+import os
+import math
+
+from python_qt_binding import loadUi
+from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal
+from python_qt_binding.QtCore import pyqtSlot, SIGNAL,SLOT, QRectF , QTimer, QEvent, QUrl
+from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QLabel, QComboBox
+from python_qt_binding.QtGui import QSizePolicy,QTextEdit, QCompleter, QBrush, QDialog, QColor, QPen, QPushButton
+from python_qt_binding.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
+from python_qt_binding.QtGui import QTreeWidgetItem, QPixmap, QGraphicsScene
+from python_qt_binding.QtDeclarative import QDeclarativeView
+from python_qt_binding.QtSvg import QSvgGenerator
+
+import rospkg
+import rospy
+from teleop_app_info import TeleopAppInfo
+
+from qt_gui.plugin import Plugin
 
 ##############################################################################
 # Teleop App
