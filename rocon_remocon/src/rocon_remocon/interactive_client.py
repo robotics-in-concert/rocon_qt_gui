@@ -342,7 +342,7 @@ class InteractiveClient():
 
         :param base_url str: the web app url without all of the attached variables.
         """
-        web_browser = self._check_webbrowser()
+        web_browser = utils.get_web_browser()
         if web_browser is not None:
             url = self._prepare_webapp_url(interaction, base_url)
             name = os.path.basename(web_browser).replace('.', '_')
