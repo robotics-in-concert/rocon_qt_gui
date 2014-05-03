@@ -10,8 +10,8 @@
 import sys
 import signal
 
-from PyQt4.QtGui import QApplication  # QAction, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
-from PyQt4.QtCore import QTimer  # Qt
+from python_qt_binding.QtGui import QApplication  # QAction, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
+from python_qt_binding.QtCore import QTimer  # Qt
 
 import rocon_remocon
 
@@ -45,6 +45,6 @@ if __name__ == "__main__":
     timer = QTimer()
     timer.start(200)
     timer.timeout.connect(lambda: None)
-    myapp = rocon_remocon.remocon.RemoconMain(None, "Rocon Remocon", app)
+    myapp = rocon_remocon.QMasterChooser(None, "Rocon Remocon", app)
     app.exec_()
     print "rocon_remocon: Main end"

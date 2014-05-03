@@ -69,7 +69,7 @@ def find_rocon_remocon_script(name):
     return rocon_python_utils.ros.find_resource('rocon_remocon', name)
 
 
-def get_web_browser(self):
+def get_web_browser():
     """
     Do a search through preferred browsers which most importantly can handle
     web apps and return the path to their executables.

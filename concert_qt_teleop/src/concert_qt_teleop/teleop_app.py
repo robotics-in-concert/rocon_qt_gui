@@ -6,11 +6,11 @@
 ##############################################################################
 # Imports
 ##############################################################################
-#system
+
 from __future__ import division
 import os
 import math
-#pyqt
+
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal
 from python_qt_binding.QtCore import pyqtSlot, SIGNAL,SLOT, QRectF , QTimer, QEvent, QUrl
@@ -20,13 +20,12 @@ from python_qt_binding.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBo
 from python_qt_binding.QtGui import QTreeWidgetItem, QPixmap, QGraphicsScene
 from python_qt_binding.QtDeclarative import QDeclarativeView
 from python_qt_binding.QtSvg import QSvgGenerator
-#ros
-import rospkg
-from teleop_app_info import TeleopAppInfo
-#rqt
-from qt_gui.plugin import Plugin
 
+import rospkg
 import rospy
+from teleop_app_info import TeleopAppInfo
+
+from qt_gui.plugin import Plugin
 
 ##############################################################################
 # Teleop App
@@ -56,7 +55,7 @@ class TeleopApp(Plugin):
         self.is_setting_dlg_live = False
         self._widget = QWidget()
         rospack = rospkg.RosPack()
-        ui_file = os.path.join(rospack.get_path('concert_teleop_app'), 'ui', 'teleop_app.ui')
+        ui_file = os.path.join(rospack.get_path('concert_qt_teleop'), 'ui', 'teleop_app.ui')
         self._widget.setObjectName('TeleopAppUi')
         loadUi(ui_file, self._widget, {})
         if context.serial_number() > 1:
@@ -105,7 +104,7 @@ class TeleopApp(Plugin):
         #virtual joystick controll
         self.last_linear_command = 0.0
         self.last_angular_command = 0.0
-        vj_path = os.path.join(rospack.get_path('concert_teleop_app'), 'ui', 'virtual_joystick.qml')
+        vj_path = os.path.join(rospack.get_path('concert_qt_teleop'), 'ui', 'virtual_joystick.qml')
         self._widget.vj_view.setSource(QUrl(vj_path))
         self._widget.vj_view.setResizeMode(QDeclarativeView.SizeRootObjectToView)
         rootObject = self._widget.vj_view.rootObject()

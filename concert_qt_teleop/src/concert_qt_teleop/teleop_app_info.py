@@ -163,7 +163,7 @@ class TeleopAppInfo(object):
           @param error_message : error string received
           @type str
         """
-        rospy.loginfo("Error Callback: %s" % error_message)
+        rospy.loginfo("Concert Teleop : triggered the error_callback [%s]" % error_message)
         self._error_event_callback(error_message)
 
     def _init_teleop(self, captured_teleop_rocon_uri):

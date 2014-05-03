@@ -10,233 +10,28 @@
 import os
 import sys
 
-from PyQt4 import uic
-from PyQt4.QtCore import QString  # pyqtSlot, SIGNAL, SLOT, QPoint, QEvent
-from PyQt4.QtCore import Qt, QSize  # QFile, QIODevice, QAbstractListModel, pyqtSignal, QStringList
-from PyQt4.QtGui import QIcon, QWidget, QLabel  # QFileDialog, QGraphicsScene, QImage, QPainter, QComboBox
-from PyQt4.QtGui import QSizePolicy, QTextEdit, QPushButton, QDialog  # QCompleter, QBrush, QColor, QPen
-from PyQt4.QtGui import QMainWindow, QCheckBox
+from python_qt_binding import loadUi
+from python_qt_binding.QtCore import Qt, QSize  # QFile, QIODevice, QAbstractListModel, pyqtSignal, QStringList
+from python_qt_binding.QtGui import QIcon, QWidget, QLabel  # QFileDialog, QGraphicsScene, QImage, QPainter, QComboBox
+from python_qt_binding.QtGui import QSizePolicy, QTextEdit, QPushButton, QDialog  # QCompleter, QBrush, QPen, QColor
+from python_qt_binding.QtGui import QMainWindow, QCheckBox
 
-from PyQt4.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox  # QMessageBox, QTabWidget, QPlainTextEdit
+from python_qt_binding.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox  # QTabWidget, QPlainTextEdit
 #from PyQt4.QtSvg import QSvgGenerator
 
 import rospkg
-import rocon_python_utils
 from rocon_console import console
-import rocon_interactions.web_interactions as web_interactions
+import rocon_python_utils
 
-from .remocon_info import RemoconInfo
-from . import utils
 from .rocon_masters import RoconMasters
+from . import utils
 
 ##############################################################################
-# Remocon
+# Main Window
 ##############################################################################
 
 
-class RemoconSub(QMainWindow):
-
-    def __init__(self, parent, title, application, rocon_master_index="", rocon_master_name="", rocon_master_uri='localhost', host_name='localhost'):
-        self.rocon_master_index = rocon_master_index
-        self.rocon_master_uri = rocon_master_uri
-        self.rocon_master_name = rocon_master_name
-        self.host_name = host_name
-        self._context = parent
-        self.application = application
-
-        super(RemoconSub, self).__init__(parent)
-        self.initialised = False
-
-        self.interactions_widget = QWidget()
-        self.roles_widget = QWidget()
-
-        self.cur_selected_role = 0
-
-        self.interactions = {}
-        self.cur_selected_interaction = None
-
-        self.remocon_info = RemoconInfo(stop_app_postexec_fn=self._set_stop_app_button)
-
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/interactions_list.ui")
-        uic.loadUi(path, self.interactions_widget)
-
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/role_list.ui")
-        uic.loadUi(path, self.roles_widget)
-
-        utils.setup_home_dirs()
-
-        # role list widget
-        self.roles_widget.role_list_widget.setIconSize(QSize(50, 50))
-        self.roles_widget.role_list_widget.itemDoubleClicked.connect(self._select_role_list)
-        self.roles_widget.back_btn.pressed.connect(self._back_role_list)
-        self.roles_widget.refresh_btn.pressed.connect(self._refresh_role_list)
-        # interactions list widget
-        self.interactions_widget.interactions_list_widget.setIconSize(QSize(50, 50))
-        self.interactions_widget.interactions_list_widget.itemDoubleClicked.connect(self._start_app)
-        self.interactions_widget.back_btn.pressed.connect(self._uninit_interactions_list)
-        self.interactions_widget.interactions_list_widget.itemClicked.connect(self._select_app_list)  # rocon master item click event
-        self.interactions_widget.stop_interactions_button.pressed.connect(self._stop_app)
-        self.interactions_widget.refresh_btn.pressed.connect(self._refresh_interactions_list)
-        self.interactions_widget.stop_interactions_button.setDisabled(True)
-
-        #init
-        self._init()
-
-    def _init(self):
-        self._init_role_list()
-        # Ugly Hack : our window manager is not graying out the button when an interaction closes itself down and the appropriate
-        # callback (_set_stop_app_button) is fired. It does otherwise though so it looks like the window manager
-        # is getting confused when the original program doesn't have the focus.
-        #
-        # Taking control of it ourselves works...
-        self.interactions_widget.stop_interactions_button.setStyleSheet(QString.fromUtf8("QPushButton:disabled { color: gray }"))
-        self.roles_widget.show()
-        self.initialised = True
-
-    ######################################
-    # Roles List Widget
-    ######################################
-
-    def _init_role_list(self):
-
-        if not self.remocon_info._connect(self.rocon_master_name, self.rocon_master_uri, self.host_name):
-            return False
-        self._refresh_role_list()
-        return True
-
-    def _uninit_role_list(self):
-
-        self.remocon_info._shutdown()
-        self.cur_selected_role = 0
-
-    def _select_role_list(self, Item):
-
-        self.cur_selected_role = str(Item.text())
-
-        self.remocon_info._select_role(self.cur_selected_role)
-
-        self.interactions_widget.show()
-        self.interactions_widget.move(self.roles_widget.pos())
-        self.roles_widget.hide()
-        self._init_interactions_list()
-
-    def _back_role_list(self):
-        self._uninit_role_list()
-        os.execv(RemoconMain.rocon_remocon_script, ['', self.host_name])
-
-    def _refresh_role_list(self):
-        self.roles_widget.role_list_widget.clear()
-
-        role_list = self.remocon_info.get_role_list()
-
-        #set list widget item (reverse order because we push them on the top)
-        for role in reversed(role_list):
-            self.roles_widget.role_list_widget.insertItem(0, role)
-            #setting the list font
-            font = self.roles_widget.role_list_widget.item(0).font()
-            font.setPointSize(13)
-            self.roles_widget.role_list_widget.item(0).setFont(font)
-
-    ######################################
-    # Interactions List Widget
-    ######################################
-
-    def _init_interactions_list(self):
-        self._refresh_interactions_list()
-
-    def _uninit_interactions_list(self):
-        self.roles_widget.show()
-        self.roles_widget.move(self.interactions_widget.pos())
-        self.interactions_widget.hide()
-
-    def _refresh_interactions_list(self):
-        self.interactions = {}
-        self.interactions = self.remocon_info.interactions
-        self.interactions_widget.interactions_list_widget.clear()
-
-        index = 0
-        for k in self.interactions.values():
-            k['index'] = index
-            index = index + 1
-
-            self.interactions_widget.interactions_list_widget.insertItem(0, k['display_name'])
-            #setting the list font
-            font = self.interactions_widget.interactions_list_widget.item(0).font()
-            font.setPointSize(13)
-            self.interactions_widget.interactions_list_widget.item(0).setFont(font)
-            #setting the icon
-
-            app_icon = k['icon']
-            if app_icon == "unknown.png":
-                icon = QIcon(self.icon_paths['unknown'])
-                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
-            elif len(app_icon):
-                icon = QIcon(os.path.join(utils.get_icon_cache_home(), app_icon))
-                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
-            else:
-                console.logdebug("%s : No icon" % str(self.rocon_master_name))
-
-    def _select_app_list(self, Item):
-        list_widget = Item.listWidget()
-        cur_index = list_widget.count() - list_widget.currentRow() - 1
-        for k in self.interactions.values():
-            if(k['index'] == cur_index):
-                self.cur_selected_interaction = k
-                break
-        self.interactions_widget.app_info.clear()
-        info_text = "<html>"
-        info_text += "<p>-------------------------------------------</p>"
-        web_interaction = web_interactions.parse(self.cur_selected_interaction['name'])
-        name = self.cur_selected_interaction['name'] if web_interaction is None else web_interaction.url
-        info_text += "<p><b>name: </b>" + name + "</p>"
-        info_text += "<p><b>  ---------------------</b>" + "</p>"
-        info_text += "<p><b>compatibility: </b>" + self.cur_selected_interaction['compatibility'] + "</p>"
-        info_text += "<p><b>display name: </b>" + self.cur_selected_interaction['display_name'] + "</p>"
-        info_text += "<p><b>description: </b>" + self.cur_selected_interaction['description'] + "</p>"
-        info_text += "<p><b>namespace: </b>" + self.cur_selected_interaction['namespace'] + "</p>"
-        info_text += "<p><b>max: </b>" + str(self.cur_selected_interaction['max']) + "</p>"
-        info_text += "<p><b>  ---------------------</b>" + "</p>"
-        info_text += "<p><b>remappings: </b>" + str(self.cur_selected_interaction['remappings']) + "</p>"
-        info_text += "<p><b>parameters: </b>" + str(self.cur_selected_interaction['parameters']) + "</p>"
-        info_text += "</html>"
-
-        self.interactions_widget.app_info.appendHtml(info_text)
-        self._set_stop_app_button()
-
-    def _set_stop_app_button(self):
-        '''
-          Disable or enable the stop button depending on whether the
-          selected interaction has any currently launched processes,
-        '''
-        if not self.interactions:
-            return
-        try:
-            if self.cur_selected_interaction["launch_list"]:
-                console.logdebug("Remocon : enabling stop interactions button [%s]" % self.cur_selected_interaction['display_name'])
-                self.interactions_widget.stop_interactions_button.setDisabled(False)
-            else:
-                console.logdebug("Remocon : disabling stop interactions button [%s]" % self.cur_selected_interaction['display_name'])
-                self.interactions_widget.stop_interactions_button.setEnabled(False)
-        except KeyError:
-            pass  # do nothing
-
-    def _stop_app(self):
-        console.logdebug("Remocon : Stop app %s " % str(self.cur_selected_interaction['name']))
-        if self.remocon_info._stop_app(self.cur_selected_interaction['hash']):
-            self._set_stop_app_button()
-            #self.interactions_widget.stop_interactions_button.setDisabled(True)
-
-    def _start_app(self):
-        console.logdebug("Remocon : Start app %s " % str(self.cur_selected_interaction['name']))
-        if self.remocon_info._start_app(self.cur_selected_interaction['hash']):
-            self.interactions_widget.stop_interactions_button.setDisabled(False)
-
-#################################################################
-##Remocon Main
-#################################################################
-
-
-class RemoconMain(QMainWindow):
+class QMasterChooser(QMainWindow):
 
     rocon_remocon_script = utils.find_rocon_remocon_script('rocon_remocon')
     rocon_remocon_sub_script = utils.find_rocon_remocon_script('rocon_remocon_sub')
@@ -244,7 +39,7 @@ class RemoconMain(QMainWindow):
     def __init__(self, parent, title, application):
         self._context = parent
 
-        super(RemoconMain, self).__init__()
+        super(QMasterChooser, self).__init__()
         self.initialised = False
         self.setObjectName('Remocon')
 
@@ -266,7 +61,7 @@ class RemoconMain(QMainWindow):
         self.is_init = False
 
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/remocon.ui")
-        uic.loadUi(path, self._widget_main)
+        loadUi(path, self._widget_main)
 
         utils.setup_home_dirs()
 
@@ -488,11 +283,10 @@ class RemoconMain(QMainWindow):
         rocon_master_index = str(self.cur_selected_rocon_master)
         self.rocon_masters[rocon_master_index].check()
         if self.rocon_masters[rocon_master_index].flag == '0':
-            # DJS: unused reply box?
-            QMessageBox.warning(self, 'ERROR', "YOU SELECT NO CONCERT", QMessageBox.Ok | QMessageBox.Ok)
+            QMessageBox.warning(self, 'Rocon Master Connection Error', "You selected no concert", QMessageBox.Ok)
             return
 
         self._widget_main.hide()
         arguments = ["", rocon_master_index, rocon_master_name, rocon_master_uri, rocon_master_host_name]
-        os.execv(RemoconMain.rocon_remocon_sub_script, arguments)
-        console.logdebug("Spawning: %s with args %s" % (RemoconMain.rocon_remocon_sub_script, arguments))
+        os.execv(QMasterChooser.rocon_remocon_sub_script, arguments)
+        console.logdebug("Spawning: %s with args %s" % (QMasterChooser.rocon_remocon_sub_script, arguments))
