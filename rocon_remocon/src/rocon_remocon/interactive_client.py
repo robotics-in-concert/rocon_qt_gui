@@ -216,19 +216,19 @@ class InteractiveClient():
         '''
         # pairing trigger (i.e. dummy interaction)
         if not interaction_name:
-            console.logdebug("InteractiveClient : start a dummy interaction for triggering a pair [%s]")
+            console.logdebug("InteractiveClient : start a dummy interaction for triggering a pair")
             return ('', self._start_dummy_interaction)
         # roslaunch
         try:
             launcher_filename = rocon_python_utils.ros.find_resource_from_string(interaction_name, extension='launch')
-            console.logdebug("InteractiveClient : regular start app [%s]")
+            console.logdebug("InteractiveClient : regular start app [%s]" % interaction_name)
             return (launcher_filename, self._start_roslaunch_interaction)
         except (rospkg.ResourceNotFound, ValueError):
             pass
         # rosrun
         try:
             rosrunnable_filename = rocon_python_utils.ros.find_resource_from_string(interaction_name)
-            console.logdebug("InteractiveClient : start_app_rosrunnable [%s]")
+            console.logdebug("InteractiveClient : start_app_rosrunnable [%s]" % interaction_name)
             return (rosrunnable_filename, self._start_rosrunnable_interaction)
         except rospkg.ResourceNotFound:
             pass
@@ -244,7 +244,7 @@ class InteractiveClient():
                 console.logdebug("InteractiveClient : _start_webapp_interaction [%s]" % web_interaction.url)
                 return (web_interaction.url, self._start_webapp_interaction)
         # executable
-        console.logdebug("InteractiveClient : _start_global_executable_interaction [%s]")
+        console.logdebug("InteractiveClient : _start_global_executable_interaction [%s]" % interaction_name)
         return (interaction_name, self._start_global_executable_interaction)
 
     def _start_dummy_interaction(self, interaction, unused_filename):
