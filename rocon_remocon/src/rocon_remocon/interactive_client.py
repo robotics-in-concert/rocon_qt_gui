@@ -252,8 +252,11 @@ class InteractiveClient():
                 console.logdebug("InteractiveClient : _start_webapp_interaction [%s]" % web_interaction.url)
                 return (web_interaction.url, self._start_webapp_interaction)
         # executable
-        console.logdebug("InteractiveClient : _start_global_executable_interaction [%s]")
-        return (interaction_name, self._start_global_executable_interaction)
+        if rocon_python_utils.system.which(interaction_name) is not None:
+            console.logdebug("InteractiveClient : _start_global_executable_interaction [%s]")
+            return (interaction_name, self._start_global_executable_interaction)
+        else:
+            raise rocon_interactions.InvalidInteraction("could not find a valid rosrunnable or global executable for '%s' (mispelt, not installed?)" % interaction_name)
 
     def _start_dummy_interaction(self, interaction, unused_filename):
         console.loginfo("InteractiveClient : starting paired dummy interaction")
