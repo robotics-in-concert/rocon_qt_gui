@@ -282,8 +282,12 @@ class QMasterChooser(QMainWindow):
 
         rocon_master_index = str(self.cur_selected_rocon_master)
         self.rocon_masters[rocon_master_index].check()
+        # Todo this use of flags is spanky
         if self.rocon_masters[rocon_master_index].flag == '0':
-            QMessageBox.warning(self, 'Rocon Master Connection Error', "You selected no concert", QMessageBox.Ok)
+            QMessageBox.warning(self, 'Rocon Master Connection Error', "Could not find a rocon master at %s" % self.rocon_masters[rocon_master_index].uri, QMessageBox.Ok)
+            return
+        if self.rocon_masters[rocon_master_index].flag == '1':
+            QMessageBox.warning(self, 'Rocon Master Communication Error', "Found a rocon master at %s but cannot communicate with it (are ROS_IP/ROS_MASTER_URI correctly configured locally and remotely?)" % self.rocon_masters[rocon_master_index].uri, QMessageBox.Ok)
             return
 
         self._widget_main.hide()

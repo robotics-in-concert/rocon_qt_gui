@@ -80,8 +80,10 @@ class RoconMaster(object):
 
                 if self.name == "Unknown":
                     self.flag = '0'
-                else:
+                elif self.name == "Uncommunicable":
                     self.flag = '1'
+                else:
+                    self.flag = '2'
                 break
 
             time.sleep(0.1)
