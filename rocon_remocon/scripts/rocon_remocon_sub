@@ -20,7 +20,7 @@ import rocon_remocon
 ##############################################################################.
 
 app = None
-myapp = None
+interactions_chooser = None
 
 ##############################################################################
 # Methods
@@ -30,7 +30,7 @@ myapp = None
 def signal_handler(signum, f):
     print "[sub] Interrupt"
     if signum == signal.SIGINT:
-        myapp._uninit_role_list()
+        interactions_chooser._uninit_role_list()
         app.exit(0)
 
 ##############################################################################
@@ -52,5 +52,5 @@ if __name__ == "__main__":
     timer.start(200)
     timer.timeout.connect(lambda: None)
 
-    myapp = rocon_remocon.QInteractionsChooser(None, "Interactions Chooser", app, index, name, ip, host_name)
+    interactions_chooser = rocon_remocon.QInteractionsChooser(None, "Interactions Chooser", app, index, name, ip, host_name)
     app.exec_()
