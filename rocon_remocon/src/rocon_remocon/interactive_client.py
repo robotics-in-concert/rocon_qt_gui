@@ -29,6 +29,7 @@ import rocon_interaction_msgs.msg as rocon_interaction_msgs
 import rocon_interaction_msgs.srv as rocon_interaction_srvs
 import rocon_interactions.web_interactions as web_interactions
 import rocon_python_comms
+import rocon_interactions
 
 from . import utils
 from .launch import LaunchInfo
@@ -190,7 +191,10 @@ class InteractiveClient():
 
         if call_result.error_code == ErrorCodes.SUCCESS:
             console.logdebug("InteractiveClient : interaction request granted")
-            (app_executable, start_app_handler) = self._determine_interaction_type(interaction['name'])
+            try:
+                (app_executable, start_app_handler) = self._determine_interaction_type(interaction['name'])
+            except rocon_interactions.InvalidInteraction as e:
+                return False, ("invalid interaction specified [%s]" % str(e))
             result = start_app_handler(interaction, app_executable)
             if result:
                 self._publish_remocon_status()
@@ -224,7 +228,11 @@ class InteractiveClient():
             console.logdebug("InteractiveClient : regular start app [%s]")
             return (launcher_filename, self._start_roslaunch_interaction)
         except (rospkg.ResourceNotFound, ValueError):
-            pass
+            unused_filename, extension = os.path.splitext(interaction_name)
+            if extension == '.launch':
+                raise rocon_interactions.InvalidInteraction("could not find %s on the filesystem" % interaction_name)
+            else:
+                pass
         # rosrun
         try:
             rosrunnable_filename = rocon_python_utils.ros.find_resource_from_string(interaction_name)
