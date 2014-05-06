@@ -29,6 +29,7 @@ import rocon_interaction_msgs.msg as rocon_interaction_msgs
 import rocon_interaction_msgs.srv as rocon_interaction_srvs
 import rocon_interactions.web_interactions as web_interactions
 import rocon_python_comms
+import rocon_interactions
 
 from . import utils
 from .launch import LaunchInfo
@@ -79,14 +80,14 @@ class InteractiveClient():
         # Need to make sure we give init a unique node name and we need a unique uuid
         # for the remocon-role manager interaction anyway:
         rospy.init_node(self.name, disable_signals=True)
-
         try:
             get_interactions_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions', timeout=rospy.rostime.Duration(5.0), unique=True)
             get_roles_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetRoles', timeout=rospy.rostime.Duration(5.0), unique=True)
             request_interaction_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/RequestInteraction', timeout=rospy.rostime.Duration(5.0), unique=True)
         except rocon_python_comms.NotFoundException as e:
-            console.logerror("InteractiveClient : failed to find all of the interactions' publications and services [%s]" % str(e))
-            return False
+            message = "failed to find all of the interactions' publications and services [%s]" % str(e)
+            console.logerror("InteractiveClient : %s" % message)
+            return (False, message)
 
         self.get_interactions_service_proxy = rospy.ServiceProxy(get_interactions_service_name, rocon_interaction_srvs.GetInteractions)
         self.get_roles_service_proxy = rospy.ServiceProxy(get_roles_service_name, rocon_interaction_srvs.GetRoles)
@@ -102,19 +103,20 @@ class InteractiveClient():
 
         self._publish_remocon_status()
         self.is_connect = True
-        return True
+        return (True, "success")
 
     def _disconnect(self):
-        self.shutdown()
+        if(self.is_connect != True):
+            self.shutdown()
 
     def _is_shutdown(self):
         print "[remocon_info] shut down is complete"
 
     def shutdown(self):
         if(self.is_connect != True):
-            console.logwarn("InteractiveClient : tried to shutdown already disconnected remocon")
+            return
         else:
-            console.logdebug("InteractiveClient : shutting down all apps")
+            console.logdebug("InteractiveClient : shutting down all rapps")
             for app_hash in self.interactions.keys():
                 self.stop_interaction(app_hash)
 
@@ -132,6 +134,9 @@ class InteractiveClient():
             console.logdebug("InteractiveClient : has shutdown.")
 
     def get_role_list(self):
+        if not self.is_connect:
+            rospy.logwarn("InteractiveClient : aborting a request to 'get_roles' as we are not connected to a rocon interactions manager.")
+            return []
         try:
             response = self.get_roles_service_proxy(self.platform_info.uri)
         except (rospy.ROSInterruptException, rospy.ServiceException):
@@ -190,7 +195,10 @@ class InteractiveClient():
 
         if call_result.error_code == ErrorCodes.SUCCESS:
             console.logdebug("InteractiveClient : interaction request granted")
-            (app_executable, start_app_handler) = self._determine_interaction_type(interaction['name'])
+            try:
+                (app_executable, start_app_handler) = self._determine_interaction_type(interaction['name'])
+            except rocon_interactions.InvalidInteraction as e:
+                return False, ("invalid interaction specified [%s]" % str(e))
             result = start_app_handler(interaction, app_executable)
             if result:
                 self._publish_remocon_status()
@@ -224,7 +232,11 @@ class InteractiveClient():
             console.logdebug("InteractiveClient : regular start app [%s]" % interaction_name)
             return (launcher_filename, self._start_roslaunch_interaction)
         except (rospkg.ResourceNotFound, ValueError):
-            pass
+            unused_filename, extension = os.path.splitext(interaction_name)
+            if extension == '.launch':
+                raise rocon_interactions.InvalidInteraction("could not find %s on the filesystem" % interaction_name)
+            else:
+                pass
         # rosrun
         try:
             rosrunnable_filename = rocon_python_utils.ros.find_resource_from_string(interaction_name)
@@ -244,8 +256,11 @@ class InteractiveClient():
                 console.logdebug("InteractiveClient : _start_webapp_interaction [%s]" % web_interaction.url)
                 return (web_interaction.url, self._start_webapp_interaction)
         # executable
-        console.logdebug("InteractiveClient : _start_global_executable_interaction [%s]" % interaction_name)
-        return (interaction_name, self._start_global_executable_interaction)
+        if rocon_python_utils.system.which(interaction_name) is not None:
+            console.logdebug("InteractiveClient : _start_global_executable_interaction [%s]")
+            return (interaction_name, self._start_global_executable_interaction)
+        else:
+            raise rocon_interactions.InvalidInteraction("could not find a valid rosrunnable or global executable for '%s' (mispelt, not installed?)" % interaction_name)
 
     def _start_dummy_interaction(self, interaction, unused_filename):
         console.loginfo("InteractiveClient : starting paired dummy interaction")

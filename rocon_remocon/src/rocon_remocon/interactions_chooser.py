@@ -87,7 +87,11 @@ class QInteractionsChooser(QMainWindow):
         self._init()
 
     def _init(self):
-        self._init_role_list()
+        (result, message) = self._init_role_list()
+        if not result:
+            QMessageBox.warning(self, 'Connection Failed', "%s." % message.capitalize(), QMessageBox.Ok)
+            self._back_role_list()
+            return
         # Ugly Hack : our window manager is not graying out the button when an interaction closes itself down and the appropriate
         # callback (_set_stop_interactions_button) is fired. It does otherwise though so it looks like the window manager
         # is getting confused when the original program doesn't have the focus.
@@ -102,11 +106,11 @@ class QInteractionsChooser(QMainWindow):
     ######################################
 
     def _init_role_list(self):
-
-        if not self.interactive_client._connect(self.rocon_master_name, self.rocon_master_uri, self.host_name):
-            return False
+        (result, message) = self.interactive_client._connect(self.rocon_master_name, self.rocon_master_uri, self.host_name)
+        if not result:
+            return (False, message)
         self._refresh_role_list()
-        return True
+        return (True, "success")
 
     def _uninit_role_list(self):
 
@@ -126,6 +130,7 @@ class QInteractionsChooser(QMainWindow):
 
     def _back_role_list(self):
         self._uninit_role_list()
+        self.initialised = False
         os.execv(QMasterChooser.rocon_remocon_script, ['', self.host_name])
 
     def _refresh_role_list(self):
