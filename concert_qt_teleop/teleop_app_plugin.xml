@@ -10,7 +10,7 @@
         <statustip>Concert plugins for ROCON.</statustip>
       </group>
       <label>Robot Teleop</label>
-      <icon type="file">./resources/images/rocon_logo.png</icon>
+      <icon type="file">./resources/images/teleop.png</icon>
       <statustip>Select and teleop a robot in the concert.</statustip>
     </qtgui>
   </class>
