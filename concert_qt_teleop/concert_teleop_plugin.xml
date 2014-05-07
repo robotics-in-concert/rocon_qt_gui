@@ -1,5 +1,5 @@
 <library path="src">
-  <class name="Teleop" type="concert_qt_teleop.teleop_app.TeleopApp" base_class_type="rqt_gui_py::Plugin">
+  <class name="Teleop" type="concert_qt_teleop.teleop.Teleop" base_class_type="rqt_gui_py::Plugin">
     <description>
         Select and teleop a robot in the concert.
     </description>
@@ -9,8 +9,8 @@
         <icon type="theme">folder</icon>
         <statustip>Concert plugins for ROCON.</statustip>
       </group>
-      <label>Robot Teleop</label>
-      <icon type="file">./resources/images/teleop.png</icon>
+      <label>Teleop</label>
+      <icon type="file">./resources/images/rocon_logo.png</icon>
       <statustip>Select and teleop a robot in the concert.</statustip>
     </qtgui>
   </class>

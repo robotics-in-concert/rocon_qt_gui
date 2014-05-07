@@ -7,38 +7,53 @@
 # Imports
 ##############################################################################
 
-#ros
-import rospy
-from sensor_msgs.msg import CompressedImage
-
-#rocon
-import rocon_uri
-import rocon_python_comms
-from rocon_std_msgs.msg import StringArray
-from geometry_msgs.msg import Twist
-
 import concert_service_msgs.msg as concert_service_msgs
+import rocon_console.console as console
+import rocon_python_comms
+from rocon_qt_library.interfaces.teleop_interface import TeleopInterface
+from rocon_std_msgs.msg import StringArray
+import rocon_uri
+import rospy
+import threading
 
 ##############################################################################
-# TeleopAppInfo
+# TeleopManager
 ##############################################################################
 
 
-class TeleopAppInfo(object):
-    def __init__(self):
+class TeleopManager(object):
+    def __init__(self, image_received_slot):
+        self._lock = threading.Lock()
+        self.teleop_interface = None
+        self._image_received_slot = image_received_slot
         self._capture_event_callback = None
         self._release_event_callback = None
         self._error_event_callback = None
         self._event_callback = None
-        self.image_data = None
         self.robot_list = {}
         self.pre_robot_list = {}
         self.service_pair_msg_q = []
         self.captured_teleop_rocon_uri = None
-        self.captured_teleop_cmd_vel_pub = None
-        self.captured_teleop_compressed_image_sub = None
         rospy.Subscriber("/services/teleop/available_teleops", StringArray, self._update_robot_list)
         self.capture_teleop = rocon_python_comms.ServicePairClient('/services/teleop/capture_teleop', concert_service_msgs.CaptureTeleopPair)
+
+    def shutdown(self):
+        """
+        Final curtains, signifies the end of existence for this rqt plugin.
+        """
+        with self._lock:
+            if self.teleop_interface:
+                self.teleop_interface.shutdown()
+                self.teleop_interface = None
+
+    def publish_cmd_vel(self, linear, angular):
+        """
+        Relay to the underlying teleop interface if there is a
+        teleopable robot currently captured.
+        """
+        with self._lock:
+            if self.teleop_interface:
+                self.teleop_interface.cmd_vel = (linear, angular)
 
     def _update_robot_list(self, data):
         """
@@ -71,37 +86,11 @@ class TeleopAppInfo(object):
         else:
             return False
 
-    def _update_teleop_image(self, data):
-        """
-        Update the teleop image
-
-        @param data: compressed image
-        @type
-        """
-        self.image_data = data
-
-    def _request_teleop_cmd_vel(self, linear, angular):
-        """
-        Update the teleop image
-
-        @param linear: linear velocity. Unit is m/s
-        @type float
-
-        @param angular: angular velocity. Unit is rad/s
-        @type float
-        """
-        if self.captured_teleop_cmd_vel_pub:
-            cmd_vel = Twist()
-            cmd_vel.linear.x = linear
-            cmd_vel.angular.z = angular
-            self.captured_teleop_cmd_vel_pub.publish(cmd_vel)
-
     def _capture_teleop(self, rocon_uri):
         """
-        caputre the robot with rocon uri
+        Initiate a request to capture a teleoppable robot.
 
-        @param rocon_uri: robot information as uri type
-        @type rocon_uri class
+        :param str rocon_uri: robot information as a rocon uri
         """
         request = concert_service_msgs.CaptureTeleopRequest()
         request.rocon_uri = rocon_uri
@@ -125,13 +114,11 @@ class TeleopAppInfo(object):
         self.service_pair_msg_q.append(msg_id)
 
     def _capture_callback(self, msg_id, msg):
-        """ User callback to feed into non-blocking requests.
+        """
+        Handle the response from a capture service pair request.
 
-        @param msg_id : id of the request-response pair.
-        @type uuid_msgs.UniqueID
-
-        @param msg : message response received
-        @type <name>Response
+        :param uuid_msgs.UniqueID msg_id: id of the request-response pair.
+        :param concert_service_msgs.CaptureTeleopPairResponse msg: message response received
          """
         if msg_id in self.service_pair_msg_q:
             self.service_pair_msg_q.remove(msg_id)
@@ -163,33 +150,34 @@ class TeleopAppInfo(object):
           @param error_message : error string received
           @type str
         """
-        rospy.loginfo("Concert Teleop : triggered the error_callback [%s]" % error_message)
+        rospy.logerr("Concert Teleop : triggered the error_callback [%s]" % error_message)
         self._error_event_callback(error_message)
 
     def _init_teleop(self, captured_teleop_rocon_uri):
-        """ After capturing teleop, intialization with teleop information.
+        """
+        Initialise the teleop interface for a newly captured robot.
 
-        @param teleop_name : captured teleop name
-        @type string
-         """
-        uri = rocon_uri.parse(captured_teleop_rocon_uri)
-        captured_name = uri.name.string
-
-        self.captured_teleop_cmd_vel_pub = rospy.Publisher(captured_name + "/cmd_vel", Twist, latch=True)
-        self.captured_teleop_compressed_image_sub = rospy.Subscriber(captured_name + "/compressed_image", CompressedImage, self._update_teleop_image)
+        :param str captured_teleop_rocon_uri: captured rocon uri
+        """
+        captured_name = rocon_uri.parse(captured_teleop_rocon_uri).name.string
+        with self._lock:
+            self.teleop_interface = TeleopInterface(
+                image_received_slot=self._image_received_slot,
+                cmd_vel_topic_name=captured_name + "/cmd_vel",
+                compressed_image_topic_name=captured_name + "/compressed_image"
+            )
 
     def _uninit_teleop(self, captured_teleop_rocon_uri):
-        """ After release teleop, unintialization with teleop information.
+        """
+        Shutdown the teleop interface for the captured robot.
 
-        @param teleop_name : captured teleop name
-        @type string
-         """
-        uri = rocon_uri.parse(captured_teleop_rocon_uri)
-        self.image_data = None
-        self.captured_teleop_cmd_vel_pub.unregister()
-        self.captured_teleop_compressed_image_sub.unregister()
-        self.captured_teleop_cmd_vel_pub = None
-        self.captured_teleop_compressed_image_sub = None
+        :param str captured_teleop_rocon_uri: captured rocon uri
+        """
+        unused_uri = rocon_uri.parse(captured_teleop_rocon_uri)
+        with self._lock:
+            if self.teleop_interface:
+                self.teleop_interface.shutdown()
+                self.teleop_interface = None
 
     def _reg_event_callback(self, func):
         self._event_callback = func

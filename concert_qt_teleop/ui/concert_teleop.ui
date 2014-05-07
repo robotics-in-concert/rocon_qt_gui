@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>TeleopAppWidget</class>
- <widget class="QWidget" name="TeleopAppWidget">
+ <class>concert_teleop_widget</class>
+ <widget class="QWidget" name="concert_teleop_widget">
   <property name="enabled">
    <bool>true</bool>
   </property>
@@ -20,7 +20,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Teleop Application</string>
+   <string>Concert Teleop</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="2">
@@ -31,7 +31,7 @@
         <number>9</number>
        </property>
        <item>
-        <widget class="QGraphicsView" name="camera_view"/>
+        <widget class="QCameraView" name="camera_view"/>
        </item>
        <item>
         <layout class="QGridLayout" name="gridLayout_2" rowstretch="0" columnstretch="0">
@@ -42,7 +42,7 @@
           <number>9</number>
          </property>
          <item row="0" column="0">
-          <widget class="QDeclarativeView" name="vj_view">
+          <widget class="QVirtualJoystickView" name="virtual_joystick_view">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -50,6 +50,12 @@
             </sizepolicy>
            </property>
            <property name="minimumSize">
+            <size>
+             <width>200</width>
+             <height>200</height>
+            </size>
+           </property>
+           <property name="maximumSize">
             <size>
              <width>200</width>
              <height>200</height>
@@ -117,9 +123,14 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QDeclarativeView</class>
+   <class>QVirtualJoystickView</class>
    <extends>QGraphicsView</extends>
-   <header>QtDeclarative/QDeclarativeView</header>
+   <header>rocon_qt_library.views</header>
+  </customwidget>
+  <customwidget>
+   <class>QCameraView</class>
+   <extends>QGraphicsView</extends>
+   <header>rocon_qt_library.views</header>
   </customwidget>
  </customwidgets>
  <resources/>

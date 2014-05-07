@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="rocon_qt_teleop" type="rocon_teleop" name="rocon_teleop">
+    <remap from="cmd_vel" to="guimul/cmd_vel"/>
+    <remap from="compressed_image" to="guimul/compressed_image"/>
+  </node>
+</launch>
