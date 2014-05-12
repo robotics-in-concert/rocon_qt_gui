@@ -22,14 +22,20 @@ import threading
 
 
 class TeleopManager(object):
-    def __init__(self, image_received_slot):
+    def __init__(self,
+                 image_received_slot,
+                 event_callback,
+                 capture_event_callback,
+                 release_event_callback,
+                 error_event_callback
+                 ):
         self._lock = threading.Lock()
         self.teleop_interface = None
         self._image_received_slot = image_received_slot
-        self._capture_event_callback = None
-        self._release_event_callback = None
-        self._error_event_callback = None
-        self._event_callback = None
+        self._capture_event_callback = capture_event_callback
+        self._release_event_callback = release_event_callback
+        self._error_event_callback = error_event_callback
+        self._event_callback = event_callback
         self.robot_list = {}
         self.pre_robot_list = {}
         self.service_pair_msg_q = []
@@ -178,15 +184,3 @@ class TeleopManager(object):
             if self.teleop_interface:
                 self.teleop_interface.shutdown()
                 self.teleop_interface = None
-
-    def _reg_event_callback(self, func):
-        self._event_callback = func
-
-    def _reg_error_event_callback(self, func):
-        self._error_event_callback = func
-
-    def _reg_capture_event_callback(self, func):
-        self._capture_event_callback = func
-
-    def _reg_release_event_callback(self, func):
-        self._release_event_callback = func
