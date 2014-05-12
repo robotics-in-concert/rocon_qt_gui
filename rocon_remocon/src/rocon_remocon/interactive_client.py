@@ -43,6 +43,12 @@ from .interactions_table import InteractionsTable
 
 class InteractiveClient():
 
+    shutdown_timeout = 0.5
+    """
+    Time to wait before shutting down so remocon status updates can be received and processed
+    by the interactions manager (important for pairing interactions).
+    """
+
     def __init__(self, stop_interaction_postexec_fn):
         '''
           @param stop_app_postexec_fn : callback to fire when a listener detects an app getting stopped.
@@ -120,15 +126,12 @@ class InteractiveClient():
             for interaction in self._interactions_table.interactions:
                 self.stop_interaction(interaction.hash)
 
-            self._interactions_table = InteractionsTable()
-            self.is_connect = False
-
+            rospy.rostime.wallsleep(InteractiveClient.shutdown_timeout)
+            console.logdebug("Interactive Client : signaling shutdown.")
             rospy.signal_shutdown("shut down remocon_info")
             while not rospy.is_shutdown():
                 rospy.rostime.wallsleep(0.1)
 
-            self.remocon_status_pub.unregister()
-            self.remocon_status_pub = None
             console.logdebug("Interactive Client : has shutdown.")
 
     def get_role_list(self):
