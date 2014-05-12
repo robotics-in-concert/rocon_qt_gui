@@ -69,12 +69,12 @@ class Teleop(Plugin):
 
         self._widget.release_teleop_btn.setEnabled(False)
         self.teleop_app_info = TeleopManager(
-            image_received_slot=self._widget.camera_view.on_compressed_image_received
+            image_received_slot=self._widget.camera_view.on_compressed_image_received,
+            event_callback=self._refresh_robot_list,
+            capture_event_callback=self._capture_event_callback,
+            release_event_callback=self._release_event_callback,
+            error_event_callback=self._error_event_callback,
         )
-        self.teleop_app_info._reg_event_callback(self._refresh_robot_list)
-        self.teleop_app_info._reg_capture_event_callback(self._capture_event_callback)
-        self.teleop_app_info._reg_release_event_callback(self._release_event_callback)
-        self.teleop_app_info._reg_error_event_callback(self._error_event_callback)
 
         self.robot_item_list = {}
         self.current_robot = None

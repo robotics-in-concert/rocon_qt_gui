@@ -38,32 +38,25 @@ class QInteractionsChooser(QMainWindow):
     signal_interactions_updated = Signal()
 
     def __init__(self, parent, title, application, rocon_master_index="", rocon_master_name="", rocon_master_uri='localhost', host_name='localhost'):
+        super(QInteractionsChooser, self).__init__(parent)
+
         self.rocon_master_index = rocon_master_index
         self.rocon_master_uri = rocon_master_uri
         self.rocon_master_name = rocon_master_name
         self.host_name = host_name
-        self._context = parent
-        self.application = application
+        self.cur_selected_interaction = None
+        self.cur_selected_role = 0
+        self.interactions = {}
+        self.interactive_client = InteractiveClient(stop_interaction_postexec_fn=self.interactions_updated_relay)
 
-        super(QInteractionsChooser, self).__init__(parent)
+        self.application = application
 
         self.interactions_widget = QWidget()
         self.roles_widget = QWidget()
-
-        self.cur_selected_role = 0
-
-        self.interactions = {}
-        self.cur_selected_interaction = None
-
-        self.interactive_client = InteractiveClient(stop_interaction_postexec_fn=self.interactions_updated_relay)
-
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/interactions_list.ui")
-        loadUi(path, self.interactions_widget)
-
+        loadUi(path, self.interactions_widget, self)
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/role_list.ui")
-        loadUi(path, self.roles_widget)
-
-        utils.setup_home_dirs()
+        loadUi(path, self.roles_widget, self)
 
         # role list widget
         self.roles_widget.role_list_widget.setIconSize(QSize(50, 50))
@@ -82,10 +75,10 @@ class QInteractionsChooser(QMainWindow):
         self.signal_interactions_updated.connect(self._refresh_interactions_list, Qt.QueuedConnection)
         self.signal_interactions_updated.connect(self._set_stop_interactions_button, Qt.QueuedConnection)
 
-        #init
-        self._init()
+        # create a few directories for caching icons and ...
+        utils.setup_home_dirs()
 
-    def _init(self):
+        # connect to the ros master
         (result, message) = self.interactive_client._connect(self.rocon_master_name, self.rocon_master_uri, self.host_name)
         if not result:
             QMessageBox.warning(self, 'Connection Failed', "%s." % message.capitalize(), QMessageBox.Ok)
@@ -100,6 +93,8 @@ class QInteractionsChooser(QMainWindow):
         self.interactions_widget.stop_interactions_button.setStyleSheet("QPushButton:disabled { color: gray }")
         self.roles_widget.show()
 
+    def closeEvent(self, event):
+        console.logwarn("Interactions Chooser : is closing!!!!!")
     ######################################
     # Roles List Widget
     ######################################
