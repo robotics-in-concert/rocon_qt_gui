@@ -62,6 +62,7 @@ class QInteractionsChooser(QMainWindow):
         self.roles_widget.role_list_widget.setIconSize(QSize(50, 50))
         self.roles_widget.role_list_widget.itemDoubleClicked.connect(self._switch_to_interactions_list)
         self.roles_widget.back_btn.pressed.connect(self._switch_to_master_chooser)
+        self.roles_widget.stop_all_interactions_button.pressed.connect(self._stop_all_interactions)
         self.roles_widget.refresh_btn.pressed.connect(self._refresh_role_list)
         self.roles_widget.closeEvent = self._close_event
         # interactions list widget
@@ -86,14 +87,22 @@ class QInteractionsChooser(QMainWindow):
             QMessageBox.warning(self, 'Connection Failed', "%s." % message.capitalize(), QMessageBox.Ok)
             self._switch_to_master_chooser()
             return
-        self._refresh_role_list()
+        role_list = self._refresh_role_list()
         # Ugly Hack : our window manager is not graying out the button when an interaction closes itself down and the appropriate
         # callback (_set_stop_interactions_button) is fired. It does otherwise though so it looks like the window manager
         # is getting confused when the original program doesn't have the focus.
         #
         # Taking control of it ourselves works...
         self.interactions_widget.stop_interactions_button.setStyleSheet("QPushButton:disabled { color: gray }")
-        self.roles_widget.show()
+
+        # show interactions list if there's no choice amongst roles, otherwise show the role list
+        if len(role_list) == 1:
+            self.cur_selected_role = role_list[0]
+            self.interactive_client.select_role(self.cur_selected_role)
+            self.interactions_widget.show()
+            self._refresh_interactions_list()
+        else:
+            self.roles_widget.show()
 
     def shutdown(self):
         """
@@ -142,6 +151,12 @@ class QInteractionsChooser(QMainWindow):
             font = self.roles_widget.role_list_widget.item(0).font()
             font.setPointSize(13)
             self.roles_widget.role_list_widget.item(0).setFont(font)
+        return role_list
+
+    def _stop_all_interactions(self):
+        console.logdebug("Interactions Chooser : stopping all running interactions")
+        self.interactive_client.stop_all_interactions()
+        self.roles_widget.stop_all_interactions_button.setEnabled(False)
 
     ######################################
     # Interactions List Widget
@@ -149,9 +164,16 @@ class QInteractionsChooser(QMainWindow):
 
     def _switch_to_role_list(self):
         console.logdebug("Interactions Chooser : switching to the role list")
+
+        # show the roles widget
+        if self.interactive_client.has_running_interactions():
+            self.roles_widget.stop_all_interactions_button.setEnabled(True)
+        else:
+            self.roles_widget.stop_all_interactions_button.setEnabled(False)
         self.roles_widget.show()
         self.roles_widget.move(self.interactions_widget.pos())
-        # reset this button for the next viewing
+
+        # show the interactions widget
         self.interactions_widget.stop_interactions_button.setEnabled(False)
         self.interactions_widget.hide()
 

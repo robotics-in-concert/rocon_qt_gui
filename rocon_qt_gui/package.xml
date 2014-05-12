@@ -14,12 +14,14 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>concert_conductor_graph</run_depend>
-  <run_depend>concert_teleop_app</run_depend>
+  <run_depend>concert_qt_teleop</run_depend>
   <run_depend>rocon_admin_app</run_depend>
   <run_depend>rocon_gateway_graph</run_depend>
   <run_depend>rocon_qt_app_manager</run_depend>
+  <run_depend>rocon_qt_library</run_depend>
   <run_depend>rocon_qt_listener</run_depend>
   <run_depend>rocon_qt_master_info</run_depend>
+  <run_depend>rocon_qt_teleop</run_depend>
   <run_depend>rocon_remocon</run_depend>
 
   <export>

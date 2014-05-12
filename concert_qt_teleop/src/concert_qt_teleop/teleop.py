@@ -36,9 +36,10 @@ class Teleop(Plugin):
     def __init__(self, context):
         self._context = context
         super(Teleop, self).__init__(context)
-        # I'd like these to be configurable via the gui
-        self.maximum_linear_velocity = 2.0
-        self.maximum_angular_velocity = 90 * Teleop.degrees_to_radians
+        # I'd like these to be also configurable via the gui
+        self.maximum_linear_velocity = rospy.get_param('~maximum_linear_velocity', 2.0)
+        self.maximum_angular_velocity = rospy.get_param('~maximum_angular_velocity', 90 * Teleop.degrees_to_radians)
+        rospy.loginfo("Rocon Teleop : maximum velocities [%s, %s]" % (self.maximum_linear_velocity, self.maximum_angular_velocity))
 
         self.initialised = False
 

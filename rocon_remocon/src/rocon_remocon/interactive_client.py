@@ -7,14 +7,15 @@
 # Imports
 ##############################################################################
 
-import os
-import uuid
 from functools import partial
+import json
+import os
 import signal
 import tempfile
+import types
 import urllib
+import uuid
 import yaml
-import json
 
 import rospy
 import rocon_python_utils
@@ -155,6 +156,16 @@ class InteractiveClient():
             self._interactions_table.append(Interaction(msg))
         # could use a whole bunch of exception checking here, removing
         # self.interactions[role_name] if necessary.
+
+    def has_running_interactions(self):
+        """
+        Identify if this client has any running interactions. Used by the gui above
+        to enable/disable a button that will trigger stoppage of all running interactions.
+        """
+        for interaction in self._interactions_table.interactions:
+            if interaction.launch_list.keys():
+                return True
+        return False
 
     def start_interaction(self, role_name, interaction_hash):
         """
@@ -300,12 +311,14 @@ class InteractiveClient():
         name = os.path.basename(rosrunnable_filename).replace('.', '_')
         anonymous_name = name + "_" + uuid.uuid4().hex
         process_listener = partial(self._process_listeners, anonymous_name, 1)
-        command_args = ['rosrun', package_name, rosrunnable_filename, '__name:=%s' % anonymous_name]
+        cmd = ['rosrun', package_name, rosrunnable_filename, '__name:=%s' % anonymous_name]
         remapping_args = []
         for remap in interaction.remappings:
             remapping_args.append(remap.remap_from + ":=" + remap.remap_to)
-        command_args.extend(remapping_args)
-        process = rocon_python_utils.system.Popen(command_args, postexec_fn=process_listener)
+        cmd.extend(remapping_args)
+        cmd.extend(self._prepare_command_line_parameters(interaction.parameters))
+        console.logdebug("Interactive Client : rosrunnable command %s" % cmd)
+        process = rocon_python_utils.system.Popen(cmd, postexec_fn=process_listener)
         interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
         return True
 
@@ -314,10 +327,11 @@ class InteractiveClient():
         name = os.path.basename(filename).replace('.', '_')
         anonymous_name = name + "_" + uuid.uuid4().hex
         process_listener = partial(self._process_listeners, anonymous_name, 1)
-        process = rocon_python_utils.system.Popen([filename], postexec_fn=process_listener)
+        cmd = [filename]
+        cmd.extend(self._prepare_command_line_parameters(interaction.parameters))
+        console.logdebug("Interactive Client : global executable command %s" % cmd)
+        process = rocon_python_utils.system.Popen(cmd, postexec_fn=process_listener)
         interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
-        print("Interaction \n%s" % interaction)
-        print("Interaction Table \n%s" % self._interactions_table)
         return True
 
     def _start_weburl_interaction(self, interaction, url):
@@ -353,6 +367,17 @@ class InteractiveClient():
             return True
         else:
             return False
+
+    def stop_all_interactions(self):
+        """
+        This is the big showstopper - stop them all!
+        """
+        running_interactions = []
+        for interaction in self._interactions_table.interactions:
+            for unused_process_name in interaction.launch_list.keys():
+                running_interactions.append(interaction.hash)
+        for interaction_hash in running_interactions:
+            self.stop_interaction(interaction_hash)
 
     def stop_interaction(self, interaction_hash):
         """
@@ -460,3 +485,23 @@ class InteractiveClient():
         query_string_mappings['interaction_data'] = json.dumps(interaction_data)
         # constructing the url
         return base_url + "?" + urllib.urlencode(query_string_mappings)
+
+    def _prepare_command_line_parameters(self, interaction_parameters):
+        """
+        Convert the interaction specified yaml string into command line parameters that can
+        be passed to rosrunnable or global nodes.
+
+        :param str interaction_parameters: parameters specified as a yaml string
+
+        :returns: the parameters as command line args
+        :rtype: str[]
+        """
+        parameters = []
+        parameter_dictionary = yaml.load(interaction_parameters)  # convert from yaml string into python dictionary
+        if parameter_dictionary is not None:  # None when there is no yaml configuration
+            for name, value in parameter_dictionary.items():
+                if type(value) is types.DictType or type(value) is types.ListType:
+                    parameters.append('_' + name + ':=' + yaml.dump(value))
+                else:  # it's a dict or list, so dump it
+                    parameters.append('_' + name + ':=' + str(value))
+        return parameters

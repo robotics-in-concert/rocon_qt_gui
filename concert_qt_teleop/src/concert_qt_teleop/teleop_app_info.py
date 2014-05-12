@@ -30,6 +30,8 @@ class TeleopManager(object):
                  error_event_callback
                  ):
         self._lock = threading.Lock()
+        self._capture_timeout = rospy.get_param('~capture_timeout', 15.0)
+        rospy.loginfo("Concert Teleop : capture timeout [%s]" % self._capture_timeout)
         self.teleop_interface = None
         self._image_received_slot = image_received_slot
         self._capture_event_callback = capture_event_callback
