@@ -62,6 +62,7 @@ class QInteractionsChooser(QMainWindow):
         self.roles_widget.role_list_widget.setIconSize(QSize(50, 50))
         self.roles_widget.role_list_widget.itemDoubleClicked.connect(self._switch_to_interactions_list)
         self.roles_widget.back_btn.pressed.connect(self._switch_to_master_chooser)
+        self.roles_widget.stop_all_interactions_button.pressed.connect(self._stop_all_interactions)
         self.roles_widget.refresh_btn.pressed.connect(self._refresh_role_list)
         self.roles_widget.closeEvent = self._close_event
         # interactions list widget
@@ -152,15 +153,27 @@ class QInteractionsChooser(QMainWindow):
             self.roles_widget.role_list_widget.item(0).setFont(font)
         return role_list
 
+    def _stop_all_interactions(self):
+        console.logdebug("Interactions Chooser : stopping all running interactions")
+        self.interactive_client.stop_all_interactions()
+        self.roles_widget.stop_all_interactions_button.setEnabled(False)
+
     ######################################
     # Interactions List Widget
     ######################################
 
     def _switch_to_role_list(self):
         console.logdebug("Interactions Chooser : switching to the role list")
+
+        # show the roles widget
+        if self.interactive_client.has_running_interactions():
+            self.roles_widget.stop_all_interactions_button.setEnabled(True)
+        else:
+            self.roles_widget.stop_all_interactions_button.setEnabled(False)
         self.roles_widget.show()
         self.roles_widget.move(self.interactions_widget.pos())
-        # reset this button for the next viewing
+
+        # show the interactions widget
         self.interactions_widget.stop_interactions_button.setEnabled(False)
         self.interactions_widget.hide()
 

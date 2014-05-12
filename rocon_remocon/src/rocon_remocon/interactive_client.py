@@ -157,6 +157,16 @@ class InteractiveClient():
         # could use a whole bunch of exception checking here, removing
         # self.interactions[role_name] if necessary.
 
+    def has_running_interactions(self):
+        """
+        Identify if this client has any running interactions. Used by the gui above
+        to enable/disable a button that will trigger stoppage of all running interactions.
+        """
+        for interaction in self._interactions_table.interactions:
+            if interaction.launch_list.keys():
+                return True
+        return False
+
     def start_interaction(self, role_name, interaction_hash):
         """
         :param str interaction_hash: the key
@@ -357,6 +367,17 @@ class InteractiveClient():
             return True
         else:
             return False
+
+    def stop_all_interactions(self):
+        """
+        This is the big showstopper - stop them all!
+        """
+        running_interactions = []
+        for interaction in self._interactions_table.interactions:
+            for unused_process_name in interaction.launch_list.keys():
+                running_interactions.append(interaction.hash)
+        for interaction_hash in running_interactions:
+            self.stop_interaction(interaction_hash)
 
     def stop_interaction(self, interaction_hash):
         """

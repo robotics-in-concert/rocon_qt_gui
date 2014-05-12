@@ -37,6 +37,9 @@
      </property>
      <item>
       <widget class="QPushButton" name="refresh_btn">
+       <property name="toolTip">
+        <string>Refresh the role list</string>
+       </property>
        <property name="text">
         <string>Refresh</string>
        </property>
@@ -44,12 +47,28 @@
      </item>
      <item>
       <widget class="QPushButton" name="back_btn">
+       <property name="toolTip">
+        <string>Switch back to the master chooser.</string>
+       </property>
        <property name="text">
         <string>Back</string>
        </property>
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="stop_all_interactions_button">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="toolTip">
+      <string>Stop all running interactions</string>
+     </property>
+     <property name="text">
+      <string>Stop All Interactions</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
