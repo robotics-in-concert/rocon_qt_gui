@@ -477,9 +477,10 @@ class InteractiveClient():
         """
         parameters = []
         parameter_dictionary = yaml.load(interaction_parameters)  # convert from yaml string into python dictionary
-        for name, value in parameter_dictionary.items():
-            if type(value) is types.DictType or type(value) is types.ListType:
-                parameters.append('_' + name + ':=' + yaml.dump(value))
-            else:  # it's a dict or list, so dump it
-                parameters.append('_' + name + ':=' + str(value))
+        if parameter_dictionary is not None:  # None when there is no yaml configuration
+            for name, value in parameter_dictionary.items():
+                if type(value) is types.DictType or type(value) is types.ListType:
+                    parameters.append('_' + name + ':=' + yaml.dump(value))
+                else:  # it's a dict or list, so dump it
+                    parameters.append('_' + name + ':=' + str(value))
         return parameters
