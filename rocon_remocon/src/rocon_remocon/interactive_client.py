@@ -118,7 +118,6 @@ class InteractiveClient():
         return (True, "success")
 
     def shutdown(self):
-        console.logdebug("Interactive Client : shutdown")
         if(self.is_connect != True):
             return
         else:
@@ -297,7 +296,6 @@ class InteractiveClient():
         '''
         # the following is guaranteed since we came back from find_resource calls earlier
         # note we're overriding the rosrunnable filename here - rosrun doesn't actually take the full path.
-        console.logwarn("Interactive Client : starting rosrunnable [%s]" % interaction.name)
         package_name, rosrunnable_filename = interaction.name.split('/')
         name = os.path.basename(rosrunnable_filename).replace('.', '_')
         anonymous_name = name + "_" + uuid.uuid4().hex
@@ -380,7 +378,7 @@ class InteractiveClient():
         except Exception as e:
             # this is bad...should not create bottomless exception buckets.
             return (False, "unknown failure - (%s)(%s)" % (type(e), str(e)))
-        console.logdebug("Interactive Client : interaction's updated launch list- %s" % str(interaction.launch_list))
+        #console.logdebug("Interactive Client : interaction's updated launch list- %s" % str(interaction.launch_list))
         if interaction.is_paired_type():
             self.pairing = None
         self._publish_remocon_status()
@@ -396,7 +394,7 @@ class InteractiveClient():
           @param exit_code : could be utilised from roslaunched processes but not currently used.
           @type int
         '''
-        console.logdebug("Interactive Client : process_listener called by terminating interaction [%s]" % name)
+        console.logdebug("Interactive Client : process_listener detected terminating interaction [%s]" % name)
         for interaction in self._interactions_table.interactions:
             if name in interaction.launch_list:
                 del interaction.launch_list[name]
@@ -404,7 +402,7 @@ class InteractiveClient():
                 if interaction.is_paired_type():
                     self.pairing = None
                 if not interaction.launch_list:
-                    console.logwarn("Interactive Client : process_listener caught terminating interaction [%s]" % name)
+                    console.logwarn("Interactive Client : process_listener detected unknown terminating interaction [%s]" % name)
                     # inform the gui to update if necessary
                     self._stop_interaction_postexec_fn()
                     # update the rocon interactions handler

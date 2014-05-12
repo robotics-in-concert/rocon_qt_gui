@@ -30,7 +30,7 @@ interactions_chooser = None
 def signal_handler(signum, f):
     print "[sub] Interrupt"
     if signum == signal.SIGINT:
-        interactions_chooser._uninit_role_list()
+        interactions_chooser.shutdown()
         app.exit(0)
 
 ##############################################################################

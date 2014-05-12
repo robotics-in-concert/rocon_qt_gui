@@ -12,7 +12,7 @@ import os
 #from PyQt4 import uic
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Signal
-from python_qt_binding.QtCore import Qt, QSize
+from python_qt_binding.QtCore import Qt, QSize, QEvent
 from python_qt_binding.QtGui import QIcon, QWidget
 from python_qt_binding.QtGui import QColor
 from python_qt_binding.QtGui import QMainWindow
@@ -54,15 +54,16 @@ class QInteractionsChooser(QMainWindow):
         self.interactions_widget = QWidget()
         self.roles_widget = QWidget()
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/interactions_list.ui")
-        loadUi(path, self.interactions_widget, self)
+        loadUi(path, self.interactions_widget)
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/role_list.ui")
-        loadUi(path, self.roles_widget, self)
+        loadUi(path, self.roles_widget)
 
         # role list widget
         self.roles_widget.role_list_widget.setIconSize(QSize(50, 50))
         self.roles_widget.role_list_widget.itemDoubleClicked.connect(self._switch_to_interactions_list)
         self.roles_widget.back_btn.pressed.connect(self._switch_to_master_chooser)
         self.roles_widget.refresh_btn.pressed.connect(self._refresh_role_list)
+        self.roles_widget.closeEvent = self._close_event
         # interactions list widget
         self.interactions_widget.interactions_list_widget.setIconSize(QSize(50, 50))
         self.interactions_widget.interactions_list_widget.itemDoubleClicked.connect(self._start_interaction)
@@ -70,6 +71,7 @@ class QInteractionsChooser(QMainWindow):
         self.interactions_widget.interactions_list_widget.itemClicked.connect(self._display_interaction_info)  # rocon master item click event
         self.interactions_widget.stop_interactions_button.pressed.connect(self._stop_interaction)
         self.interactions_widget.stop_interactions_button.setDisabled(True)
+        self.interactions_widget.closeEvent = self._close_event
 
         # signals
         self.signal_interactions_updated.connect(self._refresh_interactions_list, Qt.QueuedConnection)
@@ -93,8 +95,22 @@ class QInteractionsChooser(QMainWindow):
         self.interactions_widget.stop_interactions_button.setStyleSheet("QPushButton:disabled { color: gray }")
         self.roles_widget.show()
 
-    def closeEvent(self, event):
-        console.logwarn("Interactions Chooser : is closing!!!!!")
+    def shutdown(self):
+        """
+        Public method to enable shutdown of the script - this function is primarily for
+        shutting down the interactions chooser from external signals (e.g. CTRL-C on the command
+        line).
+        """
+        self.interactive_client.shutdown()
+
+    def _close_event(self, event):
+        """
+        Re-implementation of close event handlers for the interaction chooser's children
+        (i.e. role and interactions list widgets).
+        """
+        console.logdebug("Interactions Chooser : remocon shutting down.")
+        self.shutdown()
+
     ######################################
     # Roles List Widget
     ######################################
@@ -113,8 +129,7 @@ class QInteractionsChooser(QMainWindow):
 
     def _switch_to_master_chooser(self):
         console.logdebug("Interactions Chooser : switching back to the master chooser")
-        self.interactive_client.shutdown()
-        self.cur_selected_role = 0
+        self.shutdown()
         os.execv(QMasterChooser.rocon_remocon_script, ['', self.host_name])
 
     def _refresh_role_list(self):
@@ -237,7 +252,6 @@ class QInteractionsChooser(QMainWindow):
         if not self.interactions:
             console.logwarn("No interactions")
             return
-        console.logwarn("Launch list: %s" % self.cur_selected_interaction.launch_list)
         if self.cur_selected_interaction.launch_list:
             console.logdebug("Interactions Chooser : enabling stop interactions button [%s]" % self.cur_selected_interaction.display_name)
             self.interactions_widget.stop_interactions_button.setEnabled(True)
