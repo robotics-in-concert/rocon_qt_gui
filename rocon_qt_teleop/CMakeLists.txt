@@ -3,7 +3,7 @@
 ##############################################################################
 
 cmake_minimum_required(VERSION 2.8.3)
-project(concert_qt_teleop)
+project(rocon_qt_teleop)
 
 ##############################################################################
 # Catkin
@@ -18,7 +18,7 @@ catkin_python_setup()
 ##############################################################################
 
 install( 
-    FILES concert_teleop_plugin.xml 
+    FILES rocon_teleop_plugin.xml 
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

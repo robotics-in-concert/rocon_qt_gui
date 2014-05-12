@@ -6,7 +6,8 @@ Item {
     property string direction:"C";
     property bool isPressedHover:false;
     
-    signal pressedHoverChanged(bool ishover);
+    signal mousePressed();
+    signal mouseReleased();
     signal feedback(double x, double y);
 
     Rectangle {
@@ -64,7 +65,7 @@ Item {
        
         onPressed: {
            joyStick.isPressedHover = true;
-           pressedHoverChanged(joyStick.isPressedHover)
+           mousePressed()
         }
 
         onReleased: {
@@ -72,7 +73,7 @@ Item {
             stick.x = totalArea.width /4;
             stick.y = totalArea.height/4;
             joyStick.isPressedHover = false;
-            pressedHoverChanged(joyStick.isPressedHover)
+            mouseReleased()
         }
     }
 }
