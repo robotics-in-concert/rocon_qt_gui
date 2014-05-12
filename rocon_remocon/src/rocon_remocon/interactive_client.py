@@ -33,6 +33,8 @@ import rocon_interactions
 
 from . import utils
 from .launch import LaunchInfo
+from .interactions import Interaction
+from .interactions_table import InteractionsTable
 
 ##############################################################################
 # InteractiveClient
@@ -41,13 +43,19 @@ from .launch import LaunchInfo
 
 class InteractiveClient():
 
+    shutdown_timeout = 0.5
+    """
+    Time to wait before shutting down so remocon status updates can be received and processed
+    by the interactions manager (important for pairing interactions).
+    """
+
     def __init__(self, stop_interaction_postexec_fn):
         '''
           @param stop_app_postexec_fn : callback to fire when a listener detects an app getting stopped.
           @type method with no args
         '''
+        self._interactions_table = InteractionsTable()
         self._stop_interaction_postexec_fn = stop_interaction_postexec_fn
-        self.interactions = {}
         self.is_connect = False
         self.key = uuid.uuid4()
 
@@ -63,8 +71,12 @@ class InteractiveClient():
                                                        uri=str(self.rocon_uri),
                                                        icon=rocon_std_msgs.Icon()
                                                        )
-        console.logdebug("InteractiveClient : initialised")
+        console.logdebug("Interactive Client : initialised")
         self.pairing = None  # if an interaction is currently pairing, this will store its hash
+
+        # expose underlying functionality higher up
+        self.interactions = self._interactions_table.generate_role_view
+        """Get a dictionary of interactions belonging to the specified role."""
 
     def _connect(self, rocon_master_name="", ros_master_uri="http://localhost:11311", host_name='localhost'):
 
@@ -72,10 +84,10 @@ class InteractiveClient():
         os.environ["ROS_MASTER_URI"] = ros_master_uri
         os.environ["ROS_HOSTNAME"] = host_name
 
-        console.logdebug("InteractiveClient : Connection Details")
-        console.logdebug("InteractiveClient :   Node Name: " + self.name)
-        console.logdebug("InteractiveClient :   ROS_MASTER_URI: " + ros_master_uri)
-        console.logdebug("InteractiveClient :   ROS_HOSTNAME: " + host_name)
+        console.logdebug("Interactive Client : Connection Details")
+        console.logdebug("Interactive Client :   Node Name: " + self.name)
+        console.logdebug("Interactive Client :   ROS_MASTER_URI: " + ros_master_uri)
+        console.logdebug("Interactive Client :   ROS_HOSTNAME: " + host_name)
 
         # Need to make sure we give init a unique node name and we need a unique uuid
         # for the remocon-role manager interaction anyway:
@@ -92,46 +104,34 @@ class InteractiveClient():
         self.get_interactions_service_proxy = rospy.ServiceProxy(get_interactions_service_name, rocon_interaction_srvs.GetInteractions)
         self.get_roles_service_proxy = rospy.ServiceProxy(get_roles_service_name, rocon_interaction_srvs.GetRoles)
         self.request_interaction_service_proxy = rospy.ServiceProxy(request_interaction_service_name, rocon_interaction_srvs.RequestInteraction)
-        self.remocon_status_pub = rospy.Publisher("remocons/" + self.name, rocon_interaction_msgs.RemoconStatus, latch=True)
+        self.remocon_status_pub = rospy.Publisher("remocons/" + self.name, rocon_interaction_msgs.RemoconStatus, latch=True, queue_size=10)
 
         try:
             # if its available, should be quick to find this one since we found the others...
             pairing_topic_name = rocon_python_comms.find_topic('rocon_interaction_msgs/Pair', timeout=rospy.rostime.Duration(0.5), unique=True)
             self.pairing_status_subscriber = rospy.Subscriber(pairing_topic_name, rocon_interaction_msgs.Pair, self._subscribe_pairing_status_callback)
         except rocon_python_comms.NotFoundException as e:
-            console.logdebug("InteractiveClient : support for paired interactions disabled [not found]")
+            console.logdebug("Interactive Client : support for paired interactions disabled [not found]")
 
         self._publish_remocon_status()
         self.is_connect = True
         return (True, "success")
 
-    def _disconnect(self):
-        if(self.is_connect != True):
-            self.shutdown()
-
-    def _is_shutdown(self):
-        print "[remocon_info] shut down is complete"
-
     def shutdown(self):
         if(self.is_connect != True):
             return
         else:
-            console.logdebug("InteractiveClient : shutting down all rapps")
-            for app_hash in self.interactions.keys():
-                self.stop_interaction(app_hash)
+            console.logdebug("Interactive Client : shutting down all interactions")
+            for interaction in self._interactions_table.interactions:
+                self.stop_interaction(interaction.hash)
 
-            self.interactions = {}
-            self.is_connect = False
-
+            rospy.rostime.wallsleep(InteractiveClient.shutdown_timeout)
+            console.logdebug("Interactive Client : signaling shutdown.")
             rospy.signal_shutdown("shut down remocon_info")
             while not rospy.is_shutdown():
                 rospy.rostime.wallsleep(0.1)
 
-            self.is_connect = False
-            self.remocon_status_pub.unregister()
-
-            self.remocon_status_pub = None
-            console.logdebug("InteractiveClient : has shutdown.")
+            console.logdebug("Interactive Client : has shutdown.")
 
     def get_role_list(self):
         if not self.is_connect:
@@ -143,67 +143,49 @@ class InteractiveClient():
             return []
         return response.roles
 
-    def _select_role(self, role_name):
-        roles = []
-        roles.append(role_name)
-
-        call_result = self.get_interactions_service_proxy(roles, self.platform_info.uri)
-        console.logdebug("InteractiveClient : call result")
-        self.interactions = {}
-        for interaction in call_result.interactions:
-            if(interaction.role == role_name):
-                # TODO should create a class out of this mash, dicts of dicts are prone to mistakes and hard to introspect.
-                #if self.interactions.has_key(interaction.hash):
-                #    pass
-                #else:
-                #    self.interactions[interaction.hash]={}
-                #    self.interactions[interaction.hash]['launch_list'] ={}
-                self.interactions[interaction.hash] = {}
-                self.interactions[interaction.hash]['launch_list'] = {}
-
-                self.interactions[interaction.hash]['name'] = interaction.name
-                self.interactions[interaction.hash]['compatibility'] = interaction.compatibility
-                icon_name = interaction.icon.resource_name.split('/').pop()
-                if interaction.icon.data:
-                    icon = open(os.path.join(utils.get_icon_cache_home(), icon_name), 'w')
-                    icon.write(interaction.icon.data)
-                    icon.close()
-                self.interactions[interaction.hash]['icon'] = icon_name
-                self.interactions[interaction.hash]['display_name'] = interaction.display_name
-                self.interactions[interaction.hash]['description'] = interaction.description
-                self.interactions[interaction.hash]['namespace'] = interaction.namespace
-                self.interactions[interaction.hash]['max'] = interaction.max
-                self.interactions[interaction.hash]['remappings'] = interaction.remappings
-                self.interactions[interaction.hash]['parameters'] = interaction.parameters
-                self.interactions[interaction.hash]['hash'] = interaction.hash
-                self.interactions[interaction.hash]['pairing'] = interaction.pairing.rapp if interaction.pairing.rapp else None
-
-    def start_interaction(self, interaction_hash):
+    def select_role(self, role_name):
         """
+        Contact the interactions manager and retrieve all the interactions
+        associated to a particular role.
+
+        :param str role_name: role to request list of interactions for.
+        """
+        call_result = self.get_interactions_service_proxy([role_name], self.platform_info.uri)
+        for msg in call_result.interactions:
+            self._interactions_table.append(Interaction(msg))
+        # could use a whole bunch of exception checking here, removing
+        # self.interactions[role_name] if necessary.
+
+    def start_interaction(self, role_name, interaction_hash):
+        """
+        :param str interaction_hash: the key
+        :param str role_name: help refine the search by specifying what role this interaction is for
+
         :returns: result of the effort to start an interaction, with a message if there was an error.
         :rtype: (bool, message)
         """
-        if not interaction_hash in self.interactions.keys():
+        interaction = self._interactions_table.find(interaction_hash)
+        if interaction is None:
             return (False, "interaction key %s not found in interactions table" % interaction_hash)
-        interaction = self.interactions[interaction_hash]
-        if self.pairing and interaction['pairing']:
-            paired_interaction_display_name = self.interactions[self.pairing]['display_name']
-            return (False, "remocon already pairing (%s,%s) and additional pairing is not permitted " % (interaction['pairing'], paired_interaction_display_name))
+        if interaction.role != role_name:
+            return (False, "interaction key %s is in the interactions table, but under another role" % interaction_hash)
+        if self.pairing and interaction.is_paired_type():
+            return (False, "remocon already pairing (%s,%s) and additional pairing is not permitted " % (interaction.pairing.rapp, interaction.display_name))
 
         #get the permission
-        call_result = self.request_interaction_service_proxy(remocon=self.name, hash=interaction['hash'])
+        call_result = self.request_interaction_service_proxy(remocon=self.name, hash=interaction.hash)
 
         if call_result.error_code == ErrorCodes.SUCCESS:
-            console.logdebug("InteractiveClient : interaction request granted")
+            console.logdebug("Interactive Client : interaction request granted")
             try:
-                (app_executable, start_app_handler) = self._determine_interaction_type(interaction['name'])
+                (app_executable, start_app_handler) = self._determine_interaction_type(interaction.name)
             except rocon_interactions.InvalidInteraction as e:
                 return False, ("invalid interaction specified [%s]" % str(e))
             result = start_app_handler(interaction, app_executable)
             if result:
                 self._publish_remocon_status()
-                if interaction['pairing']:
-                    self.pairing = interaction['hash']
+                if interaction.is_paired_type():
+                    self.pairing = interaction.hash
                 return (result, "success")
             else:
                 return (result, "unknown")
@@ -224,12 +206,12 @@ class InteractiveClient():
         '''
         # pairing trigger (i.e. dummy interaction)
         if not interaction_name:
-            console.logdebug("InteractiveClient : start a dummy interaction for triggering a pair")
+            console.logdebug("Interactive Client : start a dummy interaction for triggering a pair")
             return ('', self._start_dummy_interaction)
         # roslaunch
         try:
             launcher_filename = rocon_python_utils.ros.find_resource_from_string(interaction_name, extension='launch')
-            console.logdebug("InteractiveClient : regular start app [%s]" % interaction_name)
+            console.logdebug("Interactive Client : regular start app [%s]" % interaction_name)
             return (launcher_filename, self._start_roslaunch_interaction)
         except (rospkg.ResourceNotFound, ValueError):
             unused_filename, extension = os.path.splitext(interaction_name)
@@ -240,7 +222,7 @@ class InteractiveClient():
         # rosrun
         try:
             rosrunnable_filename = rocon_python_utils.ros.find_resource_from_string(interaction_name)
-            console.logdebug("InteractiveClient : start_app_rosrunnable [%s]" % interaction_name)
+            console.logdebug("Interactive Client : start_app_rosrunnable [%s]" % interaction_name)
             return (rosrunnable_filename, self._start_rosrunnable_interaction)
         except rospkg.ResourceNotFound:
             pass
@@ -250,36 +232,36 @@ class InteractiveClient():
         web_interaction = web_interactions.parse(interaction_name)
         if web_interaction is not None:
             if web_interaction.is_web_url():
-                console.logdebug("InteractiveClient : _start_weburl_interaction [%s]" % web_interaction.url)
+                console.logdebug("Interactive Client : _start_weburl_interaction [%s]" % web_interaction.url)
                 return (web_interaction.url, self._start_weburl_interaction)
             elif web_interaction.is_web_app():
-                console.logdebug("InteractiveClient : _start_webapp_interaction [%s]" % web_interaction.url)
+                console.logdebug("Interactive Client : _start_webapp_interaction [%s]" % web_interaction.url)
                 return (web_interaction.url, self._start_webapp_interaction)
         # executable
         if rocon_python_utils.system.which(interaction_name) is not None:
-            console.logdebug("InteractiveClient : _start_global_executable_interaction [%s]")
+            console.logdebug("Interactive Client : _start_global_executable_interaction [%s]")
             return (interaction_name, self._start_global_executable_interaction)
         else:
             raise rocon_interactions.InvalidInteraction("could not find a valid rosrunnable or global executable for '%s' (mispelt, not installed?)" % interaction_name)
 
     def _start_dummy_interaction(self, interaction, unused_filename):
         console.loginfo("InteractiveClient : starting paired dummy interaction")
-        anonymous_name = interaction['name'] + "_" + uuid.uuid4().hex
+        anonymous_name = interaction.name + "_" + uuid.uuid4().hex
         #process_listener = partial(self._process_listeners, anonymous_name, 1)
         #process = rocon_python_utils.system.Popen([rosrunnable_filename], postexec_fn=process_listener)
-        interaction['launch_list'][anonymous_name] = LaunchInfo(anonymous_name, True, None, lambda: None)  # empty shutdown function
+        interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, None, lambda: None)  # empty shutdown function
         return True
 
     def _start_roslaunch_interaction(self, interaction, roslaunch_filename):
         '''
           Start a ros launchable application, applying parameters and remappings if specified.
         '''
-        name_space = '/service/' + interaction['namespace']
+        name_space = '/service/' + interaction.namespace
         temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
         #add parameters
         launch_text  = '<launch>\n'  #@IgnorePep8 noqa
         launch_text += '    <group ns="%s">\n' % (name_space)
-        launch_text += '        <rosparam>%s</rosparam>\n' % (interaction['parameters'])
+        launch_text += '        <rosparam>%s</rosparam>\n' % (interaction.parameters)
         launch_text += '        <include file="%s"/>\n' % (roslaunch_filename)
         launch_text += '    </group>\n'
         launch_text += '</launch>\n'
@@ -294,17 +276,17 @@ class InteractiveClient():
                                                             process_listeners=[self.listener])
             _launch._load_config()
             for N in _launch.config.nodes:
-                for k in interaction['remappings']:
+                for k in interaction.remappings:
                     N.remap_args.append([(name_space + '/' + k.remap_from).replace('//', '/'), k.remap_to])
             _launch.start()
 
             process_name = str(_launch.pm.get_process_names_with_spawn_count()[0][0][0])
-            interaction['launch_list'][process_name] = LaunchInfo(process_name, True, _launch, _launch.shutdown)
+            interaction.launch_list[process_name] = LaunchInfo(process_name, True, _launch, _launch.shutdown)
             return True
         except Exception, inst:
             print inst
-            interaction['running'] = str(False)
-            print "Fail to launch: %s" % (interaction['name'])
+            interaction.running = str(False)
+            print "Fail to launch: %s" % (interaction.name)
             return False
 
     def _start_rosrunnable_interaction(self, interaction, rosrunnable_filename):
@@ -314,25 +296,28 @@ class InteractiveClient():
         '''
         # the following is guaranteed since we came back from find_resource calls earlier
         # note we're overriding the rosrunnable filename here - rosrun doesn't actually take the full path.
-        package_name, rosrunnable_filename = interaction['name'].split('/')
+        package_name, rosrunnable_filename = interaction.name.split('/')
         name = os.path.basename(rosrunnable_filename).replace('.', '_')
         anonymous_name = name + "_" + uuid.uuid4().hex
         process_listener = partial(self._process_listeners, anonymous_name, 1)
         command_args = ['rosrun', package_name, rosrunnable_filename, '__name:=%s' % anonymous_name]
         remapping_args = []
-        for remap in interaction['remappings']:
+        for remap in interaction.remappings:
             remapping_args.append(remap.remap_from + ":=" + remap.remap_to)
         command_args.extend(remapping_args)
         process = rocon_python_utils.system.Popen(command_args, postexec_fn=process_listener)
-        interaction['launch_list'][anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
+        interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
         return True
 
     def _start_global_executable_interaction(self, interaction, filename):
+        console.logwarn("Interactive Client : starting global executable [%s]" % interaction.name)
         name = os.path.basename(filename).replace('.', '_')
         anonymous_name = name + "_" + uuid.uuid4().hex
         process_listener = partial(self._process_listeners, anonymous_name, 1)
         process = rocon_python_utils.system.Popen([filename], postexec_fn=process_listener)
-        interaction['launch_list'][anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
+        interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
+        print("Interaction \n%s" % interaction)
+        print("Interaction Table \n%s" % self._interactions_table)
         return True
 
     def _start_weburl_interaction(self, interaction, url):
@@ -345,7 +330,7 @@ class InteractiveClient():
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self._process_listeners, anonymous_name, 1)
             process = rocon_python_utils.system.Popen([web_browser, "--new-window", url], postexec_fn=process_listener)
-            interaction['launch_list'][anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
+            interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
             return True
         else:
             return False
@@ -364,7 +349,7 @@ class InteractiveClient():
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self._process_listeners, anonymous_name, 1)
             process = rocon_python_utils.system.Popen([web_browser, "--new-window", url], postexec_fn=process_listener)
-            interaction['launch_list'][anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
+            interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
             return True
         else:
             return False
@@ -373,28 +358,28 @@ class InteractiveClient():
         """
         This stops all launches for an interaction of a particular type.
         """
-        if not interaction_hash in self.interactions:
+        interaction = self._interactions_table.find(interaction_hash)
+        if interaction is None:
+            console.logwarn("Interactive Client : interaction key %s not found in interactions table" % interaction_hash)
             return (False, "interaction key %s not found in interactions table" % interaction_hash)
-        interaction = self.interactions[interaction_hash]
-        #print("InteractiveClient : Launched App List- %s" % str(interaction["launch_list"]))
         try:
-            for launch_info in interaction["launch_list"].values():
+            for launch_info in interaction.launch_list.values():
                 if launch_info.running:
                     launch_info.shutdown()
-                    del self.interactions[interaction_hash]["launch_list"][launch_info.name]
-                    print "InteractiveClient : %s APP STOP" % (launch_info.name)
+                    del interaction.launch_list[launch_info.name]
+                    console.loginfo("Interactive Client : interaction stopped [%s]" % (launch_info.name))
                 elif launch_info.process == None:
                     launch_info.running = False
-                    del self.interactions[interaction_hash]["launch_list"][launch_info.name]
-                    print "InteractiveClient : %s APP LAUNCH IS NONE" % (launch_info.name)
+                    del interaction.launch_list.launch_list[launch_info.name]
+                    console.loginfo("Interactive Client : no attached interaction process to stop [%s]" % (launch_info.name))
                 else:
-                    del self.interactions[interaction_hash]["launch_list"][launch_info.name]
-                    print "InteractiveClient : %s APP IS ALREADY STOP" % (launch_info.name)
+                    del interaction.launch_list.launch_list[launch_info.name]
+                    console.loginfo("Interactive Client : interaction is already stopped [%s]" % (launch_info.name))
         except Exception as e:
             # this is bad...should not create bottomless exception buckets.
             return (False, "unknown failure - (%s)(%s)" % (type(e), str(e)))
-        print "InteractiveClient : updated app list- %s" % str(self.interactions[interaction_hash]["launch_list"])
-        if interaction['pairing']:
+        #console.logdebug("Interactive Client : interaction's updated launch list- %s" % str(interaction.launch_list))
+        if interaction.is_paired_type():
             self.pairing = None
         self._publish_remocon_status()
         return (True, "success")
@@ -409,14 +394,15 @@ class InteractiveClient():
           @param exit_code : could be utilised from roslaunched processes but not currently used.
           @type int
         '''
-        for interaction in self.interactions.values():
-            if name in interaction['launch_list']:
-                del interaction['launch_list'][name]
+        console.logdebug("Interactive Client : process_listener detected terminating interaction [%s]" % name)
+        for interaction in self._interactions_table.interactions:
+            if name in interaction.launch_list:
+                del interaction.launch_list[name]
                 # toggle the pairing indicator if it was a pairing interaction
-                if interaction['pairing']:
+                if interaction.is_paired_type():
                     self.pairing = None
-                if not interaction['launch_list']:
-                    console.logdebug("InteractiveClient : process_listener caught terminating interaction [%s]" % name)
+                if not interaction.launch_list:
+                    console.logwarn("Interactive Client : process_listener detected unknown terminating interaction [%s]" % name)
                     # inform the gui to update if necessary
                     self._stop_interaction_postexec_fn()
                     # update the rocon interactions handler
@@ -432,18 +418,18 @@ class InteractiveClient():
         remocon_status.uuid = str(self.key.hex)
         remocon_status.version = rocon_std_msgs.Strings.ROCON_VERSION
         running_interactions = []
-        for interaction_hash in self.interactions.keys():
-            for unused_process_name in self.interactions[interaction_hash]["launch_list"].keys():
-                running_interactions.append(interaction_hash)
+        for interaction in self._interactions_table.interactions:
+            for unused_process_name in interaction.launch_list.keys():
+                running_interactions.append(interaction.hash)
         remocon_status.running_interactions = running_interactions
-        print "[remocon_info] publish remocon status"
+        console.logdebug("Interactive Client : publishing remocon status")
         self.remocon_status_pub.publish(remocon_status)
 
     def _subscribe_pairing_status_callback(self, msg):
-        console.logdebug("InteractiveClient : pairing status callback [%s][%s]" % (msg.rapp, msg.remocon))
+        console.logdebug("Interactive Client : pairing status callback [%s][%s]" % (msg.rapp, msg.remocon))
         if self.pairing:
             if not msg.rapp and msg.remocon == self.name:
-                console.logdebug("InteractiveClient : the rapp in this paired interaction terminated")
+                console.logdebug("Interactive Client : the rapp in this paired interaction terminated")
                 # there will only ever be one allowed instance of a paired interaction, so ok to call a stop to all instances of this interaction type
                 self.stop_interaction(self.pairing)
                 # updat the gui
@@ -461,12 +447,12 @@ class InteractiveClient():
            json strings as it makes it easier for web apps to handle them.
         """
         interaction_data = {}
-        interaction_data['display_name'] = interaction['display_name']
+        interaction_data['display_name'] = interaction.display_name
         # parameters
-        interaction_data['parameters'] = yaml.load(interaction['parameters'])
+        interaction_data['parameters'] = yaml.load(interaction.parameters)
         # remappings
-        interaction_data['remappings'] = {}  # need to create a dictionary for easy parsing (note: interaction['remappings'] is a list of rocon_std_msgs.Remapping)
-        for r in interaction['remappings']:
+        interaction_data['remappings'] = {}  # need to create a dictionary for easy parsing (note: interaction.remappings is a list of rocon_std_msgs.Remapping)
+        for r in interaction.remappings:
             interaction_data['remappings'][r.remap_from] = r.remap_to
         # package all the data in json format and dump it to one query string variable
         console.logdebug("Remocon Info : web app query string %s" % interaction_data)
