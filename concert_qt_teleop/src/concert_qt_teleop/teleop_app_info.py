@@ -118,7 +118,7 @@ class TeleopManager(object):
         request.rocon_uri = rocon_uri
         request.release = True
         self.captured_teleop_rocon_uri = rocon_uri
-        msg_id = self.capture_teleop(request, timeout=rospy.Duration(self.capture_timeout), callback=self._release_callback, error_callback=self.error_callback)
+        msg_id = self.capture_teleop(request, timeout=rospy.Duration(self._capture_timeout), callback=self._release_callback, error_callback=self.error_callback)
         self.service_pair_msg_q.append(msg_id)
 
     def _capture_callback(self, msg_id, msg):
