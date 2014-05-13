@@ -52,7 +52,7 @@ class TeleopInterface(QObject):
         self._compressed_image_subscriber = None
         if image_received_slot is not None:
             self.image_received.connect(image_received_slot)
-        self._cmd_vel_publisher = rospy.Publisher(cmd_vel_topic_name, geometry_msgs.Twist, latch=True)
+        self._cmd_vel_publisher = rospy.Publisher(cmd_vel_topic_name, geometry_msgs.Twist, latch=True, queue_size=10)
         self._compressed_image_subscriber = rospy.Subscriber(compressed_image_topic_name, sensor_msgs.CompressedImage, self._ros_subscriber_image_callback)
         self._cmd_vel_publisher_timer = \
             rospy.Timer(rospy.Duration(TeleopInterface.cmd_vel_publishing_interval),
