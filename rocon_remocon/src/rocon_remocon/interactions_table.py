@@ -23,9 +23,6 @@ some set of interactions.
 ##############################################################################
 
 import rocon_console.console as console
-import rocon_uri
-
-from rocon_interactions import InvalidInteraction
 
 ##############################################################################
 # Classes
