@@ -66,7 +66,6 @@ class TeleopInterface(QObject):
         :param sensor_msgs.CompressedImage msg: an image stream feed from the robot
         """
         # todo convert the image here
-        rospy.loginfo("Teleop : image received")
         self.image_received.emit(msg)
 
     def _publish_cmd_vel(self, unused_event):
