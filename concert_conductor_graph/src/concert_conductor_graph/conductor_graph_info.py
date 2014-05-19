@@ -69,15 +69,19 @@ class ConductorGraphInfo(object):
         changes its state. This update happens rather infrequently with every
         message supplied by the conductor's latched graph publisher.
         '''
+        print("[conductor_graph_info] : update clients callback")
         self._graph = msg
         # sneaky way of getting all the states and the lists
         visible_concert_clients_by_name = []
         for state in msg.__slots__:
+            if state == concert_msgs.ConcertClientState.GONE:
+                continue
             concert_clients = getattr(msg, state)  # by state
-            for concert_client in concert_clients:
+            for concert_client in concert_clients:  # concert_msgs.ConcertClient
                 visible_concert_clients_by_name.append(concert_client.name)
                 if concert_client.name in self.concert_clients.keys():
                     self.concert_clients[concert_client.name].is_new = False
+                    self.concert_clients[concert_client.name].update(concert_client)
                 else:
                     self.concert_clients[concert_client.name] = ConcertClient(concert_client)  # create extended ConcertClient class from msg
         # remove any that are no longer visible

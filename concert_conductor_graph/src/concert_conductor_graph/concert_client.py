@@ -37,9 +37,6 @@ class ConcertClient(object):
         :returns: link type string
         :rtype: str
         '''
-#         if ((self.msg.status == concert_msgs.ConcertClientState.AVAILABLE) or
-#             (self.msg.status == concert_msgs.ConcertClientState.MISSING)
-#             ):
         if self.msg.is_local_client:
             return 'local'
         elif self.msg.conn_stats.network_type == gateway_msgs.ConnectionStatistics.WIRED:
@@ -73,6 +70,8 @@ class ConcertClient(object):
     def get_connection_strength(self):
         if self.msg.is_local_client == True:
             return 'very_strong'
+        elif self.msg.state == concert_msgs.ConcertClientState.MISSING:
+            return 'missing' 
         else:
             link_quality_percent = (float(self.msg.conn_stats.wireless_link_quality) / 70) * 100
             if 80 < link_quality_percent and 100 >= link_quality_percent:
@@ -95,7 +94,13 @@ class ConcertClient(object):
         the rapp that is running), the connection statistics and the state.
         '''
         # could pull the individual bits, but just easy to drop the new msg in place
+        old_msg = self.msg
         self.msg = msg
+        if (
+                old_msg.is_local_client != msg.is_local_client or
+                old_msg.conn_stats.network_type != msg.conn_stats.network_type
+           ):
+            self.link_type = self._set_link_string()
 
     ##############################################################################
     # Conveniences

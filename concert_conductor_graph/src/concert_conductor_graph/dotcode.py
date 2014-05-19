@@ -87,8 +87,12 @@ class ConductorGraphDotcodeGenerator:
         """
         nodes = conductor_graph_instance.concert_clients.values()
         edges = []
+        important_states = [
+                        concert_msgs.ConcertClientState.MISSING,
+                        concert_msgs.ConcertClientState.AVAILABLE
+                       ]
         for node in nodes:
-            if node.msg.conn_stats.gateway_available:
+            if node.msg.state in important_states:  # and node.msg.conn_stats.gateway_available:
                 edges.append(Edge("conductor", node.concert_alias, node.link_type))
         return (nodes, edges)
 

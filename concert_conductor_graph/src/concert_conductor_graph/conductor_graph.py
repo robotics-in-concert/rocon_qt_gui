@@ -184,7 +184,7 @@ class ConductorGraph(Plugin):
     # constants
     # colour definitions from http://www.w3.org/TR/SVG/types.html#ColorKeywords
     # see also http://qt-project.org/doc/qt-4.8/qcolor.html#setNamedColor
-    link_strength_colours = {'very_strong': QColor("lime"), 'strong': QColor("chartreuse"), 'normal': QColor("yellow"), 'weak': QColor("orange"), 'very_weak': QColor("red")}
+    link_strength_colours = {'very_strong': QColor("lime"), 'strong': QColor("chartreuse"), 'normal': QColor("yellow"), 'weak': QColor("orange"), 'very_weak': QColor("red"), 'missing': QColor("powderblue")}
 
     def __init__(self, context):
         self._context = context
@@ -199,7 +199,6 @@ class ConductorGraph(Plugin):
         self._widget = QWidget()
         self.cur_selected_client_name = ""
         self.pre_selected_client_name = ""
-
         # factory builds generic dotcode items
         self.dotcode_factory = PydotFactory()
         # self.dotcode_factory=PygraphvizFactory()
@@ -310,13 +309,16 @@ class ConductorGraph(Plugin):
         self.cur_selected_client_name = self._widget.tabWidget.tabText(self._widget.tabWidget.currentIndex())
 
     def _set_network_statisics(self):
-        if self._edge_items == None:
-            return
-        else:
-            for edge_items in self._edge_items.itervalues():
-                for edge_item in edge_items:
-                    edge_dst_name = edge_item.to_node._label.text()
-                    edge_item.setToolTip(str(self._graph.concert_clients[edge_dst_name].msg.conn_stats))
+        # we currently redraw every statistics update (expensive!) so passing for now, but we should
+        # reenable this and drop the change callback to be more efficient
+        #if self._edge_items == None:
+        #    return
+        #else:
+        #    for edge_items in self._edge_items.itervalues():
+        #        for edge_item in edge_items:
+        #            edge_dst_name = edge_item.to_node._label.text()
+        #            edge_item.setToolTip(str(self._graph.concert_clients[edge_dst_name].msg.conn_stats))
+        pass
 
     def _redraw_graph_view(self):
         print("[conductor graph]: _redraw_graph_view")
