@@ -279,32 +279,18 @@ class InteractiveClient():
           Start a ros launchable application, applying parameters and remappings if specified.
         '''
         anonymous_name = interaction.display_name.lower().replace(" ", "_") + "_" + uuid.uuid4().hex
-        ros_launcher = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-        ros_launch_args = self._prepare_roslaunch_args(interaction.parameters)
-        #add parameters
-        launch_text  = '<launch>\n'  #@IgnorePep8 noqa
-        launch_text += '    <group ns="%s">\n' % interaction.namespace
-        launch_text += '        <include file="%s">\n' % (roslaunch_filename)
-        for arg, value in ros_launch_args.items():
-            launch_text += '          <arg name="%s" value="%s"/>\n' % (arg, value)
-        launch_text += '        </include>\n'
-        launch_text += '    </group>\n'
-        launch_text += '</launch>\n'
-        console.logwarn("Launcher: \n%s" % launch_text)
-        ros_launcher.write(launch_text)
-        ros_launcher.close()  # unlink it later
-
         launch_configuration = rocon_launch.RosLaunchConfiguration(
-            name=ros_launcher.name,
+            name=roslaunch_filename,
             package=None,
             port=self._ros_master_port,
             title=interaction.display_name,
-            args=[],
+            namespace=interaction.namespace,
+            args=self._prepare_roslaunch_args(interaction.parameters),
             options="--screen"
             )
         process_listener = partial(self._process_listeners, anonymous_name, 1)
-        process = self._roslaunch_terminal.spawn_roslaunch_window(launch_configuration, postexec_fn=process_listener)
-        interaction.launch_list[anonymous_name] = RosLaunchInfo(anonymous_name, True, process, self._roslaunch_terminal.shutdown_roslaunch_windows, [ros_launcher])
+        (process, meta_roslauncher) = self._roslaunch_terminal.spawn_roslaunch_window(launch_configuration, postexec_fn=process_listener)
+        interaction.launch_list[anonymous_name] = RosLaunchInfo(anonymous_name, True, process, self._roslaunch_terminal.shutdown_roslaunch_windows, [meta_roslauncher])
         return True
 
     def _start_rosrunnable_interaction(self, interaction, rosrunnable_filename):
@@ -529,17 +515,17 @@ class InteractiveClient():
         :param str interaction_parameters: parameters specified as a yaml string
 
         :returns: the parameters as roslaunch args key-value pairs
-        :rtype: dict
+        :rtype: list of (name, value) pairs
         """
-        args = {}
+        args = []
         parameters = yaml.load(interaction_parameters)  # convert from yaml string into python dictionary
         if parameters is not None:
             if type(parameters) is types.DictType:
-                for key, value in parameters.items():
+                for name, value in parameters.items():
                     if type(value) is types.DictType or type(value) is types.ListType:
-                        console.logwarn("Ignoring invalid parameter for roslaunch arg (simple key-value pairs only) [%s][%s]" % (key, value))
+                        console.logwarn("Ignoring invalid parameter for roslaunch arg (simple key-value pairs only) [%s][%s]" % (name, value))
                     else:
-                        args[key] = value
+                        args.append((name, value))
             else:
                 console.logwarn("Ignoring invalid parameters for roslaunch args (must be a simple key-value dict) [%s]" % parameters)
         return args

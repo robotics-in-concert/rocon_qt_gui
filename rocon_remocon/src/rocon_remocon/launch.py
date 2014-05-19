@@ -7,10 +7,7 @@
 # Imports
 ##############################################################################
 
-from functools import partial
 import os
-import rocon_launch
-import rocon_python_utils
 import signal
 import rocon_console.console as console
 
@@ -67,41 +64,3 @@ class RosLaunchInfo(LaunchInfo):
                 os.unlink(temporary_file.name)
             except OSError:
                 pass
-#         """
-#         This code is some complicated kill code I also use in the turtle herders to
-#         kill of Popened rocon_launch instances. Just sending it SIGINT signals doesn't
-#         work - that will kill the roslaunch's inside, but doesn't kill the konsoles
-#         (why?).
-# 
-#         If the code settles down, might be good to centralise this code in rocon_launch.
-#         """
-#         #self.process.send_signal(signal.SIGINT)
-#         console.loginfo("Shutting down interaction with pid: %s" % self.process.pid)
-#         roslaunch_pids = rocon_launch.get_roslaunch_pids(self.process.pid)
-#         console.logdebug("  roslaunch pids: %s" % roslaunch_pids)
-#         # The os.kills aren't required if a concert is doing a full shutdown since
-#         # it disperses signals everywhere anyway. This is important if we implement the
-#         # disable from inside the remocon though
-#         for pid in roslaunch_pids:
-#             try:
-#                 os.kill(pid, signal.SIGINT)  # sighup or sigint? I can't remember - this is same as rocon_launch code
-#             except OSError:
-#                 continue
-#         for pid in roslaunch_pids:
-#             console.logdebug("  waiting on roslaunch pid %s" % pid)
-#             result = rocon_python_utils.system.wait_pid(pid)
-#             console.logdebug("  pid %s exited with result %s" % (pid, result))
-# #         time.sleep(1)  # Do we need this?
-#         console.logdebug("  now killing the terminal %s" % self.process.pid)
-#         try:
-#             os.killpg(self.process.pid, signal.SIGTERM)
-#             #self.process.terminate()
-#         except OSError:
-#             console.logdebug("  process already died naturally")
-#             pass
-#         for temporary_file in self.temporary_files:
-#             console.logdebug("  unlinking %s" % temporary_file.name)
-#             try:
-#                 os.unlink(temporary_file.name)
-#             except OSError:
-#                 pass
