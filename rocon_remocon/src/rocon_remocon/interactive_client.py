@@ -10,30 +10,30 @@
 from functools import partial
 import json
 import os
-import signal
 import tempfile
 import types
 import urllib
+from urlparse import urlparse
 import uuid
 import yaml
 
-import rospy
-import rocon_python_utils
-import roslaunch.parent
-import rospkg
-from rospkg.os_detect import OsDetect
-import rocon_uri
-from rocon_console import console
-import rocon_std_msgs.msg as rocon_std_msgs
 from rocon_app_manager_msgs.msg import ErrorCodes
+from rocon_console import console
+import rocon_interactions
 import rocon_interaction_msgs.msg as rocon_interaction_msgs
 import rocon_interaction_msgs.srv as rocon_interaction_srvs
 import rocon_interactions.web_interactions as web_interactions
+import rocon_launch
 import rocon_python_comms
-import rocon_interactions
+import rocon_python_utils
+import rocon_std_msgs.msg as rocon_std_msgs
+import rocon_uri
+import rospkg
+from rospkg.os_detect import OsDetect
+import rospy
 
 from . import utils
-from .launch import LaunchInfo
+from .launch import LaunchInfo, RosLaunchInfo
 from .interactions import Interaction
 from .interactions_table import InteractionsTable
 
@@ -45,6 +45,7 @@ from .interactions_table import InteractionsTable
 class InteractiveClient():
 
     shutdown_timeout = 0.5
+
     """
     Time to wait before shutting down so remocon status updates can be received and processed
     by the interactions manager (important for pairing interactions).
@@ -59,6 +60,12 @@ class InteractiveClient():
         self._stop_interaction_postexec_fn = stop_interaction_postexec_fn
         self.is_connect = False
         self.key = uuid.uuid4()
+        self._ros_master_port = None
+        try:
+            self._roslaunch_terminal = rocon_launch.create_terminal()
+        except (rocon_launch.UnsupportedTerminal, rocon_python_comms.NotFoundException) as e:
+            console.warning("Cannot find a suitable terminal, falling back to the current terminal [%s]" % str(e))
+            self._roslaunch_terminal = rocon_launch.create_terminal(rocon_launch.terminals.active)
 
         # this might be naive and only work well on ubuntu...
         os_codename = OsDetect().get_codename()
@@ -84,11 +91,13 @@ class InteractiveClient():
         # uri is obtained from the user, stored in ros_master_uri
         os.environ["ROS_MASTER_URI"] = ros_master_uri
         os.environ["ROS_HOSTNAME"] = host_name
+        self._ros_master_port = urlparse(os.environ["ROS_MASTER_URI"]).port
 
         console.logdebug("Interactive Client : Connection Details")
         console.logdebug("Interactive Client :   Node Name: " + self.name)
         console.logdebug("Interactive Client :   ROS_MASTER_URI: " + ros_master_uri)
         console.logdebug("Interactive Client :   ROS_HOSTNAME: " + host_name)
+        console.logdebug("Interactive Client :   ROS_MASTER_PORT: %s" % self._ros_master_port)
 
         # Need to make sure we give init a unique node name and we need a unique uuid
         # for the remocon-role manager interaction anyway:
@@ -189,7 +198,7 @@ class InteractiveClient():
         if call_result.error_code == ErrorCodes.SUCCESS:
             console.logdebug("Interactive Client : interaction request granted")
             try:
-                (app_executable, start_app_handler) = self._determine_interaction_type(interaction.name)
+                (app_executable, start_app_handler) = self._determine_interaction_type(interaction)
             except rocon_interactions.InvalidInteraction as e:
                 return False, ("invalid interaction specified [%s]" % str(e))
             result = start_app_handler(interaction, app_executable)
@@ -204,7 +213,7 @@ class InteractiveClient():
             return False, ("interaction request rejected [%s]" % call_result.message)
         return (True, "success")
 
-    def _determine_interaction_type(self, interaction_name):
+    def _determine_interaction_type(self, interaction):
         '''
           Classifies the interaction based on the name string and some intelligent
           (well, reasonably) parsing of that string.
@@ -216,31 +225,33 @@ class InteractiveClient():
            - global executable (fallback option)
         '''
         # pairing trigger (i.e. dummy interaction)
-        if not interaction_name:
+        if not interaction.name:
             console.logdebug("Interactive Client : start a dummy interaction for triggering a pair")
             return ('', self._start_dummy_interaction)
         # roslaunch
         try:
-            launcher_filename = rocon_python_utils.ros.find_resource_from_string(interaction_name, extension='launch')
-            console.logdebug("Interactive Client : regular start app [%s]" % interaction_name)
+            launcher_filename = rocon_python_utils.ros.find_resource_from_string(interaction.name, extension='launch')
+            if interaction.remappings:
+                raise rocon_interactions.InvalidInteraction("remappings are not yet enabled for roslaunchable interactions (workaround: try remapping via interaction parameters and roslaunch args)[%s]" % interaction.name)
+            console.logdebug("Interactive Client : roslaunchable [%s]" % interaction.name)
             return (launcher_filename, self._start_roslaunch_interaction)
         except (rospkg.ResourceNotFound, ValueError):
-            unused_filename, extension = os.path.splitext(interaction_name)
+            unused_filename, extension = os.path.splitext(interaction.name)
             if extension == '.launch':
-                raise rocon_interactions.InvalidInteraction("could not find %s on the filesystem" % interaction_name)
+                raise rocon_interactions.InvalidInteraction("could not find %s on the filesystem" % interaction.name)
             else:
                 pass
         # rosrun
         try:
-            rosrunnable_filename = rocon_python_utils.ros.find_resource_from_string(interaction_name)
-            console.logdebug("Interactive Client : start_app_rosrunnable [%s]" % interaction_name)
+            rosrunnable_filename = rocon_python_utils.ros.find_resource_from_string(interaction.name)
+            console.logdebug("Interactive Client : start_app_rosrunnable [%s]" % interaction.name)
             return (rosrunnable_filename, self._start_rosrunnable_interaction)
         except rospkg.ResourceNotFound:
             pass
         except Exception:
             pass
         # web url/app
-        web_interaction = web_interactions.parse(interaction_name)
+        web_interaction = web_interactions.parse(interaction.name)
         if web_interaction is not None:
             if web_interaction.is_web_url():
                 console.logdebug("Interactive Client : _start_weburl_interaction [%s]" % web_interaction.url)
@@ -249,11 +260,11 @@ class InteractiveClient():
                 console.logdebug("Interactive Client : _start_webapp_interaction [%s]" % web_interaction.url)
                 return (web_interaction.url, self._start_webapp_interaction)
         # executable
-        if rocon_python_utils.system.which(interaction_name) is not None:
+        if rocon_python_utils.system.which(interaction.name) is not None:
             console.logdebug("Interactive Client : _start_global_executable_interaction [%s]")
-            return (interaction_name, self._start_global_executable_interaction)
+            return (interaction.name, self._start_global_executable_interaction)
         else:
-            raise rocon_interactions.InvalidInteraction("could not find a valid rosrunnable or global executable for '%s' (mispelt, not installed?)" % interaction_name)
+            raise rocon_interactions.InvalidInteraction("could not find a valid rosrunnable or global executable for '%s' (mispelt, not installed?)" % interaction.name)
 
     def _start_dummy_interaction(self, interaction, unused_filename):
         console.loginfo("InteractiveClient : starting paired dummy interaction")
@@ -267,38 +278,20 @@ class InteractiveClient():
         '''
           Start a ros launchable application, applying parameters and remappings if specified.
         '''
-        name_space = '/service/' + interaction.namespace
-        temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-        #add parameters
-        launch_text  = '<launch>\n'  #@IgnorePep8 noqa
-        launch_text += '    <group ns="%s">\n' % (name_space)
-        launch_text += '        <rosparam>%s</rosparam>\n' % (interaction.parameters)
-        launch_text += '        <include file="%s"/>\n' % (roslaunch_filename)
-        launch_text += '    </group>\n'
-        launch_text += '</launch>\n'
-        temp.write(launch_text)
-        temp.close()  # unlink it later
-        self.listener = roslaunch.pmon.ProcessListener()
-        self.listener.process_died = self._process_listeners
-        try:
-            _launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
-                                                            [temp.name],
-                                                            is_core=False,
-                                                            process_listeners=[self.listener])
-            _launch._load_config()
-            for N in _launch.config.nodes:
-                for k in interaction.remappings:
-                    N.remap_args.append([(name_space + '/' + k.remap_from).replace('//', '/'), k.remap_to])
-            _launch.start()
-
-            process_name = str(_launch.pm.get_process_names_with_spawn_count()[0][0][0])
-            interaction.launch_list[process_name] = LaunchInfo(process_name, True, _launch, _launch.shutdown)
-            return True
-        except Exception, inst:
-            print inst
-            interaction.running = str(False)
-            print "Fail to launch: %s" % (interaction.name)
-            return False
+        anonymous_name = interaction.display_name.lower().replace(" ", "_") + "_" + uuid.uuid4().hex
+        launch_configuration = rocon_launch.RosLaunchConfiguration(
+            name=roslaunch_filename,
+            package=None,
+            port=self._ros_master_port,
+            title=interaction.display_name,
+            namespace=interaction.namespace,
+            args=self._prepare_roslaunch_args(interaction.parameters),
+            options="--screen"
+            )
+        process_listener = partial(self._process_listeners, anonymous_name, 1)
+        (process, meta_roslauncher) = self._roslaunch_terminal.spawn_roslaunch_window(launch_configuration, postexec_fn=process_listener)
+        interaction.launch_list[anonymous_name] = RosLaunchInfo(anonymous_name, True, process, self._roslaunch_terminal.shutdown_roslaunch_windows, [meta_roslauncher])
+        return True
 
     def _start_rosrunnable_interaction(self, interaction, rosrunnable_filename):
         '''
@@ -319,7 +312,7 @@ class InteractiveClient():
         cmd.extend(self._prepare_command_line_parameters(interaction.parameters))
         console.logdebug("Interactive Client : rosrunnable command %s" % cmd)
         process = rocon_python_utils.system.Popen(cmd, postexec_fn=process_listener)
-        interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
+        interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process)
         return True
 
     def _start_global_executable_interaction(self, interaction, filename):
@@ -335,7 +328,7 @@ class InteractiveClient():
         cmd.extend(self._prepare_command_line_parameters(interaction.parameters))
         console.logdebug("Interactive Client : global executable command %s" % cmd)
         process = rocon_python_utils.system.Popen(cmd, postexec_fn=process_listener)
-        interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
+        interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process)
         return True
 
     def _start_weburl_interaction(self, interaction, url):
@@ -348,7 +341,7 @@ class InteractiveClient():
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self._process_listeners, anonymous_name, 1)
             process = rocon_python_utils.system.Popen([web_browser, "--new-window", url], postexec_fn=process_listener)
-            interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
+            interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process)
             return True
         else:
             return False
@@ -367,7 +360,7 @@ class InteractiveClient():
             anonymous_name = name + "_" + uuid.uuid4().hex
             process_listener = partial(self._process_listeners, anonymous_name, 1)
             process = rocon_python_utils.system.Popen([web_browser, "--new-window", url], postexec_fn=process_listener)
-            interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process, partial(process.send_signal, signal.SIGINT))
+            interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, process)
             return True
         else:
             return False
@@ -431,11 +424,12 @@ class InteractiveClient():
                 if interaction.is_paired_type():
                     self.pairing = None
                 if not interaction.launch_list:
-                    console.logwarn("Interactive Client : process_listener detected unknown terminating interaction [%s]" % name)
-                    # inform the gui to update if necessary
+                    # inform the gui to update
                     self._stop_interaction_postexec_fn()
-                    # update the rocon interactions handler
-                    self._publish_remocon_status()
+                # update the rocon interactions handler
+                self._publish_remocon_status()
+            else:
+                console.logwarn("Interactive Client : process_listener detected unknown terminating interaction [%s]" % name)
 
     ######################################
     # Ros Comms
@@ -509,3 +503,29 @@ class InteractiveClient():
                 else:  # it's a dict or list, so dump it
                     parameters.append('_' + name + ':=' + str(value))
         return parameters
+
+    def _prepare_roslaunch_args(self, interaction_parameters):
+        """
+        Convert the interaction specified yaml string into roslaunch args
+        to be passed to the roslaunchable. Note that we only use a constrained
+        subset of yaml to be compatible with roslaunch args here.
+        The root type has to be a dict and values themselves
+        may not be dicts or lists.
+
+        :param str interaction_parameters: parameters specified as a yaml string
+
+        :returns: the parameters as roslaunch args key-value pairs
+        :rtype: list of (name, value) pairs
+        """
+        args = []
+        parameters = yaml.load(interaction_parameters)  # convert from yaml string into python dictionary
+        if parameters is not None:
+            if type(parameters) is types.DictType:
+                for name, value in parameters.items():
+                    if type(value) is types.DictType or type(value) is types.ListType:
+                        console.logwarn("Ignoring invalid parameter for roslaunch arg (simple key-value pairs only) [%s][%s]" % (name, value))
+                    else:
+                        args.append((name, value))
+            else:
+                console.logwarn("Ignoring invalid parameters for roslaunch args (must be a simple key-value dict) [%s]" % parameters)
+        return args
