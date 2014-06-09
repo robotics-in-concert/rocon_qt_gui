@@ -19,7 +19,7 @@ catkin_python_setup()
 ##############################################################################
 
 install(
-    FILES gateway_plugin.xml 
+    FILES rocon_master_info_plugin.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
 
