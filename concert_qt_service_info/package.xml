@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package>
+  <name>concert_qt_service_info</name>
+  <version>0.0.0</version>
+  <description>A rqt plugin that displays the information provided by concert_qt_service_info</description>
+
+  <maintainer email="kent.sommer13@gmail.com">kent</maintainer>
+  <license>BSD</license>
+  <url type="repository">https://github.com/robotics-in-concert/rocon_qt_gui</url>
+  <url type="bugtracker">https://github.com/robotics-in-concert/rocon_qt_gui/issues</url>
+  <author>Kent Sommer</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>qt_gui_py_common</run_depend>
+  <run_depend>rqt_gui</run_depend>
+  <run_depend>rqt_gui_py</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>python-rospkg</run_depend>
+  <run_depend>concert_service_utilities</run_depend>
+
+
+  <export>
+    <rqt_gui plugin="${prefix}/concert_service_info_plugin.xml"/>
+  </export>
+</package>

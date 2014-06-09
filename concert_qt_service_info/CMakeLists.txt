@@ -3,7 +3,7 @@
 ##############################################################################
 
 cmake_minimum_required(VERSION 2.8.3)
-project(rocon_qt_master_info)
+project(concert_qt_service_info)
 
 ##############################################################################
 # Catkin
@@ -19,7 +19,7 @@ catkin_python_setup()
 ##############################################################################
 
 install(
-    FILES rocon_master_info_plugin.xml
+    FILES concert_service_info_plugin.xml 
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
 

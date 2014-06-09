@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="Concert Service Info" type="concert_qt_service_info.concert_service_info.ServiceInfo" base_class_type="rqt_gui_py::Plugin">
+    <description>
+        View information provided by Concert Service Info.
+    </description>
+    <qtgui>
+      <group>
+        <label>Concert</label>
+        <icon type="theme">folder</icon>
+        <statustip>General plugins for ROCON.</statustip>
+      </group>
+      <label>Concert Service Info</label>
+      <icon type="file">./resources/images/rocon_logo.png</icon>
+      <statustip>Information about concert service.</statustip>
+    </qtgui>
+  </class>
+</library>
