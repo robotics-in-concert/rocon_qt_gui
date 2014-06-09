@@ -30,7 +30,3 @@ install(DIRECTORY resources
 install(DIRECTORY ui
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-
-install(PROGRAMS scripts/concert_qt_service_info
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
