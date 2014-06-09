@@ -18,18 +18,19 @@ catkin_python_setup()
 # Installs
 ##############################################################################
 
-#install(
-#    FILES gateway_plugin.xml 
-#    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#    )
-#
-#install(DIRECTORY resources
-#  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#)
-#
-#install(DIRECTORY ui
-#  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#)
+install(
+    FILES gateway_plugin.xml 
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    )
+
+install(DIRECTORY resources
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+install(DIRECTORY ui
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
 install(PROGRAMS scripts/concert_qt_service_info
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
