@@ -31,19 +31,13 @@ from python_qt_binding.QtGui import QWidget, QPixmap
 from qt_gui.plugin import Plugin
 
 import rospkg
-import concert_service_info
+# import concert_service_info
 import concert_service_utilities
-import concert_msgs.msg as concert_msgs
-import rocon_std_msgs.msg as rocon_std_msgs
-import rocon_console.console as console
-import concert_service_manager
-import rocon_python_comms
-import rocon_python_utils
-import rospy
 
 ##############################################################################
 # Plugin
 ##############################################################################
+class ServiceInfo(Plugin):
     def __init__(self, context):
         super(ServiceInfo, self).__init__(context)
         self.initialised = False
