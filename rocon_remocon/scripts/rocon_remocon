@@ -8,9 +8,12 @@
 ##############################################################################
 
 import sys
+import os
 import signal
 
-from python_qt_binding.QtGui import QApplication  # QAction, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
+import rospkg
+
+from python_qt_binding.QtGui import QApplication, QIcon  # QAction, QFrame, QIcon,QMainWindow, QMenu, QSystemTrayIcon
 from python_qt_binding.QtCore import QTimer  # Qt
 
 import rocon_remocon
@@ -38,9 +41,13 @@ def signal_handler(signum, f):
 
 
 if __name__ == "__main__":
-
+    
+    rospack = rospkg.RosPack()
+    icon_file = os.path.join(rospack.get_path('rocon_remocon'), 'resources', 'images', 'rocon_logo.png')
+    
     signal.signal(signal.SIGINT, signal_handler)
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(icon_file))
     # Let the interpreter run each 200 ms.
     timer = QTimer()
     timer.start(200)
