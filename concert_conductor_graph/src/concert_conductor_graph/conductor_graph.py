@@ -372,7 +372,7 @@ class ConductorGraph(Plugin):
                 if edge_dst_name in self._graph.concert_clients.keys():
                     link_strength_colour = ConductorGraph.link_strength_colours[self._graph.concert_clients[edge_dst_name].get_connection_strength()]
                     edge_item._default_color = link_strength_colour
-                    edge_item.set_color(link_strength_colour)
+                    edge_item.set_node_color(link_strength_colour)
                 #set the tooltip about network information
                 edge_item.setToolTip(str(self._graph.concert_clients[edge_dst_name].msg.conn_stats))
 
