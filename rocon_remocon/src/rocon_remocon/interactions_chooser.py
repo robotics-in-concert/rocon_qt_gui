@@ -8,7 +8,7 @@
 ##############################################################################
 
 import os
-
+import rospkg
 #from PyQt4 import uic
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Signal
@@ -50,6 +50,9 @@ class QInteractionsChooser(QMainWindow):
         self.interactive_client = InteractiveClient(stop_interaction_postexec_fn=self.interactions_updated_relay)
 
         self.application = application
+        rospack = rospkg.RosPack()
+        icon_file = os.path.join(rospack.get_path('rocon_icons'), 'icons', 'rocon_logo.png')
+        self.application.setWindowIcon(QIcon(icon_file))
 
         self.interactions_widget = QWidget()
         self.roles_widget = QWidget()

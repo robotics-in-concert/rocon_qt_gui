@@ -271,7 +271,7 @@ class GatewayGraph(Plugin):
             if node_item._label.text() == self._graph.local_gateway_name():
                 orange = QColor(232, 132, 3)
                 node_item._default_color = orange
-                node_item.set_color(orange)
+                node_item.set_node_color(orange)
                 print "Local gateway: %s" % self._graph.local_gateway_name()
             self._scene.addItem(node_item)
         for edge_items in edges.itervalues():
