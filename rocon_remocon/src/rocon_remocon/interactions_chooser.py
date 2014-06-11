@@ -51,7 +51,7 @@ class QInteractionsChooser(QMainWindow):
 
         self.application = application
         rospack = rospkg.RosPack()
-        icon_file = os.path.join(rospack.get_path('rocon_remocon'), 'resources', 'images', 'rocon_logo.png')
+        icon_file = os.path.join(rospack.get_path('rocon_icons'), 'icons', 'rocon_logo.png')
         self.application.setWindowIcon(QIcon(icon_file))
 
         self.interactions_widget = QWidget()

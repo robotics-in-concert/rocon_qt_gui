@@ -43,7 +43,7 @@ def signal_handler(signum, f):
 if __name__ == "__main__":
     
     rospack = rospkg.RosPack()
-    icon_file = os.path.join(rospack.get_path('rocon_remocon'), 'resources', 'images', 'rocon_logo.png')
+    icon_file = os.path.join(rospack.get_path('rocon_icons'), 'icons', 'rocon_logo.png')
     
     signal.signal(signal.SIGINT, signal_handler)
     app = QApplication(sys.argv)
