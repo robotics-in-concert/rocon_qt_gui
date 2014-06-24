@@ -34,7 +34,23 @@ class LaunchInfo(object):
         self.process = process
 
     def shutdown(self):
-        self.process.send_signal(signal.SIGINT)
+        '''
+          Shutdown the process, if there is a process. Note that the internal
+          process variable can be None signifying that this is a dummy interaction
+          for use with pairing mode.
+        '''
+        if self.process is not None:
+            self.process.send_signal(signal.SIGINT)
+
+    def __str__(self):
+        '''
+          Format the interaction into a human-readable string.
+        '''
+        s = console.bold + "Launch Info" + console.reset + '\n'  # noqa
+        s += console.bold + "  Name   " + console.reset + "  : " + console.yellow + self.name + console.reset + '\n'  # noqa
+        s += console.bold + "  Running" + console.reset + "  : " + console.yellow + str(self.running) + console.reset + '\n'  # noqa
+        s += console.bold + "  Process" + console.reset + "  : " + console.yellow + str(self.process) + console.reset + '\n'  # noqa
+        return s
 
 
 class RosLaunchInfo(LaunchInfo):

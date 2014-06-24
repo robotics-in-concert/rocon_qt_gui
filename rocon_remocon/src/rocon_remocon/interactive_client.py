@@ -271,7 +271,7 @@ class InteractiveClient():
         anonymous_name = interaction.name + "_" + uuid.uuid4().hex
         #process_listener = partial(self._process_listeners, anonymous_name, 1)
         #process = rocon_python_utils.system.Popen([rosrunnable_filename], postexec_fn=process_listener)
-        interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, None, lambda: None)  # empty shutdown function
+        interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, None)  # empty shutdown function
         return True
 
     def _start_roslaunch_interaction(self, interaction, roslaunch_filename):
@@ -388,16 +388,17 @@ class InteractiveClient():
             for launch_info in interaction.launch_list.values():
                 if launch_info.running:
                     launch_info.shutdown()
-                    del interaction.launch_list[launch_info.name]
                     console.loginfo("Interactive Client : interaction stopped [%s]" % (launch_info.name))
+                    del interaction.launch_list[launch_info.name]
                 elif launch_info.process == None:
                     launch_info.running = False
-                    del interaction.launch_list.launch_list[launch_info.name]
                     console.loginfo("Interactive Client : no attached interaction process to stop [%s]" % (launch_info.name))
-                else:
                     del interaction.launch_list.launch_list[launch_info.name]
+                else:
                     console.loginfo("Interactive Client : interaction is already stopped [%s]" % (launch_info.name))
+                    del interaction.launch_list.launch_list[launch_info.name]
         except Exception as e:
+            console.logerror("Interactive Client : error trying to stop an interaction [%s][%s]" % (type(e), str(e)))
             # this is bad...should not create bottomless exception buckets.
             return (False, "unknown failure - (%s)(%s)" % (type(e), str(e)))
         #console.logdebug("Interactive Client : interaction's updated launch list- %s" % str(interaction.launch_list))
