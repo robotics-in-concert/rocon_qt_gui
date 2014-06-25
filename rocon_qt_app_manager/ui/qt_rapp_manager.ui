@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>QtAppManager</class>
- <widget class="QWidget" name="QtAppManager">
+ <class>QtRappManager</class>
+ <widget class="QWidget" name="QtRappManager">
   <property name="enabled">
    <bool>true</bool>
   </property>
@@ -20,7 +20,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>App Manager</string>
+   <string>Rapp Manager</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="1">
@@ -34,16 +34,16 @@
         <number>9</number>
        </property>
        <item row="0" column="1">
-        <widget class="QPushButton" name="start_app_btn">
+        <widget class="QPushButton" name="start_rapp_btn">
          <property name="text">
-          <string>Start App</string>
+          <string>Start Rapp</string>
          </property>
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QPushButton" name="stop_app_btn">
+        <widget class="QPushButton" name="stop_rapp_btn">
          <property name="text">
-          <string>Stop App</string>
+          <string>Stop Rapp</string>
          </property>
         </widget>
        </item>
@@ -52,12 +52,12 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>App Information</string>
+        <string>Rapp Information</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPlainTextEdit" name="app_info_text">
+      <widget class="QPlainTextEdit" name="rapp_info_text">
        <property name="readOnly">
         <bool>true</bool>
        </property>
@@ -108,19 +108,19 @@
       </layout>
      </item>
      <item>
-      <widget class="QTreeWidget" name="app_tree_widget">
+      <widget class="QTreeWidget" name="rapp_tree_widget">
        <column>
         <property name="text">
-         <string>App List</string>
+         <string>Rapp List</string>
         </property>
        </column>
       </widget>
      </item>
      <item>
-      <widget class="QTreeWidget" name="running_app_tree_widget">
+      <widget class="QTreeWidget" name="running_rapp_tree_widget">
        <column>
         <property name="text">
-         <string>Running App List</string>
+         <string>Running Rapp List</string>
         </property>
        </column>
       </widget>
