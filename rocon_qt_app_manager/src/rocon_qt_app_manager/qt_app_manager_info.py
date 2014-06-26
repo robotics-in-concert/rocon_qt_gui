@@ -35,6 +35,8 @@ def list_rapp_msg_to_dict(list_rapp):
         dict_rapp[rapp]["description"] = rapp.description
         dict_rapp[rapp]["compatibility"] = rapp.compatibility
         dict_rapp[rapp]["icon"] = rapp.icon
+        dict_rapp[rapp]["public_interface"] = rapp.public_interface
+        dict_rapp[rapp]["public_parameters"] = rapp.public_parameters
         dict_rapp[rapp]["required_capabilities"] = rapp.required_capabilities
 
     return dict_rapp
@@ -57,26 +59,7 @@ class QtRappManagerInfo(object):
         """
         self.rapps = list_rapp_msg_to_dict(data.available_rapps)
         self.running_rapps = list_rapp_msg_to_dict(data.running_rapps)
-        '''
-        for app in data.available_rapps:
-            self.apps[app] = {}
-            self.apps[app]["status"] = app.status
-            self.apps[app]["name"] = app.name
-            self.apps[app]["display_name"] = app.display_name
-            self.apps[app]["description"] = app.description
-            self.apps[app]["compatibility"] = app.compatibility
-            self.apps[app]["icon"] = app.icon
-            self.apps[app]["required_capabilities"] = app.required_capabilities
-        for app in data.running_rapps:
-            self.running_apps[app] = {}
-            self.running_apps[app]["status"] = app.status
-            self.running_apps[app]["name"] = app.name
-            self.running_apps[app]["display_name"] = app.display_name
-            self.running_apps[app]["description"] = app.description
-            self.running_apps[app]["compatibility"] = app.compatibility
-            self.running_apps[app]["icon"] = app.icon
-            self.running_apps[app]["required_capabilities"] = app.required_capabilities
-        '''
+
         #Call update callback
         self._update_rapps_callback()
 
@@ -147,7 +130,7 @@ class QtRappManagerInfo(object):
         
 
         service_handle = rospy.ServiceProxy(namespace + 'start_rapp', StartRapp)
-        call_result = service_handle(rapp_name, [remapping, ], [parameters, ])
+        call_result = service_handle(rapp_name, [], [])
         call_result_html = "<html>"
         call_result_html += "<p>-------------------------------------------</p>"
         call_result_html += "<p><b>started: </b>" + str(call_result.started) + "</p>"
