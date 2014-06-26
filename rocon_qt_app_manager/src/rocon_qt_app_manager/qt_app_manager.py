@@ -16,7 +16,7 @@ from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractList
 from python_qt_binding.QtCore import pyqtSlot, SIGNAL,SLOT, QRectF , QTimer, QEvent, QUrl
 from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QLabel, QComboBox
 from python_qt_binding.QtGui import QSizePolicy,QTextEdit, QCompleter, QBrush, QDialog, QColor, QPen, QPushButton
-from python_qt_binding.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
+from python_qt_binding.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox, QWidgetItem, QSpacerItem
 from python_qt_binding.QtGui import QTreeWidgetItem, QPixmap, QGraphicsScene
 from python_qt_binding.QtDeclarative import QDeclarativeView
 from python_qt_binding.QtSvg import QSvgGenerator
@@ -25,6 +25,39 @@ import rospkg
 from qt_app_manager_info import QtRappManagerInfo
 #rqt
 from qt_gui.plugin import Plugin
+
+##############################################################################
+# Utils
+##############################################################################
+
+def create_label_textedit_pair(key, value):
+
+    param_layout = QHBoxLayout()
+
+    name_widget = QLabel(key)
+    textedit_widget = QTextEdit() 
+    textedit_widget.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
+    textedit_widget.setMinimumSize(0,30)
+    textedit_widget.append(str(value))
+
+    param_layout.addWidget(name_widget)
+    param_layout.addWidget(textedit_widget)
+
+    return param_layout
+ 
+
+def clear_layout(layout):
+    for i in reversed(range(layout.count())):
+        item = layout.itemAt(i)
+
+        if isinstance(item, QWidgetItem):
+            item.widget().close()
+        else:
+            clear_layout(item.layout())
+
+        # remove the item from layout
+        layout.removeItem(item)    
+
 
 ##############################################################################
 # QtAppManager
@@ -87,7 +120,10 @@ class QtRappManager(Plugin):
 
     def _start_rapp(self):
         ns = self._widget.namespace_cbox.currentText()
-        result = self.qt_rapp_manager_info._start_rapp(ns, self.current_rapp['name'])
+
+        parameters = self._get_public_parameters()
+
+        result = self.qt_rapp_manager_info._start_rapp(ns, self.current_rapp['name'], parameters)
         self._widget.service_result_text.appendHtml(result)
         pass
 
@@ -122,7 +158,25 @@ class QtRappManager(Plugin):
         self._widget.rapp_info_text.clear()
         rapp_info = self.qt_rapp_manager_info._get_rapp_info(self.current_rapp)
         self._widget.rapp_info_text.appendHtml(rapp_info)
+        self._update_rapp_parameter_layout(self.current_rapp)
 
+    def _update_rapp_parameter_layout(self, rapp):
+        parameters_layout = self._widget.rapp_parameter_layout
+        clear_layout(parameters_layout)
+
+        for param in rapp['public_parameters']:
+            one_param_layout = create_label_textedit_pair(param.key, param.value)
+            parameters_layout.addLayout(one_param_layout)
+
+    def _get_public_parameters(self):
+        public_parameters = {}
+        parameters_layout = self._widget.rapp_parameter_layout
+        for i in reversed(range(parameters_layout.count())):
+            item = parameters_layout.itemAt(i)
+            key_label = item.itemAt(0).widget()
+            value_textbox = item.itemAt(1).widget()
+            public_parameters[key_label.text()] = str(value_textbox.toPlainText())
+        return public_parameters
+        
     def _refresh_rapps(self):
         self._update_rapps_signal.emit()
-        pass

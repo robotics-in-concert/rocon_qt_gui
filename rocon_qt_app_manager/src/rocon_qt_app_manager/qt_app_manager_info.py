@@ -113,24 +113,24 @@ class QtRappManagerInfo(object):
         rapp_info += "</html>"
         return rapp_info
 
-    def _start_rapp(self, namespace, rapp_name):
+    def _start_rapp(self, namespace, rapp_name, parameters):
         """
         Start rapp
 
-        @param rapp_name: rapp to start
-        @type String
-
-        @param namespace: name space of running rapp
-        @type String
+        :param rapp_name: rapp to start
+        :type rapp_name: str 
+        :param namespace: name space of running rapp
+        :type namespace: str
+        :param parameters: public parameters
+        :type parameters: dict
         """
         #not yet
         remapping = Remapping()
-        parameters = KeyValue() 
-
-        
+        params = [KeyValue(key, value) for key, value in parameters.items()]
+        print(str(params))
 
         service_handle = rospy.ServiceProxy(namespace + 'start_rapp', StartRapp)
-        call_result = service_handle(rapp_name, [], [])
+        call_result = service_handle(rapp_name, [], params) 
         call_result_html = "<html>"
         call_result_html += "<p>-------------------------------------------</p>"
         call_result_html += "<p><b>started: </b>" + str(call_result.started) + "</p>"
