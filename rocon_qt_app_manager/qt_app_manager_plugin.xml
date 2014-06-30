@@ -1,7 +1,7 @@
 <library path="src">
-  <class name="App Manger" type="rocon_qt_app_manager.qt_app_manager.QtAppManager" base_class_type="rqt_gui_py::Plugin">
+  <class name="Rapp Manger" type="rocon_qt_app_manager.qt_app_manager.QtRappManager" base_class_type="rqt_gui_py::Plugin">
     <description>
-        App manager qt gui
+        Rapp manager qt gui
     </description>
     <qtgui>
       <group>
@@ -9,9 +9,9 @@
         <icon type="theme">folder</icon>
         <statustip>Plugins related to robotics-in-concert components.</statustip>
       </group>
-      <label>App Manager</label>
+      <label>Rapp Manager</label>
       <icon type="file">./resources/images/rocon_logo.png</icon>
-      <statustip>App Manager GUI </statustip>
+      <statustip>Rapp Manager GUI </statustip>
     </qtgui>
   </class>
 </library>

@@ -12,120 +12,125 @@ import os
 import rospy
 import rocon_python_comms
 #rocon
-from rocon_std_msgs.msg import Remapping
+from rocon_std_msgs.msg import Remapping, KeyValue
 from rocon_app_manager_msgs.msg import Status
 from rocon_app_manager_msgs.srv import StartRapp
 from rocon_app_manager_msgs.srv import StopRapp
 from rocon_app_manager_msgs.srv import GetRappList
 
 ##############################################################################
-# QtAppManagerInfo
+# QtRappManagerInfo
 ##############################################################################
 
+def list_rapp_msg_to_dict(list_rapp):
+    """
+    convert msg to dict
+    """
+    dict_rapp = {}
+    for rapp in list_rapp:
+        dict_rapp[rapp] = {}
+        dict_rapp[rapp]["status"] = rapp.status
+        dict_rapp[rapp]["name"] = rapp.name
+        dict_rapp[rapp]["display_name"] = rapp.display_name
+        dict_rapp[rapp]["description"] = rapp.description
+        dict_rapp[rapp]["compatibility"] = rapp.compatibility
+        dict_rapp[rapp]["icon"] = rapp.icon
+        dict_rapp[rapp]["public_interface"] = rapp.public_interface
+        dict_rapp[rapp]["public_parameters"] = rapp.public_parameters
+        dict_rapp[rapp]["required_capabilities"] = rapp.required_capabilities
 
-class QtAppManagerInfo(object):
+    return dict_rapp
+
+
+class QtRappManagerInfo(object):
     def __init__(self):
-        self.apps = {}
-        self.running_apps = {}
-        self._update_apps_callback = None
+        self.rapps = {}
+        self.running_rapps = {}
+        self._update_rapps_callback = None
         self.current_namespace = ''
         self.current_subscriber = None
 
-    def _update_apps(self, data):
+    def _update_rapps(self, data):
         """
-        Update the available app list
+        Update the available rapp list
 
-        @param data: information of apps
-        @type rocon_app_manager_msgs/AppList
+        @param data: information of rapps
+        @type rocon_app_manager_msgs/RappList
         """
-        self.apps = {}
-        self.running_apps = {}
-        for app in data.available_rapps:
-            self.apps[app] = {}
-            self.apps[app]["status"] = app.status
-            self.apps[app]["name"] = app.name
-            self.apps[app]["display_name"] = app.display_name
-            self.apps[app]["description"] = app.description
-            self.apps[app]["compatibility"] = app.compatibility
-            self.apps[app]["icon"] = app.icon
-            self.apps[app]["required_capabilities"] = app.required_capabilities
-        for app in data.running_rapps:
-            self.running_apps[app] = {}
-            self.running_apps[app]["status"] = app.status
-            self.running_apps[app]["name"] = app.name
-            self.running_apps[app]["display_name"] = app.display_name
-            self.running_apps[app]["description"] = app.description
-            self.running_apps[app]["compatibility"] = app.compatibility
-            self.running_apps[app]["icon"] = app.icon
-            self.running_apps[app]["required_capabilities"] = app.required_capabilities
+        self.rapps = list_rapp_msg_to_dict(data.available_rapps)
+        self.running_rapps = list_rapp_msg_to_dict(data.running_rapps)
+
         #Call update callback
-        self._update_apps_callback()
+        self._update_rapps_callback()
 
-    def _update_app_status(self, data):
-        self._get_apps(self.current_namespace)
+    def _update_rapp_status(self, data):
+        self._get_rapps(self.current_namespace)
 
     def _set_update_status(self, namespace):
         if self.current_subscriber:
             self.current_subscriber.unregister()
             self.current_subscriber = None
-        self.current_subscriber = rospy.Subscriber(namespace + 'status', Status, self._update_app_status)
+        self.current_subscriber = rospy.Subscriber(namespace + 'status', Status, self._update_rapp_status)
         self.current_namespace = namespace
 
     def _get_namespaces(self):
         """
-        Getting the name space with running the app
+        Getting the name space with running the rapp
         @return name space list
         @type list
         """
-        get_app_list_service_names = rocon_python_comms.find_service('rocon_app_manager_msgs/GetRappList', timeout=rospy.rostime.Duration(5.0), unique=False)
-        return get_app_list_service_names
+        get_rapp_list_service_names = rocon_python_comms.find_service('rocon_app_manager_msgs/GetRappList', timeout=rospy.rostime.Duration(5.0), unique=False)
+        return get_rapp_list_service_names
 
-    def _get_apps(self, namespace):
+    def _get_rapps(self, namespace):
         """
-        Getting the app list using service calling
-        @param namespace: namespace of running app
+        Getting the rapp list using service calling
+        @param namespace: namespace of running rapp
         @type String
 
         @param service_name: service_name
         @type String
         """
         service_handle = rospy.ServiceProxy(namespace + 'list_rapps', GetRappList)
-        self._update_apps(service_handle())
+        self._update_rapps(service_handle())
 
-    def _get_app_info(self, app):
+    def _get_rapp_info(self, rapp):
         """
-        Getting the app information to html type
-        @param app: information of app
+        Getting the rapp information to html type
+        @param rapp: information of rapp
         @type dict
 
-        @return the app information
+        @return the rapp information
         @type String
         """
 
-        app_info = "<html>"
-        app_info += "<p>-------------------------------------------</p>"
-        for info_key in app.keys():
+        rapp_info = "<html>"
+        rapp_info += "<p>-------------------------------------------</p>"
+        for info_key in rapp.keys():
             if info_key is 'icon':
                 continue
-            app_info += "<p><b>%s: </b>%s</p>" % (info_key, str(app[info_key]))
-        app_info += "</html>"
-        return app_info
+            rapp_info += "<p><b>%s: </b>%s</p>" % (info_key, str(rapp[info_key]))
+        rapp_info += "</html>"
+        return rapp_info
 
-    def _start_app(self, namespace, app_name):
+    def _start_rapp(self, namespace, rapp_name, parameters):
         """
-        Start App
+        Start rapp
 
-        @param app_name: app to start
-        @type String
-
-        @param namespace: name space of running app
-        @type String
+        :param rapp_name: rapp to start
+        :type rapp_name: str 
+        :param namespace: name space of running rapp
+        :type namespace: str
+        :param parameters: public parameters
+        :type parameters: dict
         """
         #not yet
         remapping = Remapping()
+        params = [KeyValue(key, value) for key, value in parameters.items()]
+        print(str(params))
 
         service_handle = rospy.ServiceProxy(namespace + 'start_rapp', StartRapp)
-        call_result = service_handle(app_name, [remapping, ])
+        call_result = service_handle(rapp_name, [], params) 
         call_result_html = "<html>"
         call_result_html += "<p>-------------------------------------------</p>"
         call_result_html += "<p><b>started: </b>" + str(call_result.started) + "</p>"
@@ -134,11 +139,11 @@ class QtAppManagerInfo(object):
         call_result_html += "</html>"
         return call_result_html
 
-    def _stop_app(self, namespace):
+    def _stop_rapp(self, namespace):
         """
-        Stop App
+        Stop rapp
 
-        @param namespace: name space of running app
+        @param namespace: name space of running rapp
         @type String
         """
         service_handle = rospy.ServiceProxy(namespace + 'stop_rapp', StopRapp)
@@ -151,5 +156,10 @@ class QtAppManagerInfo(object):
         call_result_html += "</html>"
         return call_result_html
 
-    def _reg_update_apps_callback(self, func):
-        self._update_apps_callback = func
+    def _get_icon(self):
+        rapps = self.running_rapps
+        for k in rapps.values():
+            return k['icon']
+
+    def _reg_update_rapps_callback(self, func):
+        self._update_rapps_callback = func
