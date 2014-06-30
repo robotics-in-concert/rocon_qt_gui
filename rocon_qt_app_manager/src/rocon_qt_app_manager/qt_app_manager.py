@@ -81,6 +81,8 @@ class QtRappManager(Plugin):
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
+
+
         #list item click event
         self._widget.rapp_tree_widget.itemClicked.connect(self._select_rapp_tree_item)
         #button event connection
@@ -125,6 +127,7 @@ class QtRappManager(Plugin):
 
         result = self.qt_rapp_manager_info._start_rapp(ns, self.current_rapp['name'], parameters)
         self._widget.service_result_text.appendHtml(result)
+        self._widget.icon_label.clear()
         pass
 
     def _stop_rapp(self):
@@ -145,6 +148,7 @@ class QtRappManager(Plugin):
 
         self._widget.running_rapp_tree_widget.clear()
         rapps = self.qt_rapp_manager_info.running_rapps
+        self._manage_buttons()
         for k in rapps.values():
             rapp = QTreeWidgetItem(self._widget.running_rapp_tree_widget)
             rapp.setText(0, k["display_name"])
@@ -177,6 +181,24 @@ class QtRappManager(Plugin):
             value_textbox = item.itemAt(1).widget()
             public_parameters[key_label.text()] = str(value_textbox.toPlainText())
         return public_parameters
+
+    def _manage_buttons(self):
+        rapps = self.qt_rapp_manager_info.running_rapps
+        if(rapps == {}):
+            self._widget.icon_label.clear()
+            self._widget.stop_rapp_btn.setEnabled(False)
+            self._widget.start_rapp_btn.setEnabled(True)
+        else:
+            self._widget.stop_rapp_btn.setEnabled(True)
+            self._widget.start_rapp_btn.setEnabled(False)
+            self._widget.icon_label.clear()
+            self._set_icon()
+
+    def _set_icon(self):
+        pixmap = QPixmap()
+        pixmap.loadFromData(self.qt_rapp_manager_info._get_icon().data, format=self.qt_rapp_manager_info._get_icon().format)
+        self._widget.icon_label.setPixmap(pixmap)
+        self._widget.icon_label.resize(pixmap.width(), pixmap.height())
         
     def _refresh_rapps(self):
         self._update_rapps_signal.emit()

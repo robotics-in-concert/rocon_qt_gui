@@ -103,16 +103,16 @@
         <number>9</number>
        </property>
        <item row="0" column="1">
-        <widget class="QPushButton" name="start_rapp_btn">
+        <widget class="QPushButton" name="stop_rapp_btn">
          <property name="text">
-          <string>Start Rapp</string>
+          <string>Stop Rapp</string>
          </property>
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QPushButton" name="stop_rapp_btn">
+        <widget class="QPushButton" name="start_rapp_btn">
          <property name="text">
-          <string>Stop Rapp</string>
+          <string>Start Rapp</string>
          </property>
         </widget>
        </item>
@@ -155,8 +155,7 @@
         </widget>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="rapp_parameter_layout">
-        </layout>
+        <layout class="QVBoxLayout" name="rapp_parameter_layout"/>
        </item>
        <item>
         <spacer name="verticalSpacer">
@@ -172,6 +171,33 @@
         </spacer>
        </item>
       </layout>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Icon: </string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="icon_label">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="verticalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>

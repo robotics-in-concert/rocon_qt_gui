@@ -156,5 +156,10 @@ class QtRappManagerInfo(object):
         call_result_html += "</html>"
         return call_result_html
 
+    def _get_icon(self):
+        rapps = self.running_rapps
+        for k in rapps.values():
+            return k['icon']
+
     def _reg_update_rapps_callback(self, func):
         self._update_rapps_callback = func
