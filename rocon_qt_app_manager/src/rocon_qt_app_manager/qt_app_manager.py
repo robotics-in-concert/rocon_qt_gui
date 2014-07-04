@@ -103,6 +103,7 @@ class QtRappManager(Plugin):
 
         self.rapps = {}
         self.current_rapp = None
+        self.selected_impl = None
         self.current_captured_robot = None
 
         self._get_name_spaces()
@@ -124,20 +125,22 @@ class QtRappManager(Plugin):
 
     def _start_rapp(self):
         ns = self._widget.namespace_cbox.currentText()
-
+        
+        if not self.selected_impl and not self.current_rapp:
+            print "No rapp has been selected yet" 
+            return
+            
         rapp = self.selected_impl if self.selected_impl else self.current_rapp['name']
         parameters = self._get_public_parameters()
 
         result = self.qt_rapp_manager_info._start_rapp(ns, rapp, parameters)
         self._widget.service_result_text.appendHtml(result)
         self._widget.icon_label.clear()
-        pass
 
     def _stop_rapp(self):
         ns = self._widget.namespace_cbox.currentText()
         result = self.qt_rapp_manager_info._stop_rapp(ns)
         self._widget.service_result_text.appendHtml(result)
-        pass
 
     def _update_rapp_list(self):
         self._widget.rapp_info_text.clear()
