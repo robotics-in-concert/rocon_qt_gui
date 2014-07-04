@@ -81,10 +81,12 @@ class QtRappManager(Plugin):
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
-
-
-        #list item click event
+        # rapp list item click event
         self._widget.rapp_tree_widget.itemClicked.connect(self._select_rapp_tree_item)
+
+        # implementation item click
+        self._widget.implementation_tree_widget.itemClicked.connect(self._select_implementation_tree_item)
+
         #button event connection
         self._widget.start_rapp_btn.pressed.connect(self._start_rapp)
         self._widget.stop_rapp_btn.pressed.connect(self._stop_rapp)
@@ -123,9 +125,10 @@ class QtRappManager(Plugin):
     def _start_rapp(self):
         ns = self._widget.namespace_cbox.currentText()
 
+        rapp = self.selected_impl if self.selected_impl else self.current_rapp['name']
         parameters = self._get_public_parameters()
 
-        result = self.qt_rapp_manager_info._start_rapp(ns, self.current_rapp['name'], parameters)
+        result = self.qt_rapp_manager_info._start_rapp(ns, rapp, parameters)
         self._widget.service_result_text.appendHtml(result)
         self._widget.icon_label.clear()
         pass
@@ -154,15 +157,16 @@ class QtRappManager(Plugin):
             rapp.setText(0, k["display_name"])
             self.rapps[rapp] = k
 
-    def _select_rapp_tree_item(self, Item):
-        if not Item in self.rapps.keys():
+    def _select_rapp_tree_item(self, item):
+        if not item in self.rapps.keys():
             print "HAS NO KEY"
         else:
-            self.current_rapp = self.rapps[Item]
+            self.current_rapp = self.rapps[item]
         self._widget.rapp_info_text.clear()
         rapp_info = self.qt_rapp_manager_info._get_rapp_info(self.current_rapp)
         self._widget.rapp_info_text.appendHtml(rapp_info)
         self._update_rapp_parameter_layout(self.current_rapp)
+        self._update_implementation_tree(self.current_rapp)
 
     def _update_rapp_parameter_layout(self, rapp):
         parameters_layout = self._widget.rapp_parameter_layout
@@ -171,6 +175,21 @@ class QtRappManager(Plugin):
         for param in rapp['public_parameters']:
             one_param_layout = create_label_textedit_pair(param.key, param.value)
             parameters_layout.addLayout(one_param_layout)
+
+    def _update_implementation_tree(self, rapp):
+        self._widget.implementation_tree_widget.clear()
+        self.selected_impl = None        
+        self.impls = {}
+        for impl in rapp['implementations']:
+            impl_item = QTreeWidgetItem(self._widget.implementation_tree_widget)                      
+            impl_item.setText(0, impl)
+            self.impls[impl_item] = impl
+
+    def _select_implementation_tree_item(self, item):
+        if not item in self.impls.keys():
+            print "HAS NO KEY"
+        else:
+            self.selected_impl = self.impls[item]
 
     def _get_public_parameters(self):
         public_parameters = {}

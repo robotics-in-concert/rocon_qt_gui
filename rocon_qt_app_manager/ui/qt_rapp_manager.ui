@@ -66,10 +66,10 @@
         </widget>
        </item>
        <item>
-        <widget class="QTreeWidget" name="running_rapp_tree_widget">
+        <widget class="QTreeWidget" name="implementation_tree_widget">
          <column>
           <property name="text">
-           <string>Running Rapp List</string>
+           <string>Implementations</string>
           </property>
          </column>
         </widget>
@@ -77,18 +77,35 @@
       </layout>
      </item>
      <item>
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Service Result Log</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPlainTextEdit" name="service_result_text">
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QTreeWidget" name="running_rapp_tree_widget">
+         <column>
+          <property name="text">
+           <string notr="true">Running Rapp List</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Service Result Log</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPlainTextEdit" name="service_result_text">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
