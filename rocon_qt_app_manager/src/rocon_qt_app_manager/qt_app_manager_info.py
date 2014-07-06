@@ -35,9 +35,9 @@ def list_rapp_msg_to_dict(list_rapp):
         dict_rapp[rapp]["description"] = rapp.description
         dict_rapp[rapp]["compatibility"] = rapp.compatibility
         dict_rapp[rapp]["icon"] = rapp.icon
+        dict_rapp[rapp]["implementations"] = rapp.implementations
         dict_rapp[rapp]["public_interface"] = rapp.public_interface
         dict_rapp[rapp]["public_parameters"] = rapp.public_parameters
-        dict_rapp[rapp]["required_capabilities"] = rapp.required_capabilities
 
     return dict_rapp
 
@@ -127,7 +127,7 @@ class QtRappManagerInfo(object):
         #not yet
         remapping = Remapping()
         params = [KeyValue(key, value) for key, value in parameters.items()]
-        print(str(params))
+        print('Starting %s with %s'%(rapp_name, str(params)))
 
         service_handle = rospy.ServiceProxy(namespace + 'start_rapp', StartRapp)
         call_result = service_handle(rapp_name, [], params) 
