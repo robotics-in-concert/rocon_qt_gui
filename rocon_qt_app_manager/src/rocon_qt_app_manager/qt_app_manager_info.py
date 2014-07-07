@@ -38,7 +38,7 @@ def list_rapp_msg_to_dict(list_rapp):
         dict_rapp[rapp]["implementations"] = rapp.implementations
         dict_rapp[rapp]["public_interface"] = rapp.public_interface
         dict_rapp[rapp]["public_parameters"] = rapp.public_parameters
-
+        dict_rapp[rapp]["selected"] = rapp.selected
     return dict_rapp
 
 
