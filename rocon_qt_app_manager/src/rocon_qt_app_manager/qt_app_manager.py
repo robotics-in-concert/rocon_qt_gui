@@ -149,7 +149,7 @@ class QtRappManager(Plugin):
         rapps = self.qt_rapp_manager_info.rapps
         for k in rapps.values():
             rapp = QTreeWidgetItem(self._widget.rapp_tree_widget)
-            rapp.setText(0, k["display_name"])
+            rapp.setText(0, k["name"])
             self.rapps[rapp] = k
 
         self._widget.running_rapp_tree_widget.clear()
@@ -157,7 +157,7 @@ class QtRappManager(Plugin):
         self._manage_buttons()
         for k in rapps.values():
             rapp = QTreeWidgetItem(self._widget.running_rapp_tree_widget)
-            rapp.setText(0, k["display_name"])
+            rapp.setText(0, k["name"])
             self.rapps[rapp] = k
 
     def _select_rapp_tree_item(self, item):
