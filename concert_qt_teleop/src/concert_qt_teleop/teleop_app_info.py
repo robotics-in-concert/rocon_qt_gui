@@ -171,8 +171,8 @@ class TeleopManager(object):
         with self._lock:
             self.teleop_interface = TeleopInterface(
                 image_received_slot=self._image_received_slot,
-                cmd_vel_topic_name=captured_name + "/cmd_vel",
-                compressed_image_topic_name=captured_name + "/compressed_image"
+                cmd_vel_topic_name="/teleop/cmd_vel",
+                compressed_image_topic_name="/teleop/compressed_image"
             )
 
     def _uninit_teleop(self, captured_teleop_rocon_uri):
