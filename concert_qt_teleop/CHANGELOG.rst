@@ -2,8 +2,8 @@
 Changelog for package concert_qt_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2014-08-25)
+------------------
 * teleop namespacing for concert teleop closes `#148 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/148>`_
 * oops
 * oops

@@ -2,8 +2,8 @@
 Changelog for package rocon_qt_library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2014-08-25)
+------------------
 * remove debugging print.
 * update publisher queue_size to avoid warning in indigo.
 * rocon_qt_teleop added.

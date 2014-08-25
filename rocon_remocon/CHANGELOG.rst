@@ -2,8 +2,8 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2014-08-25)
+------------------
 * don't raise exceptions when stopping dummy interactions for pairing, closes `#138 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/138>`_.
 * Changed to get icon from rocon_icons instead of rocon_remocon
 * Added icons for sub applications

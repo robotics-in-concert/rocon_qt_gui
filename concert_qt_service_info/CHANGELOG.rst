@@ -2,8 +2,8 @@
 Changelog for package concert_qt_service_info
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2014-08-25)
+------------------
 * Mismatched install file reference fix
 * Fixed installs CMake for concert_service_info
 * Fixed/re-inserted installs

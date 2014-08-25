@@ -2,8 +2,8 @@
 Changelog for package rocon_qt_app_manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2014-08-25)
+------------------
 * rename selected to preferred
 * add selected field. now use name instead of display name
 * start app logs error if no rapp has selected.

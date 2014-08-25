@@ -2,8 +2,8 @@
 Changelog for package rocon_qt_master_info
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2014-08-25)
+------------------
 * Mismatched install file reference fix
 * Fixed/re-inserted installs
 * have to use python qt bindings otherwise standalone has errors.
