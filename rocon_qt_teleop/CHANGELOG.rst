@@ -4,6 +4,12 @@ Changelog for package rocon_qt_teleop
 
 Forthcoming
 -----------
+* add changelogs
+* don't need the rocon_teleop launcher, it's distracting.
+* use parameters to initialise maximum velocities, `#121 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/121>`_.
+* rocon_qt_teleop added.
+* Contributors: Daniel Stonier, Jihoon Lee
+
 * don't need the rocon_teleop launcher, it's distracting.
 * use parameters to initialise maximum velocities, `#121 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/121>`_.
 * rocon_qt_teleop added.
