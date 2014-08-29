@@ -131,7 +131,7 @@ class TeleopManager(object):
         if msg_id in self.service_pair_msg_q:
             self.service_pair_msg_q.remove(msg_id)
             if msg.result == True:
-                self._init_teleop(self.captured_teleop_rocon_uri)
+                self._init_teleop(self.captured_teleop_rocon_uri, msg.cmd_vel_topic, msg.compressed_image_topic)
             self._capture_event_callback(msg.result)
 
     def _release_callback(self, msg_id, msg):
@@ -161,7 +161,7 @@ class TeleopManager(object):
         rospy.logerr("Concert Teleop : triggered the error_callback [%s]" % error_message)
         self._error_event_callback(error_message)
 
-    def _init_teleop(self, captured_teleop_rocon_uri):
+    def _init_teleop(self, captured_teleop_rocon_uri, cmd_vel_topic, compressed_image_topic):
         """
         Initialise the teleop interface for a newly captured robot.
 
@@ -171,8 +171,8 @@ class TeleopManager(object):
         with self._lock:
             self.teleop_interface = TeleopInterface(
                 image_received_slot=self._image_received_slot,
-                cmd_vel_topic_name="/teleop/cmd_vel",
-                compressed_image_topic_name="/teleop/compressed_image"
+                cmd_vel_topic_name=cmd_vel_topic,
+                compressed_image_topic_name=compressed_image_topic
             )
 
     def _uninit_teleop(self, captured_teleop_rocon_uri):
