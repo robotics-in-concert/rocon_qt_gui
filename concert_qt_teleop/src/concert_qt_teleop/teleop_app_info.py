@@ -43,7 +43,10 @@ class TeleopManager(object):
         self.service_pair_msg_q = []
         self.captured_teleop_rocon_uri = None
         rospy.Subscriber("/services/teleop/available_teleops", StringArray, self._update_robot_list)
-        self.capture_teleop = rocon_python_comms.ServicePairClient('/services/teleop/capture_teleop', concert_service_msgs.CaptureTeleopPair)
+        self.capture_teleop = rocon_python_comms.ServicePairClient('/services/teleop/capture_teleop', concert_service_msgs.CaptureResourcePair)
+
+        self.default_cmd_vel_topic = '/teleop/cmd_vel'
+        self.default_compressed_image_topic = '/teleop/compressed_image'
 
     def shutdown(self):
         """
@@ -131,8 +134,17 @@ class TeleopManager(object):
         if msg_id in self.service_pair_msg_q:
             self.service_pair_msg_q.remove(msg_id)
             if msg.result == True:
-                self._init_teleop(self.captured_teleop_rocon_uri, msg.cmd_vel_topic, msg.compressed_image_topic)
+                cmd_vel_topic = self._get_remapped_topic(msg.remappings, self.default_cmd_vel_topic)
+                compressed_image_topic = self._get_remapped_topic(msg.remappings, self.default_compressed_image_topic)
+                self._init_teleop(self.captured_teleop_rocon_uri, cmd_vel_topic, compressed_image_topic)
             self._capture_event_callback(msg.result)
+
+    def _get_remapped_topic(self, remappings, remap_from):
+
+        for r in remappings:
+            if r.remap_from == remap_from:
+                return r.remap_to
+        return remap_from
 
     def _release_callback(self, msg_id, msg):
         """ User callback to feed into non-blocking requests.
