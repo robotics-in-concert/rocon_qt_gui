@@ -6,5 +6,5 @@
 ##############################################################################
 # Imports
 ##############################################################################
-
-from rocon_qt_teleop.teleop import *
+from .resource_chooser import QResourceChooser
+from .video_teleop import QVideoTeleop

@@ -18,8 +18,7 @@ import threading
 # RobotInterface
 ##############################################################################
 
-
-class TeleopInterface(QObject):
+class VideoTeleopInterface(QObject):
 
     cmd_vel_publishing_interval = 0.1  # seconds
 
@@ -47,7 +46,7 @@ class TeleopInterface(QObject):
         self._lock = threading.Lock()
         self._cmd_vel = geometry_msgs.Twist()
         self._cmd_vel.linear.x = self._cmd_vel.angular.z = 0.0
-        super(TeleopInterface, self).__init__()
+        super(VideoTeleopInterface, self).__init__()
         self._cmd_vel_publisher = None
         self._compressed_image_subscriber = None
         if image_received_slot is not None:
@@ -55,7 +54,7 @@ class TeleopInterface(QObject):
         self._cmd_vel_publisher = rospy.Publisher(cmd_vel_topic_name, geometry_msgs.Twist, latch=True, queue_size=10)
         self._compressed_image_subscriber = rospy.Subscriber(compressed_image_topic_name, sensor_msgs.CompressedImage, self._ros_subscriber_image_callback)
         self._cmd_vel_publisher_timer = \
-            rospy.Timer(rospy.Duration(TeleopInterface.cmd_vel_publishing_interval),
+            rospy.Timer(rospy.Duration(VideoTeleopInterface.cmd_vel_publishing_interval),
                         self._publish_cmd_vel
                         )
 
