@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="MakeAMap" type="concert_qt_make_a_map.make_a_map.MakeAMap" base_class_type="rqt_gui_py::Plugin">
+    <description>
+        Select a robot and SLAM in the concert.
+    </description>
+    <qtgui>
+      <group>
+        <label>Concert</label>
+        <icon type="theme">folder</icon>
+        <statustip>Concert plugins for ROCON.</statustip>
+      </group>
+      <label>Make A Map</label>
+      <icon type="file">./resources/images/rocon_logo.png</icon>
+      <statustip>Select a robot and SLAM in the concert.</statustip>
+    </qtgui>
+  </class>
+</library>

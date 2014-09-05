@@ -9,3 +9,4 @@
 
 from .video_teleop_interface import VideoTeleopInterface
 from .resource_chooser_interface import ResourceChooserInterface
+from .slam_interface import SlamInterface
