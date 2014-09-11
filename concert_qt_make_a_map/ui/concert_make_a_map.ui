@@ -26,10 +26,34 @@
    <item row="1" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QResourceChooser" name="resource_chooser_widget" native="true"/>
+      <widget class="QResourceChooser" name="resource_chooser_widget" native="true">
+       <property name="maximumSize">
+        <size>
+         <width>250</width>
+         <height>16777215</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item>
-      <widget class="QVideoTeleop" name="video_teleop_widget" native="true"/>
+      <widget class="QMapView" name="slam_view_widget">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QVideoTeleop" name="video_teleop_widget" native="true">
+       <property name="maximumSize">
+        <size>
+         <width>300</width>
+         <height>16777215</height>
+        </size>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -40,6 +64,11 @@
    <class>QResourceChooser</class>
    <extends>QWidget</extends>
    <header>rocon_qt_library.widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>QMapView</class>
+   <extends>QGraphicsView</extends>
+   <header>rocon_qt_library.views</header>
   </customwidget>
   <customwidget>
    <class>QVideoTeleop</class>

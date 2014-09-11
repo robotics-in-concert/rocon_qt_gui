@@ -18,51 +18,49 @@ from python_qt_binding.QtGui import QWidget
 import rospkg
 import rospy
 from rocon_qt_library.widgets import QResourceChooser, QVideoTeleop
-from rocon_qt_library.interfaces import ResourceChooserInterface
+from rocon_qt_library.views import QMapView
+from rocon_qt_library.interfaces import ResourceChooserInterface, SlamInterface
 
 from qt_gui.plugin import Plugin
 
 ##############################################################################
-# Teleop App
+# Make a Map App
 ##############################################################################
 
 
-class Teleop(Plugin):
+class MakeAMap(Plugin):
     def __init__(self, context):
         self._lock = threading.Lock()
         self._context = context
-        super(Teleop, self).__init__(context)
+        super(MakeAMap, self).__init__(context)
         # I'd like these to be also configurable via the gui
         self.initialised = False
         self.is_setting_dlg_live = False
 
         self._widget = QWidget()
         rospack = rospkg.RosPack()
-        ui_file = os.path.join(rospack.get_path('concert_qt_teleop'), 'ui', 'concert_teleop.ui')
-        loadUi(ui_file, self._widget, {'QResourceChooser' : QResourceChooser, 'QVideoTeleop' : QVideoTeleop})
+        ui_file = os.path.join(rospack.get_path('concert_qt_make_a_map'), 'ui', 'concert_make_a_map.ui')
+        loadUi(ui_file, self._widget, {'QResourceChooser' : QResourceChooser, 'QVideoTeleop' : QVideoTeleop, 'QMapView' : QMapView})
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
         ##### Setting Resource Chooser Interface ####
         self._set_resource_chooser_interface()
+        #self._set_slam_view_interface()
 
         context.add_widget(self._widget)
-        self.setObjectName('Teleop')
+        self.setObjectName('Make a Map')
 
         self._default_cmd_vel_topic = '/teleop/cmd_vel'
         self._default_compressed_image_topic = '/teleop/compressed_image'
-
-    def shutdown(self):
-        with self._lock: 
-            if self._teleop_interface:
-                self._teleop_interface.shutdown()
-                self._teleop_interface = None
+        self._default_map_topic = 'map'
+        self._default_scan_topic = '/make_a_map/scan'
 
     def _set_resource_chooser_interface(self):
         capture_timeout = rospy.get_param('~capture_timeout', 15.0)
-        available_resource_topic = '/services/teleop/available_teleops' 
-        capture_resource_pair_topic = '/services/teleop/capture_teleop'
-        capture_resource_callbacks = [self._widget.resource_chooser_widget.capture_resource_callback, self._init_teleop_interface]
+        available_resource_topic = '/services/makeamap/available_make_a_map' 
+        capture_resource_pair_topic = '/services/makeamap/capture_make_a_map'
+        capture_resource_callbacks = [self._widget.resource_chooser_widget.capture_resource_callback, self._init_teleop_interface, self._set_slam_view_interface]
         release_resource_callbacks = [self._widget.resource_chooser_widget.release_resource_callback, self._uninit_teleop_interface]
         error_resource_callbacks   = [self._widget.resource_chooser_widget.error_resource_callback]
         refresh_resource_list_callbacks = [self._widget.resource_chooser_widget.refresh_resource_list_callback]
@@ -72,7 +70,6 @@ class Teleop(Plugin):
         capture_event_callbacks = [self._resource_chooser_interface.capture_resource]
         release_event_callbacks = [self._resource_chooser_interface.release_resource]
         self._widget.resource_chooser_widget.set_callbacks(capture_event_callbacks, release_event_callbacks)
-
 
     def _init_teleop_interface(self, uri, msg):
         if msg.result:
@@ -92,3 +89,9 @@ class Teleop(Plugin):
         if msg.result:
             with self._lock:    
                 self._widget.video_teleop_widget.reset()
+
+    def _set_slam_view_interface(self, uri, msg):
+        if msg.result:
+            map_slot = self._widget.slam_view_widget.map_cb
+            map_topic = self._get_remapped_topic(self._default_map_topic, msg.remappings)
+            self._slam_interface = SlamInterface(map_received_slot=map_slot, map_topic=map_topic)

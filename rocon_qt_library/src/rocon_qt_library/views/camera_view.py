@@ -9,7 +9,7 @@
 
 from __future__ import division
 
-from python_qt_binding.QtCore import Qt, pyqtSlot, QRectF  # QPointF, QRectF, 
+from python_qt_binding.QtCore import Qt, SIGNAL, pyqtSlot, QRectF  # QPointF, QRectF, 
 from python_qt_binding.QtGui import QGraphicsView, QGraphicsScene, QPixmap
 
 import os
@@ -33,6 +33,8 @@ class QCameraView(QGraphicsView):
         self.setScene(self.scene)
         self._load_default_image()
 
+        self.connect(self, SIGNAL("load_default_image"), self._load_default_image)
+
     def _load_default_image(self):
         joystick_icon = os.path.join(rospkg.RosPack().get_path('rocon_bubble_icons'), 'icons', 'joystick.png')
         pixmap = QPixmap(joystick_icon, format="png")
@@ -40,6 +42,9 @@ class QCameraView(QGraphicsView):
         self.scene.update()
         self.fitInView(QRectF(0, 0, self.scene.width(), self.scene.height()), Qt.KeepAspectRatio)
 
+    def load_default_image(self): 
+        self.emit(SIGNAL("load_default_image"))
+        
     @pyqtSlot(sensor_msgs.CompressedImage, name='image_received')
     def on_compressed_image_received(self, image):
         '''
