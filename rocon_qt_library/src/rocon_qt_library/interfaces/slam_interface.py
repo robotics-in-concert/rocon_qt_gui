@@ -39,18 +39,26 @@ import tf
 from tf.transformations import quaternion_from_euler
 
 import nav_msgs.msg as nav_msgs
+import sensor_msgs.msg as sensor_msgs
+import geometry_msgs.msg as geometry_msgs
 
 from python_qt_binding.QtCore import Signal, QObject, pyqtSlot
 
 class SlamInterface(QObject):
 
     map_received = Signal(nav_msgs.OccupancyGrid, name='map_received')
+    scan_received = Signal(sensor_msgs.LaserScan, name='scan_received')
+    robot_pose_received = Signal(geometry_msgs.PoseStamped, name='robot_pose_received')
 
-    def __init__(self, map_received_slot=None, map_topic='map', polygons=['move_base/local_costmap/obstacle_layer_footprint/footprint_stamped'], _tf=None):
+    def __init__(self, map_received_slot=None, map_topic='map', scan_received_slot=None, scan_topic='scan', robot_pose_received_slot=None, robot_pose_topic='robot_pose', _tf=None):
         super(SlamInterface, self).__init__()
 
         if map_received_slot is not None:
             self.map_received.connect(map_received_slot)
+        if scan_received_slot is not None:
+            self.scan_received.connect(scan_received_slot)
+        if robot_pose_received_slot is not None:
+            self.robot_pose_received.connect(robot_pose_received_slot)
         self.destroyed.connect(self.close)
 
         if _tf is None:
@@ -58,7 +66,8 @@ class SlamInterface(QObject):
         else:
             self._tf = _tf
         self.sub_map = rospy.Subscriber(map_topic, nav_msgs.OccupancyGrid, self.map_cb)
-
+        self.sub_scan = rospy.Subscriber(scan_topic, sensor_msgs.LaserScan, self.scan_cb)
+        self.sub_robot_pose =rospy.Subscriber(robot_pose_topic, geometry_msgs.PoseStamped, self.robot_pose_cb)
 
     def map_cb(self, msg):
         """
@@ -68,16 +77,27 @@ class SlamInterface(QObject):
         """
         self.map_received.emit(msg)
 
-    def close(self):
-        if self.map_sub:
-            self.map_sub.unregister()
-        for p in self._paths.itervalues():
-            if p.sub:
-                p.sub.unregister()
+    def scan_cb(self, msg):
+        """
+        Update the scan
+        """
+        self.scan_received.emit(msg)
 
-        for p in self._polygons.itervalues():
-            if p.sub:
-                p.sub.unregister()
+    def robot_pose_cb(self, msg):
+        """
+        Update the robot_pose
+        """
+        self.robot_pose_received.emit(msg)
+
+    def close(self):
+        if self.sub_map:
+            self.sub_map.unregister()
+
+        if self.sub_scan:
+            self.sub_scan.unregister()
+        
+        if self.sub_robot_pose:
+            self.sub_robot_pose.unregister()
 
         super(SlamInterface, self).close()
 

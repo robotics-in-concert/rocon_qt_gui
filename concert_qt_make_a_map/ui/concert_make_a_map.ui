@@ -36,7 +36,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QMapView" name="slam_view_widget">
+      <widget class="QSlamView" name="slam_view_widget">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -66,7 +66,7 @@
    <header>rocon_qt_library.widgets</header>
   </customwidget>
   <customwidget>
-   <class>QMapView</class>
+   <class>QSlamView</class>
    <extends>QGraphicsView</extends>
    <header>rocon_qt_library.views</header>
   </customwidget>

@@ -18,7 +18,7 @@ from python_qt_binding.QtGui import QWidget
 import rospkg
 import rospy
 from rocon_qt_library.widgets import QResourceChooser, QVideoTeleop
-from rocon_qt_library.views import QMapView
+from rocon_qt_library.views import QSlamView
 from rocon_qt_library.interfaces import ResourceChooserInterface, SlamInterface
 
 from qt_gui.plugin import Plugin
@@ -40,7 +40,7 @@ class MakeAMap(Plugin):
         self._widget = QWidget()
         rospack = rospkg.RosPack()
         ui_file = os.path.join(rospack.get_path('concert_qt_make_a_map'), 'ui', 'concert_make_a_map.ui')
-        loadUi(ui_file, self._widget, {'QResourceChooser' : QResourceChooser, 'QVideoTeleop' : QVideoTeleop, 'QMapView' : QMapView})
+        loadUi(ui_file, self._widget, {'QResourceChooser' : QResourceChooser, 'QVideoTeleop' : QVideoTeleop, 'QSlamView' : QSlamView})
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
@@ -55,6 +55,7 @@ class MakeAMap(Plugin):
         self._default_compressed_image_topic = '/teleop/compressed_image'
         self._default_map_topic = 'map'
         self._default_scan_topic = '/make_a_map/scan'
+        self._default_robot_pose = 'robot_pose'
 
     def _set_resource_chooser_interface(self):
         capture_timeout = rospy.get_param('~capture_timeout', 15.0)
@@ -93,5 +94,11 @@ class MakeAMap(Plugin):
     def _set_slam_view_interface(self, uri, msg):
         if msg.result:
             map_slot = self._widget.slam_view_widget.map_cb
+            scan_slot = self._widget.slam_view_widget.scan_cb
+            robot_pose_slot = self._widget.slam_view_widget.robot_pose_cb
+
             map_topic = self._get_remapped_topic(self._default_map_topic, msg.remappings)
-            self._slam_interface = SlamInterface(map_received_slot=map_slot, map_topic=map_topic)
+            scan_topic = self._get_remapped_topic(self._default_scan_topic, msg.remappings)
+            robot_pose_topic = self._get_remapped_topic(self._default_robot_pose, msg.remappings)
+
+            self._slam_interface = SlamInterface(map_received_slot=map_slot, map_topic=map_topic, scan_received_slot=scan_slot, scan_topic=scan_topic, robot_pose_received_slot=robot_pose_slot, robot_pose_topic=robot_pose_topic)
