@@ -41,11 +41,12 @@ from math import sqrt, atan, pi, degrees, cos, sin
 import nav_msgs.msg as nav_msgs
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
-
-from python_qt_binding.QtCore import Signal, Slot,  pyqtSlot, Qt, SIGNAL , QPointF
+import rocon_qt_library.util as util
+from python_qt_binding.QtCore import Signal, Slot,  pyqtSlot, Qt, SIGNAL, QPointF
 from python_qt_binding.QtGui import QPixmap, QImage, QGraphicsView, QGraphicsScene, qRgb, QPen, QBrush, QColor, QPolygonF, QMatrix
 
 from rqt_py_common.topic_helpers import get_field_type
+
 
 class QSlamView(QGraphicsView):
     map_changed = Signal()
@@ -64,7 +65,7 @@ class QSlamView(QGraphicsView):
 
         self.destroyed.connect(self.close)
 
-        #ScrollHandDrag
+        # ScrollHandDrag
         self.setDragMode(QGraphicsView.ScrollHandDrag)
 
         self.w = 0
@@ -83,21 +84,23 @@ class QSlamView(QGraphicsView):
         self._robot_polygon = QPolygonF([QPointF(-4, 4), QPointF(-4, -4), QPointF(12, 0)])
 
         self.setScene(self._scene)
+
     def add_dragdrop(self, item):
         # Add drag and drop functionality to all the items in the view
-        def c(x, e): 
+        def c(x, e):
             self.dragEnterEvent(e)
-        def d(x, e): 
+
+        def d(x, e):
             self.dropEvent(e)
         item.setAcceptDrops(True)
-        item.dragEnterEvent = c 
-        item.dropEvent = d 
+        item.dragEnterEvent = c
+        item.dropEvent = d
 
-    def dragEnterEvent(self, e): 
+    def dragEnterEvent(self, e):
         if self._parent:
             self._parent.dragEnterEvent(e)
 
-    def dropEvent(self, e): 
+    def dropEvent(self, e):
         if self._parent:
             self._parent.dropEvent(e)
 
@@ -108,7 +111,7 @@ class QSlamView(QGraphicsView):
         else:
             self.scale(0.85, 0.85)
 
-    @pyqtSlot(nav_msgs.OccupancyGrid, name='map_received') 
+    @pyqtSlot(nav_msgs.OccupancyGrid, name='map_received')
     def map_cb(self, msg):
         self.map_frame = msg.header.frame_id
         self.resolution = msg.info.resolution
@@ -121,50 +124,51 @@ class QSlamView(QGraphicsView):
         if self.w % 4:
             e = numpy.empty((self.h, 4 - self.w % 4), dtype=a.dtype, order='C')
             a = numpy.append(a, e, axis=1)
-        image = QImage(a.reshape((a.shape[0] * a.shape[1])), self.w, self.h, QImage.Format_Indexed8)
+        image = QImage(
+            a.reshape((a.shape[0] * a.shape[1])), self.w, self.h, QImage.Format_Indexed8)
 
         for i in reversed(range(101)):
-            image.setColor(100 - i, qRgb(i* 2.55, i * 2.55, i * 2.55))
+            image.setColor(100 - i, qRgb(i * 2.55, i * 2.55, i * 2.55))
         image.setColor(101, qRgb(255, 0, 0))  # not used indices
         image.setColor(255, qRgb(200, 200, 200))  # color for unknown value -1
         self._map = image
         self.setSceneRect(0, 0, self.w, self.h)
         self.map_changed.emit()
-    
+
     def laser_scan_to_point_cloud(self, msg):
         point_cloud = sensor_msgs.PointCloud()
         point_cloud.header.frame_id = msg.header.frame_id
 
         for idx in range(0, len(msg.ranges), 10):
             point = geometry_msgs.Point32()
-            a = msg.angle_min + msg.angle_increment*idx
-            point.x = msg.ranges[idx]*cos(a)
-            point.y = msg.ranges[idx]*sin(a)
+            a = msg.angle_min + msg.angle_increment * idx
+            point.x = msg.ranges[idx] * cos(a)
+            point.y = msg.ranges[idx] * sin(a)
             point_cloud.points.append(point)
         return point_cloud
 
-    @pyqtSlot(sensor_msgs.LaserScan, name='scan_received') 
-    def scan_cb(self, msg): 
+    @pyqtSlot(sensor_msgs.LaserScan, name='scan_received')
+    def scan_cb(self, msg):
         if not self._map:
             return
         trans_ptc = None
-
         if not (msg.header.frame_id == self.map_frame or msg.header.frame_id == ''):
             try:
                 self._tf.waitForTransform(msg.header.frame_id, self.map_frame, rospy.Time(), rospy.Duration(10))
-                point_cloud = self.laser_scan_to_point_cloud(msg)
-                trans_ptc = self._tf.transformPointCloud(self.map_frame, point_cloud)
+                point_cloud = util.laser_scan_to_point_cloud(msg)
+                trans_ptc = self._tf.transformPointCloud(
+                    self.map_frame, point_cloud)
             except tf.Exception:
                 rospy.logerr("TF Error")
                 trans_ptc = None
         else:
-            trans_ptc = self.laser_scan_to_point_cloud(msg)
+            trans_ptc = util.laser_scan_to_point_cloud(msg)
 
         if trans_ptc:
             self._scan = trans_ptc
             self.scan_changed.emit()
 
-    @pyqtSlot(geometry_msgs.PoseStamped, name='robot_pose_received') 
+    @pyqtSlot(geometry_msgs.PoseStamped, name='robot_pose_received')
     def robot_pose_cb(self, msg):
         if not self._map:
             return
@@ -207,9 +211,10 @@ class QSlamView(QGraphicsView):
                 old_items.append(item)
 
         for pt in self._scan.points:
-            dx = (pt.x - self.ori_x)/self.resolution
-            dy = (pt.y - self.ori_y)/self.resolution
-            scan_item = self._scene.addRect(dx, dy, 1, 1, pen = QPen(QColor(0,255,0)), brush = QBrush(QColor(0,255,0)))
+            dx = (pt.x - self.ori_x) / self.resolution
+            dy = (pt.y - self.ori_y) / self.resolution
+            scan_item = self._scene.addRect(dx, dy, 1, 1, pen=QPen(
+                QColor(0, 255, 0)), brush=QBrush(QColor(0, 255, 0)))
             # Everything must be mirrored
             self._mirror(scan_item)
             self._scan_items.append(scan_item)
@@ -223,14 +228,14 @@ class QSlamView(QGraphicsView):
         old_item = None
         if self._robot_pose_item:
             old_item = self._robot_pose_item
-        dx = (self._robot_pose.pose.position.x - self.ori_x)/self.resolution
-        dy = (self._robot_pose.pose.position.y - self.ori_y)/self.resolution
+        dx = (self._robot_pose.pose.position.x - self.ori_x) / self.resolution
+        dy = (self._robot_pose.pose.position.y - self.ori_y) / self.resolution
         (droll, dpitch, dyaw) = tf.transformations.euler_from_quaternion([self._robot_pose.pose.orientation.x,
-                                                                      self._robot_pose.pose.orientation.y,
-                                                                      self._robot_pose.pose.orientation.z,
-                                                                      self._robot_pose.pose.orientation.w])
+                                                                         self._robot_pose.pose.orientation.y,
+                                                                         self._robot_pose.pose.orientation.z,
+                                                                         self._robot_pose.pose.orientation.w])
         translated_robot_pose = QMatrix().rotate(degrees(dyaw)).map(self._robot_polygon).translated(dx, dy)
-        self._robot_pose_item = self._scene.addPolygon(translated_robot_pose, pen = QPen(QColor(255,0,0)), brush = QBrush(QColor(255,0,0)))
+        self._robot_pose_item = self._scene.addPolygon(translated_robot_pose, pen=QPen(QColor(255, 0, 0)), brush=QBrush(QColor(255, 0, 0)))
         # Everything must be mirrored
         self._mirror(self._robot_pose_item)
         if old_item:
@@ -239,7 +244,6 @@ class QSlamView(QGraphicsView):
     def _mirror(self, item):
         item.scale(-1, 1)
         item.translate(-self.w, 0)
-        pass
 
     def save_settings(self, plugin_settings, instance_settings):
         # TODO add any settings to be saved
