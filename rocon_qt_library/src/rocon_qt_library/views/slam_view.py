@@ -82,9 +82,6 @@ class QSlamView(QGraphicsView):
         self._colors = [(238, 34, 116), (68, 134, 252), (236, 228, 46), (102, 224, 18), (242, 156, 6), (240, 64, 10), (196, 30, 250)]
         self._robot_polygon = QPolygonF([QPointF(-4, 4), QPointF(-4, -4), QPointF(12, 0)])
 
-        self._consine = []
-        self._sine = []
-
         self.setScene(self._scene)
     def add_dragdrop(self, item):
         # Add drag and drop functionality to all the items in the view
