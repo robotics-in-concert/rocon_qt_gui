@@ -56,6 +56,7 @@ class MakeAMap(Plugin):
         self._default_map_topic = 'map'
         self._default_scan_topic = '/make_a_map/scan'
         self._default_robot_pose = 'robot_pose'
+        self._default_save_map = 'save_map'
 
     def _set_resource_chooser_interface(self):
         capture_timeout = rospy.get_param('~capture_timeout', 15.0)
@@ -74,13 +75,13 @@ class MakeAMap(Plugin):
 
     def _init_teleop_interface(self, uri, msg):
         if msg.result:
-            cmd_vel_topic = self._get_remapped_topic(self._default_cmd_vel_topic, msg.remappings)
-            compressed_image_topic = self._get_remapped_topic(self._default_compressed_image_topic, msg.remappings)
+            cmd_vel_topic = self._get_remaps(self._default_cmd_vel_topic, msg.remappings)
+            compressed_image_topic = self._get_remaps(self._default_compressed_image_topic, msg.remappings)
 
             with self._lock:
                 self._widget.video_teleop_widget.init_teleop_interface(cmd_vel_topic_name=cmd_vel_topic, compressed_image_topic_name=compressed_image_topic)
 
-    def _get_remapped_topic(self, remap_from, remappings):
+    def _get_remaps(self, remap_from, remappings):
         for r in remappings:
             if r.remap_from == remap_from:
                 return r.remap_to
@@ -97,8 +98,9 @@ class MakeAMap(Plugin):
             scan_slot = self._widget.slam_view_widget.scan_cb
             robot_pose_slot = self._widget.slam_view_widget.robot_pose_cb
 
-            map_topic = self._get_remapped_topic(self._default_map_topic, msg.remappings)
-            scan_topic = self._get_remapped_topic(self._default_scan_topic, msg.remappings)
-            robot_pose_topic = self._get_remapped_topic(self._default_robot_pose, msg.remappings)
+            map_topic = self._get_remaps(self._default_map_topic, msg.remappings)
+            scan_topic = self._get_remaps(self._default_scan_topic, msg.remappings)
+            robot_pose_topic = self._get_remaps(self._default_robot_pose, msg.remappings)
+            save_map_srv = self._get_remaps(self._default_save_map, msg.remappings)
 
             self._slam_interface = SlamInterface(map_received_slot=map_slot, map_topic=map_topic, scan_received_slot=scan_slot, scan_topic=scan_topic, robot_pose_received_slot=robot_pose_slot, robot_pose_topic=robot_pose_topic)
