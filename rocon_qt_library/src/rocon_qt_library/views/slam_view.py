@@ -41,7 +41,7 @@ from math import sqrt, atan, pi, degrees, cos, sin
 import nav_msgs.msg as nav_msgs
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
-import rocon_qt_library.util as util
+import rocon_qt_library.utils as utils
 from python_qt_binding.QtCore import Signal, Slot,  pyqtSlot, Qt, SIGNAL, QPointF
 from python_qt_binding.QtGui import QPixmap, QImage, QGraphicsView, QGraphicsScene, qRgb, QPen, QBrush, QColor, QPolygonF, QMatrix
 
@@ -155,14 +155,14 @@ class QSlamView(QGraphicsView):
         if not (msg.header.frame_id == self.map_frame or msg.header.frame_id == ''):
             try:
                 self._tf.waitForTransform(msg.header.frame_id, self.map_frame, rospy.Time(), rospy.Duration(10))
-                point_cloud = util.laser_scan_to_point_cloud(msg)
+                point_cloud = utils.laser_scan_to_point_cloud(msg)
                 trans_ptc = self._tf.transformPointCloud(
                     self.map_frame, point_cloud)
             except tf.Exception:
                 rospy.logerr("TF Error")
                 trans_ptc = None
         else:
-            trans_ptc = util.laser_scan_to_point_cloud(msg)
+            trans_ptc = utils.laser_scan_to_point_cloud(msg)
 
         if trans_ptc:
             self._scan = trans_ptc

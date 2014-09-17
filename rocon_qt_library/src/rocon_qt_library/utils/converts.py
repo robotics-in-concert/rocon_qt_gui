@@ -11,7 +11,7 @@ import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
 
 ##############################################################################
-# Util Function
+# converter Function
 ##############################################################################
 def laser_scan_to_point_cloud(laser_scan_msg):
     point_cloud = sensor_msgs.PointCloud()
