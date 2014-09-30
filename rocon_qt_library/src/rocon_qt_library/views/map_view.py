@@ -52,7 +52,6 @@ class QMapView(QGraphicsView):
     def __init__(self, parent=None):
         super(QMapView, self).__init__()
         self._parent = parent
-        self._tf = tf.TransformListener()
         self._scene = QGraphicsScene()
 
         self.map_changed.connect(self._update_map)
