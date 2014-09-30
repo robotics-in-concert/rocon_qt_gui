@@ -3,9 +3,9 @@
 # License: BSD
 #   https://raw.github.com/robotics-in-concert/rocon_qt_gui/license/LICENSE
 #
-##############################################################################
+#
 # Imports
-##############################################################################
+#
 from python_qt_binding.QtCore import QObject
 
 import rospy
@@ -17,10 +17,10 @@ from rocon_std_msgs.msg import StringArray
 
 
 class ResourceChooserInterface(QObject):
-    
+
     def __init__(self, capture_timeout=15.0, available_resource_topic='avaialble_resource', capture_resource_pair_topic='capture_resource', capture_resource_callbacks=[], release_resource_callbacks=[], error_resource_callbacks=[], refresh_resource_list_callbacks=[]):
         super(ResourceChooserInterface, self).__init__()
-        self._capture_timeout = capture_timeout 
+        self._capture_timeout = capture_timeout
         self._resource_list = []
         self._service_pair_msg_q = []
 
@@ -38,7 +38,7 @@ class ResourceChooserInterface(QObject):
     def _init_ros_api(self):
         self._sub_avail_resource = rospy.Subscriber(self.available_resource_topic, StringArray, self._update_resource_list)
         self._pair_capture_resource = rocon_python_comms.ServicePairClient(self.capture_resource_pair_topic, concert_service_msgs.CaptureResourcePair)
-        
+
     def capture_resource(self, uri):
         """
         Initiate a request to capture an available robot.
@@ -105,8 +105,7 @@ class ResourceChooserInterface(QObject):
             for callback in self._callback['release']:
                 callback(self.captured_resource_uri, msg)
 
-
-    def _update_resource_list(self, msg): 
+    def _update_resource_list(self, msg):
         ''' 
         Receives available resource list from resource pimp.
         '''

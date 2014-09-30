@@ -45,24 +45,24 @@ from python_qt_binding.QtGui import QPixmap, QImage, QGraphicsView, QGraphicsSce
 
 from rqt_py_common.topic_helpers import get_field_type
 
+
 class QMapView(QGraphicsView):
     map_changed = Signal()
 
     def __init__(self, parent=None):
         super(QMapView, self).__init__()
         self._parent = parent
-        self._tf = tf.TransformListener()
         self._scene = QGraphicsScene()
 
         self.map_changed.connect(self._update_map)
         self.destroyed.connect(self.close)
 
-        #ScrollHandDrag
+        # ScrollHandDrag
         self.setDragMode(QGraphicsView.ScrollHandDrag)
 
-        self.w = 0
-        self.h = 0
         self._map = None
+        self.w = 0
+        self.h = 0        
         self._map_item = {}
 
         self._polygons = {}
@@ -72,19 +72,20 @@ class QMapView(QGraphicsView):
 
     def add_dragdrop(self, item):
         # Add drag and drop functionality to all the items in the view
-        def c(x, e): 
+        def c(x, e):
             self.dragEnterEvent(e)
-        def d(x, e): 
+
+        def d(x, e):
             self.dropEvent(e)
         item.setAcceptDrops(True)
-        item.dragEnterEvent = c 
-        item.dropEvent = d 
+        item.dragEnterEvent = c
+        item.dropEvent = d
 
-    def dragEnterEvent(self, e): 
+    def dragEnterEvent(self, e):
         if self._parent:
             self._parent.dragEnterEvent(e)
 
-    def dropEvent(self, e): 
+    def dropEvent(self, e):
         if self._parent:
             self._parent.dropEvent(e)
 
@@ -95,7 +96,7 @@ class QMapView(QGraphicsView):
         else:
             self.scale(0.85, 0.85)
 
-    @pyqtSlot(nav_msgs.OccupancyGrid, name='map_received') 
+    @pyqtSlot(nav_msgs.OccupancyGrid, name='map_received')
     def map_cb(self, msg):
         self.resolution = msg.info.resolution
         self.w = msg.info.width
@@ -109,7 +110,7 @@ class QMapView(QGraphicsView):
         image = QImage(a.reshape((a.shape[0] * a.shape[1])), self.w, self.h, QImage.Format_Indexed8)
 
         for i in reversed(range(101)):
-            image.setColor(100 - i, qRgb(i* 2.55, i * 2.55, i * 2.55))
+            image.setColor(100 - i, qRgb(i * 2.55, i * 2.55, i * 2.55))
         image.setColor(101, qRgb(255, 0, 0))  # not used indices
         image.setColor(255, qRgb(200, 200, 200))  # color for unknown value -1
         self._map = image

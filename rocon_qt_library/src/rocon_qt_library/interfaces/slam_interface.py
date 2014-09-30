@@ -44,14 +44,14 @@ import geometry_msgs.msg as geometry_msgs
 
 from python_qt_binding.QtCore import Signal, QObject, pyqtSlot
 
-class SlamInterface(QObject):
+class SlamWidgetInterface(QObject):
 
     map_received = Signal(nav_msgs.OccupancyGrid, name='map_received')
     scan_received = Signal(sensor_msgs.LaserScan, name='scan_received')
     robot_pose_received = Signal(geometry_msgs.PoseStamped, name='robot_pose_received')
 
     def __init__(self, map_received_slot=None, map_topic='map', scan_received_slot=None, scan_topic='scan', robot_pose_received_slot=None, robot_pose_topic='robot_pose', _tf=None):
-        super(SlamInterface, self).__init__()
+        super(SlamWidgetInterface, self).__init__()
 
         if map_received_slot is not None:
             self.map_received.connect(map_received_slot)
@@ -99,7 +99,7 @@ class SlamInterface(QObject):
         if self.sub_robot_pose:
             self.sub_robot_pose.unregister()
 
-        super(SlamInterface, self).close()
+        super(SlamWidgetInterface, self).close()
 
     def save_settings(self, plugin_settings, instance_settings):
         # TODO add any settings to be saved
