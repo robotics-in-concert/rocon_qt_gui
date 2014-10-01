@@ -9,3 +9,4 @@
 from .resource_chooser import QResourceChooser
 from .video_teleop import QVideoTeleop
 from .slam_widget import QSlamWidget
+from .map_annotation import QMapAnnotation

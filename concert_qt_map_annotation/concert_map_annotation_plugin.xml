@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="MapAnnotation" type="concert_qt_map_annotation.map_annotation.MapAnnotation" base_class_type="rqt_gui_py::Plugin">
+    <description>
+        Annotate semantic information on saved map.
+    </description>
+    <qtgui>
+      <group>
+        <label>Concert</label>
+        <icon type="theme">folder</icon>
+        <statustip>Concert plugins for ROCON.</statustip>
+      </group>
+      <label>Map Annotation</label>
+      <icon type="file">./resources/images/rocon_logo.png</icon>
+      <statustip>Annotate semantic information on saved map.</statustip>
+    </qtgui>
+  </class>
+</library>
