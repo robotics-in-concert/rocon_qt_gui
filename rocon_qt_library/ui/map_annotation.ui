@@ -86,12 +86,12 @@
         <widget class="QLabel" name="label_5">
          <property name="maximumSize">
           <size>
-           <width>45</width>
+           <width>75</width>
            <height>25</height>
           </size>
          </property>
          <property name="text">
-          <string>radius:</string>
+          <string>radius [m]:</string>
          </property>
         </widget>
        </item>
@@ -99,12 +99,12 @@
         <widget class="QLabel" name="label">
          <property name="maximumSize">
           <size>
-           <width>45</width>
+           <width>75</width>
            <height>25</height>
           </size>
          </property>
          <property name="text">
-          <string>height:</string>
+          <string>height [m]:</string>
          </property>
         </widget>
        </item>
@@ -128,7 +128,7 @@
         <widget class="QLabel" name="label_2">
          <property name="maximumSize">
           <size>
-           <width>45</width>
+           <width>75</width>
            <height>25</height>
           </size>
          </property>
@@ -157,12 +157,12 @@
         <widget class="QLabel" name="label_4">
          <property name="maximumSize">
           <size>
-           <width>45</width>
+           <width>75</width>
            <height>25</height>
           </size>
          </property>
          <property name="text">
-          <string>x:</string>
+          <string>x [m]:</string>
          </property>
         </widget>
        </item>
@@ -170,12 +170,12 @@
         <widget class="QLabel" name="label_3">
          <property name="maximumSize">
           <size>
-           <width>45</width>
+           <width>75</width>
            <height>25</height>
           </size>
          </property>
          <property name="text">
-          <string>y:</string>
+          <string>y [m]:</string>
          </property>
         </widget>
        </item>
@@ -231,12 +231,12 @@
         <widget class="QLabel" name="label_6">
          <property name="maximumSize">
           <size>
-           <width>45</width>
+           <width>75</width>
            <height>25</height>
           </size>
          </property>
          <property name="text">
-          <string>roll:</string>
+          <string>roll [deg]:</string>
          </property>
         </widget>
        </item>
@@ -244,12 +244,12 @@
         <widget class="QLabel" name="label_7">
          <property name="maximumSize">
           <size>
-           <width>45</width>
+           <width>75</width>
            <height>25</height>
           </size>
          </property>
          <property name="text">
-          <string>pitch:</string>
+          <string>pitch [deg]:</string>
          </property>
         </widget>
        </item>
@@ -257,12 +257,12 @@
         <widget class="QLabel" name="label_8">
          <property name="maximumSize">
           <size>
-           <width>45</width>
+           <width>75</width>
            <height>25</height>
           </size>
          </property>
          <property name="text">
-          <string>yaw:</string>
+          <string>yaw [deg]:</string>
          </property>
         </widget>
        </item>
@@ -327,13 +327,13 @@
       <widget class="QListView" name="listView">
        <property name="minimumSize">
         <size>
-         <width>200</width>
+         <width>400</width>
          <height>0</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>400</width>
          <height>16777215</height>
         </size>
        </property>

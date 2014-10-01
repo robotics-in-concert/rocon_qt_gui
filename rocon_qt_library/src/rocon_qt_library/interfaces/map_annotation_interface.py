@@ -73,6 +73,7 @@ class MapAnnotationInterface(QObject):
         self.h = 0
         self.ori_x = 0
         self.ori_y = 0
+        self.resolution = 1
         self.map_frame = None
 
         self.viz_markers_msg = None
@@ -86,15 +87,15 @@ class MapAnnotationInterface(QObject):
         viz_marker = visualization_msgs.Marker()
         viz_marker.header = self.map_frame
 
-        viz_marker.pose.position.x = (-data['x'] + self.w)*self.resolution + self.ori_x
-        viz_marker.pose.position.y = (data['y'])*self.resolution + self.ori_y
-        viz_marker.pose.position.z = data['height']
+        viz_marker.pose.position.x = (-data['x'] + self.w) * self.resolution + self.ori_x
+        viz_marker.pose.position.y = (data['y']) * self.resolution + self.ori_y
+        viz_marker.pose.position.z = data['height'] * self.resolution
 
         (viz_marker.pose.orientation.x, viz_marker.pose.orientation.y, viz_marker.pose.orientation.z, viz_marker.pose.orientation.w) = tf.transformations.quaternion_from_euler(radians(data['roll']), radians(data['pitch']), radians(data['yaw']))
-        
-        viz_marker.scale.x = data['scale'][0]*self.resolution
-        viz_marker.scale.y = data['scale'][1]*self.resolution
-        viz_marker.scale.z = data['scale'][2]*self.resolution
+
+        viz_marker.scale.x = data['scale'][0] * self.resolution
+        viz_marker.scale.y = data['scale'][1] * self.resolution
+        viz_marker.scale.z = data['scale'][2] * self.resolution
         viz_marker.text = data['name']
         rospy.loginfo(viz_marker)
 
@@ -147,6 +148,7 @@ class MapAnnotationInterface(QObject):
 
             draw_data["map"] = self.map_msg
             draw_data["viz_markers"] = viz_marker_items
+            draw_data["map_resolution"] = self.resolution
             self.scene_update.emit(draw_data)
 
     def map_cb(self, msg):

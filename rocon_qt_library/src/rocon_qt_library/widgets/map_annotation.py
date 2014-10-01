@@ -50,6 +50,7 @@ class QMapAnnotation(QWidget):
         self.annotation_item = None
         self.point_x = 0
         self.point_y = 0
+        self.map_resolution = 1
 
         self._init_events()
 
@@ -68,11 +69,6 @@ class QMapAnnotation(QWidget):
         self.ar_marker_cbox.stateChanged.connect(self._check_ar_marker_cbox)
         self.table_cbox.stateChanged.connect(self._check_table_cbox)
         self.save_annotation_btn.clicked.connect(self._save_annotation)
-
-        self.x_txt.currentCharFormatChanged.connect(self.test)
-
-    def test(self):
-        print 'name changed'
 
     def _save_annotation(self):
         if self.annotation:
@@ -127,7 +123,7 @@ class QMapAnnotation(QWidget):
                 return
 
             self._set_annotating_info(anno_type=anno_type, x=self.point_x, y=self.point_y, radius=1)
-            self.draw_annotations(self.annotation)
+            self._draw_annotations(self.annotation)
 
     def _mouseMoveEvent(self, e):
         if self.ar_marker_cbox.checkState() != Qt.Unchecked or self.table_cbox.checkState() != Qt.Unchecked:
@@ -145,7 +141,7 @@ class QMapAnnotation(QWidget):
             yaw = math.degrees(math.atan2(dy, dx))
 
             self._set_annotating_info(anno_type=anno_type, x=self.point_x, y=self.point_y, radius=dist, yaw=yaw)
-            self.draw_annotations(self.annotation)
+            self._draw_annotations(self.annotation)
 
     def _set_annotating_info(self, anno_type='', name='', x=0, y=0, height=0, radius=1, roll=90, pitch=0, yaw=0):
         self.annotation['type'] = anno_type
@@ -160,21 +156,21 @@ class QMapAnnotation(QWidget):
         self.annotation['name'] = ''
 
         self.name_txt.setText(str(self.annotation['name']))
-        self.x_txt.setText(str(round(self.annotation['x'], 2)))
-        self.y_txt.setText(str(round(self.annotation['y'], 2)))
-        self.height_txt.setText(str(round(self.annotation['height'], 2)))
-        self.radius_txt.setText(str(round(self.annotation['radius'], 2)))
+        self.x_txt.setText(str(round(self.annotation['x'] * self.map_resolution, 3)))
+        self.y_txt.setText(str(round(self.annotation['y'] * self.map_resolution, 3)))
+        self.height_txt.setText(str(round(self.annotation['height'] * self.map_resolution, 3)))
+        self.radius_txt.setText(str(round(self.annotation['radius'] * self.map_resolution, 3)))
         self.roll_txt.setText(str(round(self.annotation['roll'])))
-        self.pitch_txt.setText(str(round(self.annotation['pitch'], 2)))
-        self.yaw_txt.setText(str(round(self.annotation['yaw'], 2)))
+        self.pitch_txt.setText(str(round(self.annotation['pitch'], 3)))
+        self.yaw_txt.setText(str(round(self.annotation['yaw'], 3)))
 
     def _get_annotating_info(self):
 
         self.annotation['name'] = str(self.name_txt.toPlainText())
 
-        self.annotation['x'] = float(self.x_txt.toPlainText())
-        self.annotation['y'] = float(self.y_txt.toPlainText())
-        self.annotation['height'] = float(self.height_txt.toPlainText())
+        self.annotation['x'] = float(self.x_txt.toPlainText()) / self.map_resolution
+        self.annotation['y'] = float(self.y_txt.toPlainText()) / self.map_resolution
+        self.annotation['height'] = float(self.height_txt.toPlainText()) / self.map_resolution
 
         self.annotation['yaw'] = float(self.yaw_txt.toPlainText())
         self.annotation['roll'] = float(self.roll_txt.toPlainText())
@@ -196,8 +192,9 @@ class QMapAnnotation(QWidget):
     def draw_scene(self, data):
         self.draw_map(data['map'])
         self.draw_viz_markers(data['viz_markers'])
+        self.map_resolution = data['map_resolution']
 
-    def draw_annotations(self, data):
+    def _draw_annotations(self, data):
         if not self.annotating:
             return
         old_item = None
