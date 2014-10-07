@@ -110,16 +110,17 @@ class SlamWidgetInterface(QObject):
         """
         scans = []
         trans_ptc = None
-        if not (msg.header.frame_id == self.map_frame or msg.header.frame_id == ''):
-            try:
-                self._tf.waitForTransform(msg.header.frame_id, self.map_frame, rospy.Time(), rospy.Duration(10))
-                point_cloud = utils.laser_scan_to_point_cloud(msg,10)
-                trans_ptc = self._tf.transformPointCloud(self.map_frame, point_cloud)
-            except tf.Exception:
-                rospy.logerr("TF Error")
-                trans_ptc = None
-        else:
-            trans_ptc = utils.laser_scan_to_point_cloud(msg)
+        if self.map_frame:
+            if not (msg.header.frame_id == self.map_frame or msg.header.frame_id == ''):
+                try:
+                    self._tf.waitForTransform(msg.header.frame_id, self.map_frame, rospy.Time(), rospy.Duration(10))
+                    point_cloud = utils.laser_scan_to_point_cloud(msg,10)
+                    trans_ptc = self._tf.transformPointCloud(self.map_frame, point_cloud)
+                except tf.Exception:
+                    rospy.logerr("TF Error")
+                    trans_ptc = None
+            else:
+                trans_ptc = utils.laser_scan_to_point_cloud(msg)
 
         if trans_ptc:
             for pt in trans_ptc.points:
@@ -136,15 +137,16 @@ class SlamWidgetInterface(QObject):
         """
         # Transform everything in to the map frame
         trans_pose = None
-        if not (msg.header.frame_id == self.map_frame or msg.header.frame_id == ''):
-            try:
-                self._tf.waitForTransform(msg.header.frame_id, self.map_frame, rospy.Time(), rospy.Duration(10))
-                trans_pose = self._tf.transformPose(self.map_frame, msg)
-            except tf.Exception:
-                rospy.logerr("TF Error")
-                trans_pose = None
-        else:
-            trans_pose = msg
+        if self.map_frame:
+            if not (msg.header.frame_id == self.map_frame or msg.header.frame_id == ''):
+                try:
+                    self._tf.waitForTransform(msg.header.frame_id, self.map_frame, rospy.Time(), rospy.Duration(10))
+                    trans_pose = self._tf.transformPose(self.map_frame, msg)
+                except tf.Exception:
+                    rospy.logerr("TF Error")
+                    trans_pose = None
+            else:
+                trans_pose = msg
 
         if trans_pose:
             dx = (trans_pose.pose.position.x - self.ori_x) / self.resolution - self.w
