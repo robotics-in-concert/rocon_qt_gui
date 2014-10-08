@@ -13,7 +13,7 @@ from math import sqrt, atan, pi, degrees
 import rospy
 import tf
 from tf.transformations import quaternion_from_euler
-from world_canvas_client import AnnotationCollection
+from world_canvas_client import AnnotationCollection, WCFError
 
 import nav_msgs.msg as nav_msgs
 import sensor_msgs.msg as sensor_msgs
@@ -61,9 +61,9 @@ class SlamWidgetInterface(QObject):
         self.ori_y = 0
         self.map_frame = None
 
-    def save_map(self, world='world', name='map'):
-        ac = AnnotationCollection(world_namespace=self.wc_namespace, world=world)
-        annotation = util.create_map_annotation(world, name, self.map_msg)
+    def save_map(self, world='world', map_name='map'):
+        ac = AnnotationCollection(srv_namespace=self.wc_namespace, world=world)
+        annotation = utils.create_map_annotation(world, map_name, self.map_msg)
         success = True
         message = "Success"
         try:

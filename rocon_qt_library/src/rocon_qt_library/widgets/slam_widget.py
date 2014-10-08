@@ -87,8 +87,9 @@ class QSlamWidget(QWidget):
     
     def save_map(self):
         self.setDisabled(True)
-        name = str(self.map_path_txt.toPlainText())
-        self._callback['save_map'](name)
+        map_name = str(self.map_name_txt.toPlainText())
+        world_name = str(self.world_name_txt.toPlainText())
+        self._callback['save_map'](world=world_name, map_name=map_name)
 
     @pyqtSlot(list)
     def draw_scan(self, data):

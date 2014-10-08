@@ -94,7 +94,6 @@ class MakeAMap(Plugin):
 
     def _set_slam_view_interface(self, uri, msg):
         if msg.result:
-
             scan_slot = self._widget.slam_widget.draw_scan
             robot_pose_slot = self._widget.slam_widget.draw_robot_pose
 

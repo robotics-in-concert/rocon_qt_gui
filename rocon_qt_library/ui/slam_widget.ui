@@ -46,7 +46,7 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QTextEdit" name="map_path_txt">
+      <widget class="QTextEdit" name="map_name_txt">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -67,10 +67,39 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
+     <item row="1" column="1">
+      <widget class="QTextEdit" name="world_name_txt">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="tabChangesFocus">
+        <bool>true</bool>
+       </property>
+       <property name="readOnly">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="map_name_label">
        <property name="text">
         <string>Map Name: </string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="world_name_label">
+       <property name="text">
+        <string>World Name: </string>
        </property>
       </widget>
      </item>

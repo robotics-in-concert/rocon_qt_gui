@@ -27,5 +27,5 @@ def create_map_annotation(world, map_name, map_msg):
     ann.size.z = 0.000001
     ann.pose.header.frame_id = '/map'
     ann.pose.header.stamp = rospy.Time.now()
-    ann.pose.pose.pose = message_converter.convert_dictionary_to_ros_message('geometry_msgs/Pose', map_msg.info.origin)
+    ann.pose.pose.pose = map_msg.info.origin
     return ann
