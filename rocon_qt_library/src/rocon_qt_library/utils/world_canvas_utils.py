@@ -6,7 +6,7 @@
 ##############################################################################
 
 import rospy
-from world_canvas_msgs import Annotation
+from world_canvas_msgs.msg import Annotation
 import unique_id
 from rospy_message_converter import message_converter
 
