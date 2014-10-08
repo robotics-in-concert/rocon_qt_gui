@@ -56,7 +56,7 @@ class MakeAMap(Plugin):
         self._default_map_topic = 'map'
         self._default_scan_topic = '/make_a_map/scan'
         self._default_robot_pose = 'robot_pose'
-        self._default_save_map = 'save_map'
+        self._default_wc_namespace = 'world_canvas'
 
     def _set_resource_chooser_interface(self):
         capture_timeout = rospy.get_param('~capture_timeout', 15.0)
@@ -101,13 +101,12 @@ class MakeAMap(Plugin):
             map_topic = self._get_remaps(self._default_map_topic , msg.remappings)
             scan_topic = self._get_remaps(self._default_scan_topic, msg.remappings)
             robot_pose_topic = self._get_remaps(self._default_robot_pose, msg.remappings)
-
-            save_map_srv = self._get_remaps(self._default_save_map, msg.remappings)
+            wc_namespace = self._get_remaps(self._default_wc_namespace, msg.remappings)
             map_saved_callbacks = [self._widget.slam_widget.map_saved_callback]
             self._widget.slam_widget.init_slam_widget_interface(map_topic=map_topic,
                                                                 scan_received_slot=scan_slot,
                                                                 scan_topic=scan_topic,
                                                                 robot_pose_received_slot=robot_pose_slot,
                                                                 robot_pose_topic=robot_pose_topic,
-                                                                save_map_srv=save_map_srv,
+                                                                wc_namespace=wc_namespace,
                                                                 map_saved_callbacks=map_saved_callbacks)

@@ -8,3 +8,4 @@
 ##############################################################################
 
 from .converts import *
+from .world_canvas_utils import *

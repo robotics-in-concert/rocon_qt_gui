@@ -1,34 +1,10 @@
-# Software License Agreement (BSD License)
+#!/usr/bin/env python
 #
-# Copyright (c) 2012, Willow Garage, Inc.
-# All rights reserved.
+# License: BSD
+#   https://raw.github.com/robotics-in-concert/rocon_qt_gui/license/LICENSE
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of Willow Garage, Inc. nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+
 
 import numpy
 import random
@@ -37,6 +13,7 @@ from math import sqrt, atan, pi, degrees
 import rospy
 import tf
 from tf.transformations import quaternion_from_euler
+from world_canvas_client import AnnotationCollection
 
 import nav_msgs.msg as nav_msgs
 import sensor_msgs.msg as sensor_msgs
@@ -53,7 +30,7 @@ class SlamWidgetInterface(QObject):
     scan_received = Signal(list)
     robot_pose_received = Signal(dict)
 
-    def __init__(self, map_received_slot=None, map_topic='map', scan_received_slot=None, scan_topic='scan', robot_pose_received_slot=None, robot_pose_topic='robot_pose', save_map_srv='save_map', map_saved_callbacks=None,_tf=None):
+    def __init__(self, map_received_slot=None, map_topic='map', scan_received_slot=None, scan_topic='scan', robot_pose_received_slot=None, robot_pose_topic='robot_pose', wc_namespace='world_canvas', map_saved_callbacks=None,_tf=None):
         super(SlamWidgetInterface, self).__init__()
         if map_received_slot is not None:
             self.map_received.connect(map_received_slot)
@@ -72,10 +49,11 @@ class SlamWidgetInterface(QObject):
             self._tf = tf.TransformListener()
         else:
             self._tf = _tf
+        self.wc_namespace = wc_namespace
+        
         self.sub_map = rospy.Subscriber(map_topic, nav_msgs.OccupancyGrid, self.map_cb)
         self.sub_scan = rospy.Subscriber(scan_topic, sensor_msgs.LaserScan, self.scan_cb)
         self.sub_robot_pose = rospy.Subscriber(robot_pose_topic, geometry_msgs.PoseStamped, self.robot_pose_cb)
-        self.srv_save_map = rospy.ServiceProxy(save_map_srv, map_store_srv.SaveMap)
 
         self.w = 0
         self.h = 0
@@ -83,10 +61,20 @@ class SlamWidgetInterface(QObject):
         self.ori_y = 0
         self.map_frame = None
 
-    def save_map(self, name):
-        self.srv_save_map(name)
+    def save_map(self, world='world', name='map'):
+        ac = AnnotationCollection(world_namespace=self.wc_namespace, world=world)
+        annotation = util.create_map_annotation(world, name, self.map_msg)
+        success = True
+        message = "Success"
+        try:
+            ac.add(annotation, self.map_msg)
+            ac.save()
+        except WCFError as e:
+            success = False
+            message = str(e)
+            
         for callback in self.map_saved_callbacks:
-            callback(True)
+            callback((success, message))
 
     def map_cb(self, msg):
         """
@@ -100,6 +88,7 @@ class SlamWidgetInterface(QObject):
         self.h = msg.info.height
         self.ori_x = msg.info.origin.position.x
         self.ori_y = msg.info.origin.position.y
+        self.map_msg = msg
         self.map_received.emit(msg)
 
     def scan_cb(self, msg):

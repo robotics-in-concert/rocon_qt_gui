@@ -60,14 +60,14 @@ class QSlamWidget(QWidget):
         self.save_map_btn.pressed.connect(self.save_map)
         self.connect(self, SIGNAL("map_saved"), self.show_saved_map_message)
 
-    def init_slam_widget_interface(self, map_topic, scan_received_slot, scan_topic, robot_pose_received_slot, robot_pose_topic, save_map_srv, map_saved_callbacks):
+    def init_slam_widget_interface(self, map_topic, scan_received_slot, scan_topic, robot_pose_received_slot, robot_pose_topic, wc_namespace, map_saved_callbacks):
         self._slam_widget_interface = SlamWidgetInterface(map_received_slot=self.on_map_received,
                                                           map_topic=map_topic,
                                                           scan_received_slot=scan_received_slot,
                                                           scan_topic=scan_topic,
                                                           robot_pose_received_slot=robot_pose_received_slot,
                                                           robot_pose_topic=robot_pose_topic,
-                                                          save_map_srv=save_map_srv,
+                                                          wc_namespace=wc_namespace,
                                                           map_saved_callbacks=map_saved_callbacks)
         self._callback['save_map'] = self._slam_widget_interface.save_map
     
@@ -78,10 +78,11 @@ class QSlamWidget(QWidget):
             pass
 
     def show_saved_map_message(self, rtn):
-        if rtn:
+        (success, message) = rtn
+        if success:
             QMessageBox.warning(self, 'SUCCESS', "SAVE!!!!", QMessageBox.Ok | QMessageBox.Ok)           
         else:
-            QMessageBox.warning(self, 'FAIL', "FAIURE CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
+            QMessageBox.warning(self, 'FAIL', "FAIURE CAPTURE[%s]"%str(message), QMessageBox.Ok | QMessageBox.Ok)
         self.setDisabled(False)
     
     def save_map(self):
