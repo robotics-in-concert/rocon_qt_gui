@@ -9,3 +9,7 @@
 
 from .converts import *
 from .world_canvas_utils import *
+from python_qt_binding.QtGui import QMessageBox
+
+def show_message(parent, title, message):
+    QMessageBox.warning(parent, str(title), str(message), QMessageBox.Ok | QMessageBox.Ok)

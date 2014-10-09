@@ -50,6 +50,7 @@ class SlamWidgetInterface(QObject):
         else:
             self._tf = _tf
         self.wc_namespace = wc_namespace
+        self.ac_handler = AnnotationCollection(srv_namespace=self.wc_namespace)
         
         self.sub_map = rospy.Subscriber(map_topic, nav_msgs.OccupancyGrid, self.map_cb)
         self.sub_scan = rospy.Subscriber(scan_topic, sensor_msgs.LaserScan, self.scan_cb)
@@ -62,13 +63,12 @@ class SlamWidgetInterface(QObject):
         self.map_frame = None
 
     def save_map(self, world='world', map_name='map'):
-        ac = AnnotationCollection(srv_namespace=self.wc_namespace, world=world)
         annotation = utils.create_map_annotation(world, map_name, self.map_msg)
         success = True
         message = "Success"
         try:
-            ac.add(annotation, self.map_msg)
-            ac.save()
+            self.ac_handler.add(annotation, self.map_msg)
+            self.ac_handler.save()
         except WCFError as e:
             success = False
             message = str(e)

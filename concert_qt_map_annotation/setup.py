@@ -6,6 +6,6 @@ from catkin_pkg.python_setup import generate_distutils_setup
 d = generate_distutils_setup(
     packages=['concert_qt_map_annotation'],
     package_dir={'': 'src'},
-    scripts=['scripts/concert_map_annotation'],
+    scripts=['scripts/concert_map_annotation']
 )
 setup(**d)

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>927</width>
-    <height>516</height>
+    <height>732</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,38 +15,105 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout">
+    <layout class="QVBoxLayout" name="map_view_layout">
      <item>
       <widget class="QMapView" name="map_view"/>
      </item>
     </layout>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout_2">
-     <property name="leftMargin">
-      <number>0</number>
-     </property>
-     <property name="topMargin">
-      <number>0</number>
-     </property>
-     <property name="rightMargin">
-      <number>0</number>
-     </property>
-     <property name="bottomMargin">
+    <layout class="QVBoxLayout" name="editor_layout">
+     <property name="margin">
       <number>0</number>
      </property>
      <item>
-      <layout class="QGridLayout" name="gridLayout">
-       <property name="leftMargin">
-        <number>9</number>
-       </property>
-       <property name="topMargin">
-        <number>9</number>
-       </property>
-       <property name="rightMargin">
-        <number>9</number>
-       </property>
-       <property name="bottomMargin">
+      <layout class="QGridLayout" name="world_loader_grid_layout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="world_name_label">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>World Name </string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QTextEdit" name="world_name_text">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>500000</width>
+           <height>30</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QPushButton" name="load_world_btn">
+         <property name="text">
+          <string>Load</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="map_select_layout">
+       <item>
+        <widget class="QLabel" name="map_name_label">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Map</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="map_select_combobox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QGridLayout" name="annotation_select_layout">
+       <property name="margin">
         <number>9</number>
        </property>
        <item row="0" column="0">
@@ -66,24 +133,15 @@
       </layout>
      </item>
      <item>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
+      <layout class="QGridLayout" name="data_editor_layout">
+       <property name="margin">
         <number>0</number>
        </property>
        <property name="spacing">
         <number>3</number>
        </property>
        <item row="0" column="2">
-        <widget class="QLabel" name="label_5">
+        <widget class="QLabel" name="radius_label">
          <property name="maximumSize">
           <size>
            <width>75</width>
@@ -96,7 +154,7 @@
         </widget>
        </item>
        <item row="3" column="0">
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="height_label">
          <property name="maximumSize">
           <size>
            <width>75</width>
@@ -125,15 +183,15 @@
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QLabel" name="label_2">
+        <widget class="QLabel" name="name_label">
          <property name="maximumSize">
           <size>
-           <width>75</width>
+           <width>80</width>
            <height>25</height>
           </size>
          </property>
          <property name="text">
-          <string>name:</string>
+          <string>name(or ID):</string>
          </property>
         </widget>
        </item>
@@ -153,32 +211,6 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_4">
-         <property name="maximumSize">
-          <size>
-           <width>75</width>
-           <height>25</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>x [m]:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_3">
-         <property name="maximumSize">
-          <size>
-           <width>75</width>
-           <height>25</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>y [m]:</string>
-         </property>
-        </widget>
-       </item>
        <item row="2" column="1">
         <widget class="QTextEdit" name="y_txt">
          <property name="minimumSize">
@@ -195,6 +227,19 @@
          </property>
         </widget>
        </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="x_label">
+         <property name="maximumSize">
+          <size>
+           <width>75</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>x [m]:</string>
+         </property>
+        </widget>
+       </item>
        <item row="0" column="1">
         <widget class="QTextEdit" name="name_txt">
          <property name="minimumSize">
@@ -208,6 +253,19 @@
            <width>90</width>
            <height>30</height>
           </size>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="y_label">
+         <property name="maximumSize">
+          <size>
+           <width>75</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>y [m]:</string>
          </property>
         </widget>
        </item>
@@ -228,7 +286,7 @@
         </widget>
        </item>
        <item row="1" column="2">
-        <widget class="QLabel" name="label_6">
+        <widget class="QLabel" name="roll_label">
          <property name="maximumSize">
           <size>
            <width>75</width>
@@ -241,7 +299,7 @@
         </widget>
        </item>
        <item row="2" column="2">
-        <widget class="QLabel" name="label_7">
+        <widget class="QLabel" name="pitch_label">
          <property name="maximumSize">
           <size>
            <width>75</width>
@@ -253,8 +311,24 @@
          </property>
         </widget>
        </item>
+       <item row="1" column="3">
+        <widget class="QTextEdit" name="roll_txt">
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>90</width>
+           <height>30</height>
+          </size>
+         </property>
+        </widget>
+       </item>
        <item row="3" column="2">
-        <widget class="QLabel" name="label_8">
+        <widget class="QLabel" name="yaw_label">
          <property name="maximumSize">
           <size>
            <width>75</width>
@@ -266,8 +340,8 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="3">
-        <widget class="QTextEdit" name="roll_txt">
+       <item row="3" column="3">
+        <widget class="QTextEdit" name="yaw_txt">
          <property name="minimumSize">
           <size>
            <width>90</width>
@@ -298,19 +372,42 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="3">
-        <widget class="QTextEdit" name="yaw_txt">
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="button_layout">
+       <item>
+        <widget class="QPushButton" name="add_annotation_btn">
+         <property name="text">
+          <string>Add</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="remove_annotation_btn">
+         <property name="text">
+          <string>Remove</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QGridLayout" name="list_view_layout">
+       <item row="1" column="0">
+        <widget class="QListWidget" name="annotations_list_widget">
          <property name="minimumSize">
           <size>
-           <width>90</width>
+           <width>200</width>
            <height>0</height>
           </size>
          </property>
-         <property name="maximumSize">
-          <size>
-           <width>90</width>
-           <height>30</height>
-          </size>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="annotations_label">
+         <property name="text">
+          <string>Annotations </string>
          </property>
         </widget>
        </item>
@@ -320,22 +417,6 @@
       <widget class="QPushButton" name="save_annotation_btn">
        <property name="text">
         <string>Save</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QListView" name="listView">
-       <property name="minimumSize">
-        <size>
-         <width>400</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>400</width>
-         <height>16777215</height>
-        </size>
        </property>
       </widget>
      </item>

@@ -15,7 +15,6 @@ import rocon_python_comms
 import concert_service_msgs.msg as concert_service_msgs
 from rocon_std_msgs.msg import StringArray
 
-
 class ResourceChooserInterface(QObject):
 
     def __init__(self, capture_timeout=15.0, available_resource_topic='avaialble_resource', capture_resource_pair_topic='capture_resource', capture_resource_callbacks=[], release_resource_callbacks=[], error_resource_callbacks=[], refresh_resource_list_callbacks=[]):
