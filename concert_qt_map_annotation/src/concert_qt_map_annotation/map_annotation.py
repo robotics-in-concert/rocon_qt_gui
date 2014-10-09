@@ -49,7 +49,7 @@ class MapAnnotation(Plugin):
 
         self._default_map_topic = 'map'
         self._default_viz_markers_topic = 'viz_markers'
-        self._default_save_annotation_srv = 'save_annotation'
+        self._default_wc_namespace = 'world_canvas'
 
         context.add_widget(self._widget)
         self.setObjectName('Map Annotation')
@@ -62,7 +62,7 @@ class MapAnnotation(Plugin):
         map_topic = self._default_map_topic
         viz_markers_topic = "/annotation/" + self._default_viz_markers_topic
 
-        save_annotation_srv = self._default_save_annotation_srv
+        #save_annotation_srv = self._default_save_annotation_srv
 
         viz_markers_slot = self._widget.map_annotation.draw_viz_markers
         scene_slot = self._widget.map_annotation.draw_scene
