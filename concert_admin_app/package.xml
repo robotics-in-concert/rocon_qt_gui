@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>rocon_admin_app</name>
+  <name>concert_admin_app</name>
   <version>0.7.0</version>
-  <description>The rocon_admin_app package</description>
+  <description>The concert_admin_app package</description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>
   <license>BSD</license>
