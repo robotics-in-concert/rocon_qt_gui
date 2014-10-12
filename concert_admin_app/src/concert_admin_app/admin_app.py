@@ -12,19 +12,19 @@ import os
 #pyqt
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal, pyqtSlot,SIGNAL,SLOT
-from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget,QLabel, QComboBox
-from python_qt_binding.QtGui import QSizePolicy,QTextEdit ,QCompleter, QBrush,QDialog, QColor, QPen, QPushButton
-from python_qt_binding.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
+from python_qt_binding.QtGui import QFileDialog, QPainter, QWidget
+from python_qt_binding.QtGui import QSizePolicy,QTextEdit ,QCompleter, QDialog, QColor, QPen, QPushButton
+from python_qt_binding.QtGui import QTabWidget, QPlainTextEdit, QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox
+from python_qt_binding.QtGui import QLabel
 from python_qt_binding.QtGui import QTreeWidgetItem
 from python_qt_binding.QtSvg import QSvgGenerator
-#rqt
-from qt_gui.plugin import Plugin
 #ros
 import rospkg
-import rospy
+#rqt
+from qt_gui.plugin import Plugin
 
-from .admin_app_info import AdminAppInfo
-from concert_msgs.srv import EnableService
+from .admin_app_interface import AdminAppInterface
+
 
 ##############################################################################
 # Admin App
@@ -45,53 +45,62 @@ class AdminApp(Plugin):
         self._widget=QWidget()
         
         rospack=rospkg.RosPack()
-        ui_file=os.path.join(rospack.get_path('rocon_admin_app'), 'ui', 'admin_app.ui')
+        ui_file=os.path.join(rospack.get_path('concert_admin_app'), 'ui', 'admin_app.ui')
         self._widget.setObjectName('AdminApphUi')
         loadUi(ui_file, self._widget, {})
       
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
-        self._widget.enable_btn.pressed.connect(self._enable_service)
-        self._widget.disable_btn.pressed.connect(self._disable_service)
-        self._widget.setting_btn.pressed.connect(self._setting_service) 
+        
+        self.admin_app_interface = AdminAppInterface()
+        self.admin_app_interface._reg_event_callback(self._refresh_service)
+        self.current_service= None
+
+        self.params_layout = None
+        self.params_layout_items = []
+
+        self._init_event()
+        self._init_widget()
+        
+        context.add_widget(self._widget)
+    
+    def _init_event(self):
+        self._widget.enable_disable_btn.pressed.connect(self._toggle_service)
         self._widget.refresh_btn.pressed.connect(self._refresh_service)
-        self._widget.clear_btn.pressed.connect(self._clear_service_list)
+        
         self._widget.service_tree_widget.itemClicked.connect(self._select_service_tree_item) #concert item click event
         self._refresh_service_list_signal.connect(self._update_service_list)
         
-        #Not implementation
-        self._widget.clear_btn.setDisabled(True)
-        self._widget.setting_btn.setDisabled(True)
-        
-        self._widget.setting_btn.setToolTip("Not yet")
-        self._widget.clear_btn.setToolTip("Not yet")
-        
-        
-
-        context.add_widget(self._widget)
-
-        #init
-        self.admin_app_info = AdminAppInfo()
-        self.admin_app_info._reg_event_callback(self._refresh_service)
-        self.current_service=""
-        self._widget.client_tab_widget.clear()
-        self._update_service_list()
+        pass
     
+    def _init_widget(self):
+        self.params_layout = self._widget.findChildren(QGridLayout, "params_layout")[0]
+        self.params_layout_items = []
+
+        self._update_service_list()
+
+        if not self.current_service:
+            self._widget.enable_disable_btn.setDisabled(True)
+        pass
+
+    def _toggle_service(self):
+        if self.current_service['enabled']:
+            print "Enable Service: %s"%self.current_service['name']
+            self.admin_app_interface.disable_service(self.current_service['name'])
+        else:
+            print "Disable Service: %s"%self.current_service['name']
+            self.admin_app_interface.eable_service(self.current_service['name'])
+
     def _refresh_service(self):
         self._refresh_service_list_signal.emit()
         pass
-    
-    def _clear_service_list(self):
-        print "[_clear_service_list]: widget clear start"
-        self._widget.service_tree_widget.clear()
-        pass    
     
     def _update_service_list(self):
         self._widget.service_tree_widget.clear()
         self._widget.service_info_text.clear()
         self._widgetitem_service_pair = {}
-        service_list = self.admin_app_info.service_list
+        service_list = self.admin_app_interface.service_list
         
         for k in service_list.values():
             #Top service
@@ -118,74 +127,51 @@ class AdminApp(Plugin):
             
             #self._widget.service_tree_widget.addTopLevelItem(service_item)
         pass    
-        
-    def _update_client_list(self,service_name):
-        service_list = self.admin_app_info.service_list
-        client_list=service_list[service_name]["client_list"]
-        self._widget.client_tab_widget.clear()
-        for k in client_list.values(): 
-            client_name = k["name"]
-            k["index"] = self._widget.client_tab_widget.count()
-            main_widget=QWidget()
-           
-            ver_layout=QVBoxLayout(main_widget)
-           
-            ver_layout.setContentsMargins (9,9,9,9)
-            ver_layout.setSizeConstraint (ver_layout.SetDefaultConstraint)
-            
-            sub_widget=QWidget()
-            sub_widget.setAccessibleName('sub_widget')
-             
-            ver_layout.addWidget(sub_widget)            
-            
-            client_context_widget=QPlainTextEdit()
-            client_context_widget.setObjectName(client_name+'_'+'app_context_widget')
-            client_context_widget.setAccessibleName('app_context_widget')
-            client_context_widget.appendPlainText("client name is "+client_name)
-            #ap><b>uuidp_context_widget.appendHtml(k["app_context"])
-            ver_layout.addWidget(client_context_widget)
-            
-            #add tab
-            self._widget.client_tab_widget.addTab(main_widget, client_name)
-        pass
     
     def _set_service_info(self,service_name):
-        service_list = self.admin_app_info.service_list
+        service_list = self.admin_app_interface.service_list
         self._widget.service_info_text.clear()
         self._widget.service_info_text.appendHtml(service_list[service_name]['context'])
         pass
         
-    def _set_client_info(self,client_name):
-        #self._widget.service_info_text.clear()
-        #self._widget.service_info_text.appendPlainText(client_name)
-        
-        pass  
-        
     def _select_service_tree_item(self,item):
         if item.parent() == None:
             selected_service = self._widgetitem_service_pair[item]
-
+            
             print '_select_service: '+ selected_service['name']
             self._set_service_info(selected_service['name'])
             self.current_service = selected_service
-            self._update_client_list(self.current_service['name'])
-        
-        else:
-            selected_service = self._widgetitem_service_pair[item.parent()]
-            print '_select_service: '+ selected_service['name']
-            print '_select_client: '+ item.text(0)
+            self._set_parameter(self.current_service['parameters'])
+            
+            if self.current_service['enabled']:
+                self._widget.enable_disable_btn.setText("Disable")
+                self._widget.enable_disable_btn.setDisabled(False)
+            else :
+                self._widget.enable_disable_btn.setText("Enable")
+                self._widget.enable_disable_btn.setDisabled(False)
 
-            self._set_service_info(selected_service['name'])
-            self._set_client_info(item.text(0))
+
             
-            for k in range(self._widget.client_tab_widget.count()):
-                tab_text = self._widget.client_tab_widget.tabText (k)
-                if tab_text == Item.text(0):
-                    self._widget.client_tab_widget.setCurrentIndex (k)
-                    break;
+    def _set_parameter(self, parameters_path):
+        print parameters_path
+        params = self.admin_app_interface.get_srv_parameters(parameters_path)
+        if self.params_layout_items:
+            for item in self.params_layout_items:
+                self.params_layout.removeWidget(item[0])
+                self.params_layout.removeWidget(item[1])
+        if params:
+            self.params_layout.setColumnStretch (1, 0)
+            self.params_layout.setRowStretch (2, 0)
             
-        pass
-    
+            for param in params.keys():
+                label =  QLabel(param)
+                self.params_layout.addWidget(label)
+                value = QTextEdit(params[param])
+                value.setMaximumHeight(30) 
+                self.params_layout.addWidget(value)
+                self.params_layout_items.append((label, value))
+
+            
     def _get_client_list(self,service_name):
         ##function call
         client_list=[]
@@ -294,37 +280,10 @@ class AdminApp(Plugin):
         self.is_setting_dlg_live=True
         
         pass
-    
-    def _enable_service(self):
-        print "Enable Service: %s"%self.current_service['name']
-        service = "/concert/services/enable"
-        service_handle=rospy.ServiceProxy(service, EnableService)
-        call_result=service_handle(self.current_service['name'],True)
-        print call_result
-        pass
-        
-    def _disable_service(self):
-        print "Disable Service: %s"%self.current_service['name']
-        service = "/concert/services/enable"
-        service_handle=rospy.ServiceProxy(service, EnableService)
-        call_result=service_handle(self.current_service['name'],False)
-        print call_result
-        pass
-        
-    def _destroy_setting_dlg(self):
-        print "Distory!!!"
-        self.is_setting_dlg_live=False
-        pass
-   
+
     def _set_configuration(self, params):        
         print self.current_service['name']+" set param: "
         print "param1: "+ params['param1'].toPlainText()
         print "param2: "+ params['param2'].toPlainText()
         print "param3: "+ params['param3'].toPlainText()   
         pass        
-        
-        
-        
-        
-        
-  
