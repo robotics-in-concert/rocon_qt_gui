@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>729</width>
-    <height>573</height>
+    <height>574</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,6 +23,130 @@
    <string>Administrator Application</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="1">
+    <layout class="QHBoxLayout" name="admin_app_layout">
+     <item>
+      <layout class="QVBoxLayout" name="ctrl_layout">
+       <property name="leftMargin">
+        <number>9</number>
+       </property>
+       <property name="topMargin">
+        <number>9</number>
+       </property>
+       <property name="rightMargin">
+        <number>9</number>
+       </property>
+       <property name="bottomMargin">
+        <number>9</number>
+       </property>
+       <item>
+        <layout class="QGridLayout" name="button_ctrl_layout">
+         <property name="leftMargin">
+          <number>9</number>
+         </property>
+         <property name="topMargin">
+          <number>9</number>
+         </property>
+         <property name="rightMargin">
+          <number>9</number>
+         </property>
+         <property name="bottomMargin">
+          <number>9</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QPushButton" name="enable_disable_btn">
+           <property name="text">
+            <string>Enable/Disable</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="refresh_btn">
+           <property name="text">
+            <string>Refresh</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Service information</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPlainTextEdit" name="service_info_text">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>500</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Configuration</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="params_layout">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+        </layout>
+       </item>
+       <item>
+        <widget class="QWidget" name="params_widget" native="true"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="configuration_btn">
+         <property name="text">
+          <string>Configuration</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
    <item row="0" column="0">
     <widget class="QTreeWidget" name="service_tree_widget">
      <property name="maximumSize">
@@ -120,106 +244,6 @@
       </property>
      </item>
     </widget>
-   </item>
-   <item row="0" column="1">
-    <layout class="QHBoxLayout" name="admin_app_layout">
-     <item>
-      <layout class="QVBoxLayout" name="ctrl_layout">
-       <property name="leftMargin">
-        <number>9</number>
-       </property>
-       <property name="topMargin">
-        <number>9</number>
-       </property>
-       <property name="rightMargin">
-        <number>9</number>
-       </property>
-       <property name="bottomMargin">
-        <number>9</number>
-       </property>
-       <item>
-        <layout class="QGridLayout" name="button_ctrl_layout">
-         <property name="leftMargin">
-          <number>9</number>
-         </property>
-         <property name="topMargin">
-          <number>9</number>
-         </property>
-         <property name="rightMargin">
-          <number>9</number>
-         </property>
-         <property name="bottomMargin">
-          <number>9</number>
-         </property>
-         <item row="0" column="0">
-          <widget class="QPushButton" name="enable_disable_btn">
-           <property name="text">
-            <string>Enable/Disable</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QPushButton" name="refresh_btn">
-           <property name="text">
-            <string>Refresh</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Service information</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPlainTextEdit" name="service_info_text">
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>500</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Configuration</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QGridLayout" name="params_layout">
-         <property name="leftMargin">
-          <number>5</number>
-         </property>
-         <property name="topMargin">
-          <number>5</number>
-         </property>
-         <property name="rightMargin">
-          <number>5</number>
-         </property>
-         <property name="bottomMargin">
-          <number>5</number>
-         </property>
-        </layout>
-       </item>
-       <item>
-        <widget class="QWidget" name="params_widget" native="true"/>
-       </item>
-       <item>
-        <widget class="QPushButton" name="configuration_btn">
-         <property name="text">
-          <string>Configuration</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>
