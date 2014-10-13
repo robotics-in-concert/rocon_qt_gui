@@ -58,8 +58,12 @@ class AdminAppInterface(object):
                 return False
             if not data:
                 return False
-            params = file(self.full_params_path, 'w')
-            yaml.dump(data, params, default_flow_style=False) 
+            stream = open(self.full_params_path, 'r')
+            bak_data = yaml.load(stream)
+            bak_stream = file(self.full_params_path+'.bak', 'w')
+            yaml.safe_dump(bak_data, bak_stream, default_flow_style=False)
+            new_stream = file(self.full_params_path, 'w')
+            yaml.safe_dump(data, new_stream, default_flow_style=False)
         except Exception, e:
             rospy.loginfo(e)
             return False
@@ -84,7 +88,7 @@ class AdminAppInterface(object):
             self.service_list[service_name]['parameters'] = k.parameters
             self.service_list[service_name]['uuid'] = k.uuid
             self.service_list[service_name]['status'] = k.status
-            self.service_list[service_name]['enabled'] = k.enable
+            self.service_list[service_name]['enabled'] = k.enabled
 
             #html
             service_context = "<html>"
