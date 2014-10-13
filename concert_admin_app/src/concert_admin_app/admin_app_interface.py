@@ -53,9 +53,10 @@ class AdminAppInterface(object):
                 return params                
 
     def set_srv_parameters(self, data):
-        print params
         try:
             if not self.full_params_path:
+                return False
+            if not data:
                 return False
             params = file(self.full_params_path, 'w')
             yaml.dump(data, params, default_flow_style=False) 
@@ -66,7 +67,7 @@ class AdminAppInterface(object):
             return True
         
     def update_service_list(self, data):
-        print "update_service_list start"
+        
         self.service_list = {}
         for k in data.services:
             service_name = k.name
@@ -83,28 +84,13 @@ class AdminAppInterface(object):
             self.service_list[service_name]['parameters'] = k.parameters
             self.service_list[service_name]['uuid'] = k.uuid
             self.service_list[service_name]['status'] = k.status
-            self.service_list[service_name]['enabled'] = k.enabled
-            # not implementation
-            self.service_list[service_name]['client_list'] = {}
+            self.service_list[service_name]['enabled'] = k.enable
 
             #html
             service_context = "<html>"
-            service_context += "<p>-------------------------------------------</p>"
-            service_context += "<p><b>name: </b>" + k.name + "</p>"
-            service_context += "<p><b>resource_name: </b>" + k.resource_name + "</p>"
-            service_context += "<p><b>description: </b>" + k.description + "</p>"
-            service_context += "<p><b>author: </b>" + k.author + "</p>"
-            service_context += "<p><b>priority: </b>" + str(k.priority) + "</p>"
-            service_context += "<p><b>launcher_type: </b>" + k.launcher_type + "</p>"
-            service_context += "<p><b>launcher: </b>" + k.launcher + "</p>"
-            service_context += "<p><b>interactions: </b>" + k.interactions + "</p>"
-            service_context += "<p><b>parameters: </b>" + k.parameters + "</p>"
-            
-            service_context += "<p><b>uuid: </b>" + str(k.uuid) + "</p>"
-            service_context += "<p><b>status: </b>" + str(k.status) + "</p>"
-            service_context += "<p><b>enabled: </b>" + str(k.enabled) + "</p>"
+            for key in self.service_list[service_name].keys():
+                service_context += "<p><b>"+key+": </b>" + str(self.service_list[service_name][key]) + "</p>"
             service_context += "</html>"
-
             self.service_list[service_name]['context'] = service_context
 
         if self._event_callback != None:
