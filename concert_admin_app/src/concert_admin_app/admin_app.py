@@ -61,7 +61,7 @@ class AdminApp(Plugin):
     def _init_event(self):
         self._widget.enable_disable_btn.pressed.connect(self._toggle_service)
         self._widget.refresh_btn.pressed.connect(self._refresh_service)
-        self._widget.configuration_btn.pressed.connect(self._save_parmeters)
+        self._widget.save_configuration_btn.pressed.connect(self._save_parmeters)
         self._widget.service_tree_widget.itemClicked.connect(self._select_service_tree_item) #concert item click event
         self._refresh_service_list_signal.connect(self._update_service_list)
         
@@ -77,28 +77,35 @@ class AdminApp(Plugin):
     def _save_parmeters(self):
         params = {}
         result = False
-        if self.params_layout_items:
+
+        if not self.current_service:
+            print "Not selected service"
+        
+        elif self.current_service['enabled']:
+            print "service is already enabled!"
+        
+        elif self.params_layout_items:
             for item in self.params_layout_items:
                     params[item[0].text()] = item[1].toPlainText()
             result = self.admin_app_interface.set_srv_parameters(params)
         else:
             print "No params infomation"
+        
         print "Save params result: %s" %str(result)
 
     def _toggle_service(self):
         if self.current_service['enabled']:
-            print "Enable Service: %s"%self.current_service['name']
-            self.admin_app_interface.disable_service(self.current_service['name'])
-        else:
             print "Disable Service: %s"%self.current_service['name']
+            self.admin_app_interface.disable_service(self.current_service['name'])
+            self._set_enable_params_layout(True)
+        else:
+            print "Enable Service: %s"%self.current_service['name']
             self.admin_app_interface.eable_service(self.current_service['name'])
+            self._set_enable_params_layout(False)
 
-        self.current_services = None
-        
-        print "button chagne self.current_services: %s" %str(self.current_services)
+        self.current_service = None
         self._widget.enable_disable_btn.setDisabled(True)
         self._widget.enable_disable_btn.setText("Enable/Disable")
-        
 
     def _refresh_service(self):
         self._refresh_service_list_signal.emit()
@@ -121,15 +128,6 @@ class AdminApp(Plugin):
             font.setBold(True)
             service_item.setFont(0,font)
             
-            #set client item
-            for l in k["client_list"]:
-                client_item=QTreeWidgetItem()
-                client_item.setText (0, l)
-                font=client_item.font(0)        
-                font.setPointSize(15)
-                client_item.setFont(0,font)
-                service_item.addChild (client_item)
-
             self._widgetitem_service_pair[service_item] = k
     
     def _set_service_info(self,service_name):
@@ -144,17 +142,20 @@ class AdminApp(Plugin):
             print '_select_service: '+ selected_service['name']
             self._set_service_info(selected_service['name'])
             self.current_service = selected_service
-            self._set_parameter_layout(self.current_service['parameters'])
+            self._set_parameter_layout()
             
             if self.current_service['enabled']:
                 self._widget.enable_disable_btn.setText("Disable")
                 self._widget.enable_disable_btn.setDisabled(False)
-            else :
+            else:
                 self._widget.enable_disable_btn.setText("Enable")
                 self._widget.enable_disable_btn.setDisabled(False)
 
-    def _set_parameter_layout(self, parameters_path):
-        params = self.admin_app_interface.get_srv_parameters(parameters_path)
+    def _set_parameter_layout(self):
+        
+        params = self.admin_app_interface.get_srv_parameters(self.current_service['parameters'])
+        is_enabled = self.current_service['enabled']
+        
         if self.params_layout_items:
             for item in self.params_layout_items:
                 self.params_layout.removeWidget(item[0])
@@ -162,6 +163,7 @@ class AdminApp(Plugin):
                 item[0].setParent(None)
                 item[1].setParent(None)
             self.params_layout_items = []
+        
         if params:
             self.params_layout.setColumnStretch (1, 0)
             self.params_layout.setRowStretch (2, 0)
@@ -172,3 +174,13 @@ class AdminApp(Plugin):
                 value.setMaximumHeight(30) 
                 self.params_layout.addWidget(value)
                 self.params_layout_items.append((label, value))
+
+        self._set_enable_params_layout(not is_enabled)
+
+    def _set_enable_params_layout(self, enable):
+        if self.params_layout_items:
+            for item in self.params_layout_items:
+                item[0].setEnabled(enable)
+                item[1].setEnabled(enable)
+        
+       

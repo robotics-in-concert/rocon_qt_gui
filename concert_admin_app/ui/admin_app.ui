@@ -90,11 +90,29 @@
        </item>
        <item>
         <widget class="QPlainTextEdit" name="service_info_text">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>250</height>
+          </size>
+         </property>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>500</height>
+           <height>250</height>
           </size>
+         </property>
+         <property name="lineWrapMode">
+          <enum>QPlainTextEdit::NoWrap</enum>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -137,9 +155,9 @@
         <widget class="QWidget" name="params_widget" native="true"/>
        </item>
        <item>
-        <widget class="QPushButton" name="configuration_btn">
+        <widget class="QPushButton" name="save_configuration_btn">
          <property name="text">
-          <string>Configuration</string>
+          <string>Save Configuration</string>
          </property>
         </widget>
        </item>
