@@ -244,39 +244,28 @@ class MapAnnotationInterface(QObject):
         return True, "Success" 
 
     def get_annotation_info(self, annotation_name):
-        markers = None
+        annotations = []
         for a in self._annotations:
             if a.name == annotation_name:
-                markers = utils.annotations_to_viz_markers([a])
-        
+                annotations = self.ac_handler_others.getAnnotations(annotation_name)
+                break
+
         for a in self._new_annotations:
             if a.name == annotation_name:
-                markers = utils.annotations_to_viz_markers([a])
-
-        if markers:
-            name = ''
-            anno_type = ''
-            x = 0
-            y = 0
-            yaw = 0
-            radius = 1
-            roll = None
-            pitch = None
-            height = None
-            for marker in markers.markers:
-                if marker.type is Marker.TEXT_VIEW_FACING:
-                    name = marker.text
-                else:
-                    anno_type = marker.type
-                    radius = marker.scale.x / self.resolution
-                    x = (marker.pose.position.x - self.ori_x) / self.resolution - self.w
-                    y = (marker.pose.position.y - self.ori_y) / self.resolution
-                    height = marker.pose.position.z
-                    (roll, pitch, yaw) = tf.transformations.euler_from_quaternion([marker.pose.orientation.x,
-                                                                                     marker.pose.orientation.y,
-                                                                                     marker.pose.orientation.z,
-                                                                                     marker.pose.orientation.w])
-
+                annotations = self.ac_handler_others.getAnnotations(annotation_name)
+                break
+        if annotations:
+            annotation = annotations[0]
+            name = annotation.name
+            anno_type = annotation.shape
+            x = annotation.pose.pose.pose.position.x
+            y = annotation.pose.pose.pose.position.y
+            (roll, pitch, yaw) = tf.transformations.euler_from_quaternion([annotation.pose.pose.pose.orientation.x,
+                                                                                     annotation.pose.pose.pose.orientation.y,
+                                                                                     annotation.pose.pose.pose.orientation.z,
+                                                                                     annotation.pose.pose.pose.orientation.w])
+            height = annotation.pose.pose.pose.position.z
+            radius = annotation.size.x
             return (anno_type, name, x, y, yaw, radius, roll, pitch, height)
         else:
             return ()

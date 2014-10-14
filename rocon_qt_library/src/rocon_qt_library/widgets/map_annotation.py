@@ -173,7 +173,6 @@ class QMapAnnotation(QWidget):
             elif ann_list == 'new_annotations':
                 self._new_annotation_name_list = names
             self.emit(SIGNAL("update_annotation_list"))
-        
 
     def _save_annotation(self):
         success, message = self._callback['save_annotation']()
@@ -191,17 +190,6 @@ class QMapAnnotation(QWidget):
                 self.emit(SIGNAL("show_message"), self, "Failed", message)
         else:
             self.emit(SIGNAL("show_message"), self, "Failed", message)
-
-
-    def _clear_edit_annotation_box(self):
-        self.name_txt.clear()
-        self.x_txt.clear()
-        self.y_txt.clear()
-        self.height_txt.clear()
-        self.radius_txt.clear()
-        self.roll_txt.clear()
-        self.pitch_txt.clear()
-        self.yaw_txt.clear()
 
     def _set_annotating_info(self, anno_type='', name='', x=0, y=0, yaw=0, radius=1, roll=None, pitch=None, height=None):
         resolution = self._drawing_objects['map'].info.resolution
@@ -226,6 +214,16 @@ class QMapAnnotation(QWidget):
         self.annotation['scale'] = (radius, radius, radius)
         self.annotation['name'] = name
 
+    def _clear_edit_annotation_box(self):
+        self.name_txt.clear()
+        self.x_txt.clear()
+        self.y_txt.clear()
+        self.height_txt.clear()
+        self.radius_txt.clear()
+        self.roll_txt.clear()
+        self.pitch_txt.clear()
+        self.yaw_txt.clear()
+
     def _update_edit_annotation_box(self):
         self.name_txt.setText(str(self.annotation['name']))
         self.x_txt.setText(str(round(self.annotation['x'], 3)))
@@ -235,6 +233,16 @@ class QMapAnnotation(QWidget):
         self.roll_txt.setText(str(round(self.annotation['roll'])))
         self.pitch_txt.setText(str(round(self.annotation['pitch'], 3)))
         self.yaw_txt.setText(str(round(self.annotation['yaw'], 3)))
+
+    def _set_edit_annotation_box(self, name="", x=0, y=0, height=0, radius=0, roll=0, pitch=0, yaw=0):
+        self.name_txt.setText(str(name))
+        self.x_txt.setText(str(round(x, 3)))
+        self.y_txt.setText(str(round(y, 3)))
+        self.height_txt.setText(str(round(height, 3)))
+        self.radius_txt.setText(str(round(radius, 3)))
+        self.roll_txt.setText(str(round(roll)))
+        self.pitch_txt.setText(str(round(pitch, 3)))
+        self.yaw_txt.setText(str(round(yaw, 3)))
 
     def _get_annotating_info(self):
         self.annotation['name'] = str(self.name_txt.toPlainText().strip())
@@ -291,6 +299,7 @@ class QMapAnnotation(QWidget):
             elif data['type'] == "ar_track_alvar_msgs/AlvarMarker": 
                 viz_marker_pose = QMatrix().rotate(data['yaw']).map(self._viz_marker_polygon).translated(x, y)
                 annotation_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(0, 0, 255)), brush=QBrush(QColor(0, 0, 255, 125)))
+            annotation_item.setZValue(2)
         if old_item:
             self._scene.removeItem(old_item)
         self.annotation_item = annotation_item
@@ -385,16 +394,16 @@ class QMapAnnotation(QWidget):
         annotation_info = self._map_annotation_interface.get_annotation_info(self._selected_annotation)
 
         if annotation_info:
-            self._set_annotating_info(anno_type=annotation_info[0], 
-                                            name=annotation_info[1], 
-                                            x= - annotation_info[2], 
+            self._set_edit_annotation_box()
+            
+            self._set_edit_annotation_box(name=annotation_info[1], 
+                                            x=annotation_info[2], 
                                             y=annotation_info[3], 
                                             yaw=annotation_info[4], 
                                             radius=annotation_info[5], 
                                             roll=annotation_info[6], 
                                             pitch=annotation_info[7], 
                                             height=annotation_info[8])
-            self._update_edit_annotation_box()
 
 ###############################################################
 # Check boxk Events
