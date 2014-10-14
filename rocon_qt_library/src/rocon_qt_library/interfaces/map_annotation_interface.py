@@ -45,6 +45,7 @@ import visualization_msgs.msg as visualization_msgs
 from python_qt_binding.QtCore import Signal, QObject, pyqtSlot
 import rocon_qt_library.utils as utils
 from world_canvas_client import AnnotationCollection, WCFError
+from visualization_msgs.msg import Marker
 
 
 class MapAnnotationInterface(QObject):
@@ -150,6 +151,7 @@ class MapAnnotationInterface(QObject):
             return message, []
 
         self._update_annotations('annotations',annotations)
+        self._update_annotations('new_annotations', self._new_annotations)
 
         names = [a.name for a in annotations]
         return message, names
@@ -157,7 +159,6 @@ class MapAnnotationInterface(QObject):
     def _update_annotations(self, key,  annotations):
         viz_marker_items = []
         markers = utils.annotations_to_viz_markers(annotations)
-
         for marker in markers.markers:
             viz_marker = {}
             
@@ -232,11 +233,53 @@ class MapAnnotationInterface(QObject):
     def save_annotations(self):
         try:
             self.ac_handler_others.save()
+            for a in self._new_annotations:
+                self.ac_handler_others.delete(a.id)
+            self._new_annotations = []
+            self._new_annotations_data = []
+            
         except WCFError as e:
             message = str(e)
             return False, message
         return True, "Success" 
 
+    def get_annotation_info(self, annotation_name):
+        markers = None
+        for a in self._annotations:
+            if a.name == annotation_name:
+                markers = utils.annotations_to_viz_markers([a])
+        
+        for a in self._new_annotations:
+            if a.name == annotation_name:
+                markers = utils.annotations_to_viz_markers([a])
+
+        if markers:
+            name = ''
+            anno_type = ''
+            x = 0
+            y = 0
+            yaw = 0
+            radius = 1
+            roll = None
+            pitch = None
+            height = None
+            for marker in markers.markers:
+                if marker.type is Marker.TEXT_VIEW_FACING:
+                    name = marker.text
+                else:
+                    anno_type = marker.type
+                    radius = marker.scale.x / self.resolution
+                    x = (marker.pose.position.x - self.ori_x) / self.resolution - self.w
+                    y = (marker.pose.position.y - self.ori_y) / self.resolution
+                    height = marker.pose.position.z
+                    (roll, pitch, yaw) = tf.transformations.euler_from_quaternion([marker.pose.orientation.x,
+                                                                                     marker.pose.orientation.y,
+                                                                                     marker.pose.orientation.z,
+                                                                                     marker.pose.orientation.w])
+
+            return (anno_type, name, x, y, yaw, radius, roll, pitch, height)
+        else:
+            return ()
 
     def close(self):
         super(MapAnnotationInterface, self).close()

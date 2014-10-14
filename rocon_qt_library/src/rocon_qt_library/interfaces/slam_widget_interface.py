@@ -18,7 +18,6 @@ from world_canvas_client import AnnotationCollection, WCFError
 import nav_msgs.msg as nav_msgs
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
-import map_store.srv as map_store_srv
 
 from python_qt_binding.QtCore import Signal, QObject, pyqtSlot
 import rocon_qt_library.utils as utils

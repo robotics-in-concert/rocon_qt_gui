@@ -145,7 +145,7 @@ class QMapAnnotation(QWidget):
             self.annotations_list_widget.addItem(n)
             
         for n in self._new_annotation_name_list:
-            self.annotations_list_widget.addItem(n + '(new)')
+            self.annotations_list_widget.addItem('(new) '+n)
 
     def _add_annotation(self):
         if self.annotation:
@@ -208,7 +208,7 @@ class QMapAnnotation(QWidget):
         origin = self._drawing_objects['map'].info.origin
         w = self._drawing_objects['map'].info.width
         h = self._drawing_objects['map'].info.height
-    
+        
         self.annotation['type'] = anno_type
         self.annotation['x'] = (-x + w) * resolution + origin.position.x
         self.annotation['y'] = y * resolution + origin.position.y
@@ -304,7 +304,7 @@ class QMapAnnotation(QWidget):
         if len(self._viz_marker_items[key]):
             for item in self._viz_marker_items[key]:
                 old_items.append(item)
-
+        self._viz_marker_items[key] = []
         for viz_marker in data:
             if viz_marker['type'] is Marker.TEXT_VIEW_FACING:
                 # text
@@ -319,13 +319,12 @@ class QMapAnnotation(QWidget):
                 self._mirror(viz_marker_pose_item)
             elif viz_marker['type'] is Marker.ARROW:
                 # marker
-                viz_marker_pose = QMatrix().rotate(viz_marker['yaw']).map(self._viz_marker_polygon).translated(viz_marker['x'], viz_marker['y'])
-                viz_marker_pose_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(255, 0, 0)), brush=QBrush(QColor(255, 0, 0)))
                 # Everything must be mirrored
-                self._mirror(viz_marker_pose_item)
+                viz_marker_pose = QMatrix().rotate(viz_marker['yaw']).map(self._viz_marker_polygon).translated(-viz_marker['x'], viz_marker['y'])
+                viz_marker_pose_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(255, 0, 0)), brush=QBrush(QColor(255, 0, 0)))
             else:
                 rospy.logerr("Unknown Marker type : %s"%(viz_marker['type']))
-
+            viz_marker_pose_item.setZValue(1)
             self._viz_marker_items[key].append(viz_marker_pose_item)
         if len(old_items):
             for item in old_items:
@@ -379,9 +378,23 @@ class QMapAnnotation(QWidget):
 # Annotation List Events
 ###############################################################
     def _annotation_list_item_clicked(self, item):
+        
         self._selected_annotation = str(item.text())
-        if self._selected_annotation.endswith('(new)'):
-            self._selected_annotation = self._selected_annotation[:-5]
+        if self._selected_annotation.startswith('(new)'):
+            self._selected_annotation = self._selected_annotation[6:]
+        annotation_info = self._map_annotation_interface.get_annotation_info(self._selected_annotation)
+
+        if annotation_info:
+            self._set_annotating_info(anno_type=annotation_info[0], 
+                                            name=annotation_info[1], 
+                                            x= - annotation_info[2], 
+                                            y=annotation_info[3], 
+                                            yaw=annotation_info[4], 
+                                            radius=annotation_info[5], 
+                                            roll=annotation_info[6], 
+                                            pitch=annotation_info[7], 
+                                            height=annotation_info[8])
+            self._update_edit_annotation_box()
 
 ###############################################################
 # Check boxk Events
@@ -416,6 +429,7 @@ class QMapAnnotation(QWidget):
             self._scene.removeItem(self.annotation_item)
             self.annotation_item = None
             self.annotation = None
+            self.annotation = {}
         self._clear_edit_annotation_box()
 
     def _deselect_list_annotation(self):

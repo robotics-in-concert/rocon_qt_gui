@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>927</width>
-    <height>732</height>
+    <width>915</width>
+    <height>501</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,8 +22,23 @@
     </layout>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="editor_layout">
-     <property name="margin">
+    <layout class="QVBoxLayout" name="editor_layout" stretch="0,0,0,0,0,0,0">
+     <property name="spacing">
+      <number>3</number>
+     </property>
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
       <number>0</number>
      </property>
      <item>
@@ -113,7 +128,16 @@
      </item>
      <item>
       <layout class="QGridLayout" name="annotation_select_layout">
-       <property name="margin">
+       <property name="leftMargin">
+        <number>9</number>
+       </property>
+       <property name="topMargin">
+        <number>9</number>
+       </property>
+       <property name="rightMargin">
+        <number>9</number>
+       </property>
+       <property name="bottomMargin">
         <number>9</number>
        </property>
        <item row="0" column="0">
@@ -134,7 +158,16 @@
      </item>
      <item>
       <layout class="QGridLayout" name="data_editor_layout">
-       <property name="margin">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
         <number>0</number>
        </property>
        <property name="spacing">
@@ -394,6 +427,13 @@
      </item>
      <item>
       <layout class="QGridLayout" name="list_view_layout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="annotations_label">
+         <property name="text">
+          <string>Annotations </string>
+         </property>
+        </widget>
+       </item>
        <item row="1" column="0">
         <widget class="QListWidget" name="annotations_list_widget">
          <property name="minimumSize">
@@ -401,13 +441,6 @@
            <width>200</width>
            <height>0</height>
           </size>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="annotations_label">
-         <property name="text">
-          <string>Annotations </string>
          </property>
         </widget>
        </item>
