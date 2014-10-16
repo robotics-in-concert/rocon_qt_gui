@@ -300,7 +300,7 @@ class QMapAnnotation(QWidget):
                 viz_marker_pose = QMatrix().rotate(-data['yaw']+180).map(self._viz_marker_polygon).translated(x, y)
                 annotation_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(0, 0, 255)), brush=QBrush(QColor(0, 0, 255, 125)))
             elif data['type'] == "ar_track_alvar_msgs/AlvarMarker": 
-                viz_marker_pose = QMatrix().rotate(-data['yaw']+180).map(self._viz_marker_polygon).translated(x, y)
+                viz_marker_pose = QMatrix().rotate(-(data['yaw']-90)+180).map(self._viz_marker_polygon).translated(x, y)
                 annotation_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(0, 0, 255)), brush=QBrush(QColor(0, 0, 255, 125)))
             annotation_item.setZValue(2)
         if old_item:
@@ -329,13 +329,12 @@ class QMapAnnotation(QWidget):
                 # viz_marker_pose_item = self._scene.addEllipse(viz_marker['x'] - viz_marker['scale'][0] / 2, viz_marker['y'] - viz_marker['scale'][1] / 2, viz_marker['scale'][0], viz_marker['scale'][1], pen=QPen(QColor(255, 0, 0)), brush=QBrush(QColor(255, 0, 0)))
                 # # Everything must be mirrored
                 # self._mirror(viz_marker_pose_item)
-                print viz_marker['yaw']
                 viz_marker_pose = QMatrix().rotate(viz_marker['yaw']+180).map(self._viz_marker_polygon).translated(-viz_marker['x'], viz_marker['y'])
                 viz_marker_pose_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(0, 255, 0)), brush=QBrush(QColor(0, 255, 0)))
             elif viz_marker['type'] is Marker.ARROW:
                 # marker
                 # Everything must be mirrored
-                viz_marker_pose = QMatrix().rotate(viz_marker['yaw']+180).map(self._viz_marker_polygon).translated(-viz_marker['x'], viz_marker['y'])
+                viz_marker_pose = QMatrix().rotate(viz_marker['yaw']).map(self._viz_marker_polygon).translated(-viz_marker['x'], viz_marker['y'])
                 viz_marker_pose_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(255, 0, 0)), brush=QBrush(QColor(255, 0, 0)))
             else:
                 rospy.logerr("Unknown Marker type : %s"%(viz_marker['type']))
@@ -384,7 +383,8 @@ class QMapAnnotation(QWidget):
             dy = e.scenePos().y() - self.point_y
             dist = math.hypot(dx, dy)
             yaw = -math.degrees(math.atan2(dy, dx))
-
+            if self.anno_type == 'ar_track_alvar_msgs/AlvarMarker':
+                yaw += 90 
             self._set_annotating_info(anno_type=self.anno_type, x=self.point_x, y=self.point_y, yaw=yaw, radius=dist, roll=None, pitch=None, height=None)
             self._update_edit_annotation_box()
             self.update_scene("on_annotation", self.annotation)
