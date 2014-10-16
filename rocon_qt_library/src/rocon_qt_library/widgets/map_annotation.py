@@ -201,7 +201,7 @@ class QMapAnnotation(QWidget):
         self.annotation['x'] = (-x + w) * resolution + origin.position.x
         self.annotation['y'] = y * resolution + origin.position.y
         self.annotation['yaw'] = yaw 
-        self.annotation['radius'] = radius * resolution
+        self.annotation['radius'] = 0.2 #fixed value
 
         if height != None:
             self.annotation['height'] = height
@@ -296,7 +296,6 @@ class QMapAnnotation(QWidget):
             y = (data['y'] - origin.position.y) / resolution
             if data['type'] == "yocs_msgs/Table":
                 #annotation_item = self._scene.addEllipse(x - (data['scale'][0] / resolution), y -(data['scale'][1] / resolution), data['scale'][0] / resolution * 2, data['scale'][1] / resolution * 2, pen=QPen(QColor(0, 0, 255)), brush=QBrush(QColor(0, 0, 255, 125)))
-                
                 viz_marker_pose = QMatrix().rotate(-data['yaw']+180).map(self._viz_marker_polygon).translated(x, y)
                 annotation_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(0, 0, 255)), brush=QBrush(QColor(0, 0, 255, 125)))
             elif data['type'] == "ar_track_alvar_msgs/AlvarMarker": 
@@ -333,8 +332,8 @@ class QMapAnnotation(QWidget):
                 viz_marker_pose_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(0, 255, 0)), brush=QBrush(QColor(0, 255, 0)))
             elif viz_marker['type'] is Marker.ARROW:
                 # marker
-                # Everything must be mirrored
-                viz_marker_pose = QMatrix().rotate(viz_marker['yaw']).map(self._viz_marker_polygon).translated(-viz_marker['x'], viz_marker['y'])
+                # Everything must be mirrored -(data['yaw']-90)+180
+                viz_marker_pose = QMatrix().rotate((viz_marker['yaw']-90)+180).map(self._viz_marker_polygon).translated(-viz_marker['x'], viz_marker['y'])
                 viz_marker_pose_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(255, 0, 0)), brush=QBrush(QColor(255, 0, 0)))
             else:
                 rospy.logerr("Unknown Marker type : %s"%(viz_marker['type']))
