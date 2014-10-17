@@ -99,8 +99,9 @@ class MapAnnotationInterface(QObject):
         # Load the first map on map view
         # return list of available maps
         message, map_name_list = self._load_map(world)
+        
         if len(map_name_list) > 0:
-            message, annotation_name_list = self._load_annotations(world, map_name_list[0])
+            message, annotation_name_list = self._load_annotations(world)
         else:
             return False, message, [], []
 
@@ -109,13 +110,18 @@ class MapAnnotationInterface(QObject):
         self._new_annotations_data = []
         return True, message, map_name_list, annotation_name_list
 
-    def load_map(self, map_name):
+    def load_map(self, selected_name):
         try:
-            map_name, map_id = map_name.split('-')
+            map_name, map_id = selected_name.split('-')
             for annot in self._map_annotations:
                 if map_name == annot.name and map_id == str(annot.id):
                     map_msg = self.ac_handler_map.getData(annot)
                     self._update_map(map_msg)
+                    annotations_tmp = self.ac_handler_others.getAnnotations()
+                    annotations = [a for a in annotations_tmp if not a.type == 'nav_msgs/OccupancyGrid']
+                    self._annotations = annotations
+                    self._update_annotations('annotations',annotations)
+                    self._update_annotations('new_annotations', self._new_annotations)
         except WCFError as e:
             return False, str(e)
 
@@ -156,7 +162,7 @@ class MapAnnotationInterface(QObject):
         draw_data["map"] = self._map
         self.scene_update.emit('map', draw_data)
         
-    def _load_annotations(self, world, map_name):
+    def _load_annotations(self, world):
         message = "Success"
         try: 
             self.ac_handler_others.filterBy(world=world)

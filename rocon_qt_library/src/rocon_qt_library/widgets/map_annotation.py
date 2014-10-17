@@ -72,6 +72,8 @@ class QMapAnnotation(QWidget):
 
         self.anno_type = None
 
+        self._selected_map = None
+
 
     def _load_ui(self):
         rospack = rospkg.RosPack()
@@ -79,10 +81,6 @@ class QMapAnnotation(QWidget):
         loadUi(ui_file, self, {'QMapView': QMapView})
 
         world_name =  rospy.get_param('~default_world_name',None)
-        
-        #if world_name:
-            #self.world_name_text.setText(str(world_name))
-
         self._enable_buttons(False)
 
     def _init_events(self):
@@ -139,7 +137,7 @@ class QMapAnnotation(QWidget):
 
         if success:
             self._world_name = world_name
-            
+            self._selected_map = self._map_name_list[0]
             self.emit(SIGNAL("update_map_selector"))
             self._new_annotation_name_list = []
             self.emit(SIGNAL("update_annotation_list"))
@@ -158,6 +156,10 @@ class QMapAnnotation(QWidget):
         
         for name in self._map_name_list:
             self.map_select_combobox.addItem(name)
+
+        if self._selected_map:
+            idx = self.map_select_combobox.findText(self._selected_map)
+            self.map_select_combobox.setCurrentIndex(idx)
 
     def _update_annotation_list(self):
         self.annotations_list_widget.clear()
@@ -432,12 +434,13 @@ class QMapAnnotation(QWidget):
                                             height=annotation_info[8])
 
 ###############################################################
-# Annotation List Events
+# Map ItemClicked 
 ###############################################################
     def _select_map_item_clicked(self, item_index):
         # if item_index is -1, combobox got reset
-        if item_index >= 0 :
+        if item_index >= 0 and self.map_select_combobox.count() > 1: # this is to avoid being selected when the first item is added in the combobox
             self._selected_map = self.map_select_combobox.itemText(item_index)
+            print(str("in item clicked : " + self._selected_map))
             success, message = self._callback['load_map'](self._selected_map)
 
             if not success:
