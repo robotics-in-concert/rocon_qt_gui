@@ -417,11 +417,14 @@ class QMapAnnotation(QWidget):
 # Annotation List Events
 ###############################################################
     def _select_map_item_clicked(self, item_index):
-        self._selected_map = self.map_select_combobox.itemText(item_index)
-        success, message = self._callback['load_map'](self._selected_map)
 
-        if not success:
-            self.emit(SIGNAL("show_message"), self, "Failed", message)
+        # if item_index is -1, combobox got reset
+        if item_index >= 0 :
+            self._selected_map = self.map_select_combobox.itemText(item_index)
+            success, message = self._callback['load_map'](self._selected_map)
+
+            if not success:
+                self.emit(SIGNAL("show_message"), self, "Failed", message)
 
         
 
