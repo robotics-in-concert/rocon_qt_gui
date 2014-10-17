@@ -36,6 +36,7 @@ from math import sqrt, atan, pi, degrees, radians
 
 import rospy
 import tf
+import unique_id
 from tf.transformations import quaternion_from_euler
 
 import nav_msgs.msg as nav_msgs
@@ -97,8 +98,19 @@ class MapAnnotationInterface(QObject):
         self._world = world
         self._new_annotations      = []
         self._new_annotations_data = []
-
         return True, message, map_name_list, annotation_name_list
+
+    def load_map(self, map_name):
+        try:
+            map_name, map_id = map_name.split('-')
+            for annot in self._map_annotations:
+                if map_name == annot.name and map_id == str(annot.id):
+                    map_msg = self.ac_handler_map.getData(annot)
+                    self._update_map(map_msg)
+        except WCFError as e:
+            return False, str(e)
+
+        return True, "Success"
 
     def _load_map(self, world):
         message = "Success"
@@ -117,7 +129,7 @@ class MapAnnotationInterface(QObject):
         
         map_msg = self.ac_handler_map.getData(self._map_annotations[0])
         self._update_map(map_msg)
-        map_names = [a.name for a in self._map_annotations]
+        map_names = [a.name+"-"+str(a.id) for a in self._map_annotations]
         return message, map_names
 
     def _update_map(self,map_msg):

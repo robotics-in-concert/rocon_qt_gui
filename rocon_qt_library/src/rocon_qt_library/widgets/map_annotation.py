@@ -98,6 +98,7 @@ class QMapAnnotation(QWidget):
         self.remove_annotation_btn.clicked.connect(self._remove_annotation)
         self.save_annotation_btn.clicked.connect(self._save_annotation)
         self.load_world_btn.clicked.connect(self._load_world)
+        self.map_select_combobox.currentIndexChanged.connect(self._select_map_item_clicked)
         self.annotations_list_widget.itemClicked.connect(self._annotation_list_item_clicked)
 
         self.connect(self, SIGNAL("show_message"), utils.show_message)
@@ -108,6 +109,7 @@ class QMapAnnotation(QWidget):
     def init_map_annotation_interface(self, scene_update_slot, wc_namespace):
         self._map_annotation_interface = MapAnnotationInterface(scene_update_slot=self.update_scene, wc_namespace=wc_namespace)
         self._callback['load_world']      = self._map_annotation_interface.load_world
+        self._callback['load_map']      = self._map_annotation_interface.load_map
         self._callback['add_annotation']  = self._map_annotation_interface.add_annotation
         self._callback['remove_annotation']  = self._map_annotation_interface.remove_annotation
         self._callback['save_annotation'] = self._map_annotation_interface.save_annotations
@@ -126,6 +128,7 @@ class QMapAnnotation(QWidget):
             self._enable_buttons(True)
         else:
             self.emit(SIGNAL("show_message"), self, "Failed", message)
+
 
     def _enable_buttons(self, enable):
         self.add_annotation_btn.setEnabled(enable)
@@ -411,7 +414,20 @@ class QMapAnnotation(QWidget):
                                             height=annotation_info[8])
 
 ###############################################################
-# Check boxk Events
+# Annotation List Events
+###############################################################
+    def _select_map_item_clicked(self, item_index):
+        self._selected_map = self.map_select_combobox.itemText(item_index)
+        rospy.loginfo(str(self._selected_map))
+        success, message = self._callback['load_map'](self._selected_map)
+
+        if not success:
+            self.emit(SIGNAL("show_message"), self, "Failed", message)
+
+        
+
+###############################################################
+# Check box Events
 ###############################################################
     def _check_ar_marker_cbox(self, data):
         if data == Qt.Checked:
