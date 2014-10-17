@@ -70,7 +70,7 @@ class MakeAMap(Plugin):
         self._resource_chooser_interface = ResourceChooserInterface(capture_timeout, available_resource_topic, capture_resource_pair_topic, capture_resource_callbacks, release_resource_callbacks, error_resource_callbacks, refresh_resource_list_callbacks)
 
         capture_event_callbacks = [self._resource_chooser_interface.capture_resource]
-        release_event_callbacks = [self._resource_chooser_interface.release_resource]
+        release_event_callbacks = [self._resource_chooser_interface.release_resource, self._unset_slam_interface]
         self._widget.resource_chooser_widget.set_callbacks(capture_event_callbacks, release_event_callbacks)
 
     def _init_teleop_interface(self, uri, msg):
@@ -91,6 +91,9 @@ class MakeAMap(Plugin):
         if msg.result:
             with self._lock:
                 self._widget.video_teleop_widget.reset()
+
+    def _unset_slam_interface(self, uri, msg):
+        self._widget.slam_widget.unset_slam_interface()
 
     def _set_slam_view_interface(self, uri, msg):
         if msg.result:

@@ -34,6 +34,7 @@ class QSlamWidget(QWidget):
     def __init__(self, parent=None):
         super(QSlamWidget, self).__init__()
         self._parent = parent
+        self._slam_widget_interface = None
 
         self._load_ui()
         self._init_events()
@@ -70,6 +71,9 @@ class QSlamWidget(QWidget):
                                                           wc_namespace=wc_namespace,
                                                           map_saved_callbacks=map_saved_callbacks)
         self._callback['save_map'] = self._slam_widget_interface.save_map
+
+    def unset_slam_interface(self):
+        self._slam_widget_interface = None
     
     def map_saved_callback(self, msg):
         try:
@@ -86,10 +90,13 @@ class QSlamWidget(QWidget):
         self.setDisabled(False)
     
     def save_map(self):
-        self.setDisabled(True)
-        map_name = str(self.map_name_txt.toPlainText())
-        world_name = str(self.world_name_txt.toPlainText())
-        self._callback['save_map'](world=world_name, map_name=map_name)
+        if self._slam_widget_interface:
+            self.setDisabled(True)
+            map_name = str(self.map_name_txt.toPlainText())
+            world_name = str(self.world_name_txt.toPlainText())
+            self._callback['save_map'](world=world_name, map_name=map_name)
+        else:
+            QMessageBox.warning(self, 'FAIL', "No map has created",QMessageBox.Ok | QMessageBox.Ok)
 
     @pyqtSlot(list)
     def draw_scan(self, data):
