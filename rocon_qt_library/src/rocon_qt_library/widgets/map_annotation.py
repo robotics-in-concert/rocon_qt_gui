@@ -331,12 +331,12 @@ class QMapAnnotation(QWidget):
                 # viz_marker_pose_item = self._scene.addEllipse(viz_marker['x'] - viz_marker['scale'][0] / 2, viz_marker['y'] - viz_marker['scale'][1] / 2, viz_marker['scale'][0], viz_marker['scale'][1], pen=QPen(QColor(255, 0, 0)), brush=QBrush(QColor(255, 0, 0)))
                 # # Everything must be mirrored
                 # self._mirror(viz_marker_pose_item)
-                viz_marker_pose = QMatrix().rotate(viz_marker['yaw']+180).map(self._viz_marker_polygon).translated(-viz_marker['x'], viz_marker['y'])
+                viz_marker_pose = QMatrix().scale(1,-1).rotate(viz_marker['yaw']+180).map(self._viz_marker_polygon).translated(-viz_marker['x'], viz_marker['y'])
                 viz_marker_pose_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(0, 255, 0)), brush=QBrush(QColor(0, 255, 0)))
             elif viz_marker['type'] is Marker.ARROW:
                 # marker
-                # Everything must be mirrored -(data['yaw']-90)+180
-                viz_marker_pose = QMatrix().rotate((viz_marker['yaw']-90)+180).map(self._viz_marker_polygon).translated(-viz_marker['x'], viz_marker['y'])
+                # Everything must be mirrored
+                viz_marker_pose = QMatrix().scale(1,-1).rotate((viz_marker['yaw']-90)+180).map(self._viz_marker_polygon).translated(-viz_marker['x'], viz_marker['y'])
                 viz_marker_pose_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(255, 0, 0)), brush=QBrush(QColor(255, 0, 0)))
             else:
                 rospy.logerr("Unknown Marker type : %s"%(viz_marker['type']))
