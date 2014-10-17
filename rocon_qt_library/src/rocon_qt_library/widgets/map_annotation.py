@@ -418,7 +418,6 @@ class QMapAnnotation(QWidget):
 ###############################################################
     def _select_map_item_clicked(self, item_index):
         self._selected_map = self.map_select_combobox.itemText(item_index)
-        rospy.loginfo(str(self._selected_map))
         success, message = self._callback['load_map'](self._selected_map)
 
         if not success:
