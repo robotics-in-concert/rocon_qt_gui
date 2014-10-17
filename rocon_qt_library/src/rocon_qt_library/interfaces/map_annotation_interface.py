@@ -80,6 +80,15 @@ class MapAnnotationInterface(QObject):
         self._new_annotations = []
         self._new_annotations_data = []
 
+    def get_list_world(self):
+        try:
+            world_names = self.ac_handler_map.getWorldlist()
+        except WCFError as e:
+            return False, str(e), []
+
+        return True, "Success", world_names
+         
+
     def load_world(self, world):
         '''
         loading world information from world canvas server

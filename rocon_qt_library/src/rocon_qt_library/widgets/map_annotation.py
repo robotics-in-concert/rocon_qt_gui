@@ -80,8 +80,8 @@ class QMapAnnotation(QWidget):
 
         world_name =  rospy.get_param('~default_world_name',None)
         
-        if world_name:
-            self.world_name_text.setText(str(world_name))
+        #if world_name:
+            #self.world_name_text.setText(str(world_name))
 
         self._enable_buttons(False)
 
@@ -108,15 +108,33 @@ class QMapAnnotation(QWidget):
 
     def init_map_annotation_interface(self, scene_update_slot, wc_namespace):
         self._map_annotation_interface = MapAnnotationInterface(scene_update_slot=self.update_scene, wc_namespace=wc_namespace)
-        self._callback['load_world']      = self._map_annotation_interface.load_world
-        self._callback['load_map']      = self._map_annotation_interface.load_map
+        self._callback['list_world'] = self._map_annotation_interface.get_list_world
+        self._callback['load_world'] = self._map_annotation_interface.load_world
+        self._callback['load_map'] = self._map_annotation_interface.load_map
         self._callback['add_annotation']  = self._map_annotation_interface.add_annotation
         self._callback['remove_annotation']  = self._map_annotation_interface.remove_annotation
         self._callback['save_annotation'] = self._map_annotation_interface.save_annotations
 
+        self.load_world_list()
+
+    def load_world_list(self):
+        success, message, self._world_list = self._callback['list_world']()
+        
+        if success:        
+            self._update_world_list()
+        else:
+            self.emit(SIGNAL("show_message"), self, "Failed", message)
+
+    def _update_world_list(self): 
+        self.list_world_combobox.clear()
+    
+        for name in self._world_list:
+            self.list_world_combobox.addItem(name)
 
     def _load_world(self):
-        world_name = self.world_name_text.toPlainText()
+        #world_name = self.world_name_text.toPlainText()
+        world_name = str(self.list_world_combobox.currentText())
+
         success, message, self._map_name_list, self._annotation_name_list = self._callback['load_world'](world_name)
 
         if success:
@@ -417,7 +435,6 @@ class QMapAnnotation(QWidget):
 # Annotation List Events
 ###############################################################
     def _select_map_item_clicked(self, item_index):
-
         # if item_index is -1, combobox got reset
         if item_index >= 0 :
             self._selected_map = self.map_select_combobox.itemText(item_index)
