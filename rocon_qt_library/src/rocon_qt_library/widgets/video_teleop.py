@@ -34,6 +34,7 @@ class QVideoTeleop(QWidget):
         super(QVideoTeleop, self).__init__()
         self.maximum_linear_velocity = rospy.get_param('~maximum_linear_velocity', 2.0)                         
         self.maximum_angular_velocity = rospy.get_param('~maximum_angular_velocity', 90 * QVideoTeleop.degrees_to_radians)
+        self._teleop_interface = None
 
         self._load_ui()
         self._init_events()

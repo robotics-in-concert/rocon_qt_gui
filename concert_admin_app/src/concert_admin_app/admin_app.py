@@ -18,7 +18,7 @@ from python_qt_binding.QtGui import QWidget, QTreeWidgetItem, QTextEdit, QPushBu
 import rospkg
 #rqt
 from qt_gui.plugin import Plugin
-
+import rocon_qt_library.utils as utils
 from .admin_app_interface import AdminAppInterface
 
 ##############################################################################
@@ -64,6 +64,7 @@ class AdminApp(Plugin):
         self._widget.save_configuration_btn.pressed.connect(self._save_parmeters)
         self._widget.service_tree_widget.itemClicked.connect(self._select_service_tree_item) #concert item click event
         self._refresh_service_list_signal.connect(self._update_service_list)
+        self.connect(self, SIGNAL("show_message"), utils.show_message)
         
     def _init_widget(self):
         self.params_layout = self._widget.findChildren(QGridLayout, "params_layout")[0]
@@ -77,21 +78,22 @@ class AdminApp(Plugin):
     def _save_parmeters(self):
         params = {}
         result = False
-
+        msg = ""
         if not self.current_service:
-            print "Not selected service"
-        
+            msg = "Not selected service"
         elif self.current_service['enabled']:
-            print "service is already enabled!"
-        
+            msg = "service is already enabled!"
         elif self.params_layout_items:
             for item in self.params_layout_items:
                     params[item[0].text()] = item[1].toPlainText()
             result = self.admin_app_interface.set_srv_parameters(params)
         else:
-            print "No params infomation"
-        
-        print "Save params result: %s" %str(result)
+            msg = "No params infomation"
+
+        if result:
+            self.emit(SIGNAL("show_message"), self._widget, "Success", "Saved Parameters")
+        else:
+            self.emit(SIGNAL("show_message"), self._widget, "Failed", msg)
 
     def _toggle_service(self):
         if self.current_service['enabled']:
@@ -170,7 +172,7 @@ class AdminApp(Plugin):
             for param in params.keys():
                 label =  QLabel(param)
                 self.params_layout.addWidget(label)
-                value = QTextEdit(params[param])
+                value = QTextEdit(str(params[param]))
                 value.setMaximumHeight(30) 
                 self.params_layout.addWidget(value)
                 self.params_layout_items.append((label, value))
@@ -179,6 +181,7 @@ class AdminApp(Plugin):
 
     def _set_enable_params_layout(self, enable):
         if self.params_layout_items:
+            self._widget.save_configuration_btn.setEnabled(enable)
             for item in self.params_layout_items:
                 item[0].setEnabled(enable)
                 item[1].setEnabled(enable)

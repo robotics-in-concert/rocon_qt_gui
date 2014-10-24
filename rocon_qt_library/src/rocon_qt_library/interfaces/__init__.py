@@ -9,4 +9,5 @@
 
 from .video_teleop_interface import VideoTeleopInterface
 from .resource_chooser_interface import ResourceChooserInterface
-from .slam_interface import SlamInterface
+from .slam_widget_interface import SlamWidgetInterface
+from .map_annotation_interface import MapAnnotationInterface
