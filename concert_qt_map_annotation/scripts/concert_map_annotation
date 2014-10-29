@@ -19,9 +19,9 @@ import rocon_console.console as console
 
 def print_usage(name):
     s = ("\n    " + console.green + name + console.reset + " launches a standalone rqt plugin that allows you to\n"
-         "    capture and teleop a concert robot. You would normally initiate this\n"
+         "    annotate a map with semantic information. You would normally initiate this\n"
          "    application from the qt rocon remocon connected to a concert running\n"
-         "    the " + console.bold + "concert teleop service.\n" + console.reset
+         "    the " + console.bold + "concert map annotation service.\n" + console.reset
          )
     print("%s" % s)
 
