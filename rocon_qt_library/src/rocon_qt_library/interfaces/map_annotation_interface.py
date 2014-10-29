@@ -82,7 +82,7 @@ class MapAnnotationInterface(QObject):
 
     def get_list_world(self):
         try:
-            world_names = self.ac_handler_map.getWorldlist()
+            world_names = self.ac_handler_map.get_world_list()
         except WCFError as e:
             return False, str(e), []
 
@@ -115,9 +115,9 @@ class MapAnnotationInterface(QObject):
             map_name, map_id = selected_name.split('-')
             for annot in self._map_annotations:
                 if map_name == annot.name and map_id == str(annot.id):
-                    map_msg = self.ac_handler_map.getData(annot)
+                    map_msg = self.ac_handler_map.get_data(annot)
                     self._update_map(map_msg)
-                    annotations_tmp = self.ac_handler_others.getAnnotations()
+                    annotations_tmp = self.ac_handler_others.get_annotations()
                     annotations = [a for a in annotations_tmp if not a.type == 'nav_msgs/OccupancyGrid']
                     self._annotations = annotations
                     self._update_annotations('annotations',annotations)
@@ -130,9 +130,9 @@ class MapAnnotationInterface(QObject):
     def _load_map(self, world):
         message = "Success"
         try:
-            self.ac_handler_map.filterBy(world=world, types=['nav_msgs/OccupancyGrid'])
-            self.ac_handler_map.loadData()
-            map_annotations = self.ac_handler_map.getAnnotations(type='nav_msgs/OccupancyGrid')
+            self.ac_handler_map.filter_by(world=world, types=['nav_msgs/OccupancyGrid'])
+            self.ac_handler_map.load_data()
+            map_annotations = self.ac_handler_map.get_annotations(type='nav_msgs/OccupancyGrid')
             self._map_annotations = map_annotations
         except WCFError as e:
             message = str(e)
@@ -142,7 +142,7 @@ class MapAnnotationInterface(QObject):
             message = "No map available"
             return message, []
         
-        map_msg = self.ac_handler_map.getData(self._map_annotations[0])
+        map_msg = self.ac_handler_map.get_data(self._map_annotations[0])
         self._update_map(map_msg)
         map_names = [a.name+"-"+str(a.id) for a in self._map_annotations]
         return message, map_names
@@ -165,9 +165,9 @@ class MapAnnotationInterface(QObject):
     def _load_annotations(self, world):
         message = "Success"
         try: 
-            self.ac_handler_others.filterBy(world=world)
-            self.ac_handler_others.loadData()
-            annotations_tmp = self.ac_handler_others.getAnnotations()
+            self.ac_handler_others.filter_by(world=world)
+            self.ac_handler_others.load_data()
+            annotations_tmp = self.ac_handler_others.get_annotations()
             annotations = [a for a in annotations_tmp if not a.type == 'nav_msgs/OccupancyGrid']
             self._annotations = annotations
         except WCFError as e:
@@ -245,14 +245,14 @@ class MapAnnotationInterface(QObject):
     def remove_annotation(self, annotation_name):
         for a in self._annotations:
             if a.name == annotation_name:
-                self.ac_handler_others.delete(a.id)
+                self.ac_handler_others.remove(a.id)
                 self._annotations.remove(a)
                 self._update_annotations('annotations', self._annotations)
                 return 'annotations', [a.name for a in self._annotations]
 
         for a in self._new_annotations:
             if a.name == annotation_name:
-                self.ac_handler_others.delete(a.id)
+                self.ac_handler_others.remove(a.id)
                 self._new_annotations.remove(a)
                 self._update_annotations('new_annotations', self._new_annotations)
                 return 'new_annotations', [a.name for a in self._new_annotations]
@@ -261,7 +261,7 @@ class MapAnnotationInterface(QObject):
         try:
             self.ac_handler_others.save()
             for a in self._new_annotations:
-                self.ac_handler_others.delete(a.id)
+                self.ac_handler_others.remove(a.id)
             self._new_annotations = []
             self._new_annotations_data = []
             
@@ -274,12 +274,12 @@ class MapAnnotationInterface(QObject):
         annotations = []
         for a in self._annotations:
             if a.name == annotation_name:
-                annotations = self.ac_handler_others.getAnnotations(annotation_name)
+                annotations = self.ac_handler_others.get_annotations(annotation_name)
                 break
 
         for a in self._new_annotations:
             if a.name == annotation_name:
-                annotations = self.ac_handler_others.getAnnotations(annotation_name)
+                annotations = self.ac_handler_others.get_annotations(annotation_name)
                 break
         if annotations:
             annotation = annotations[0]
