@@ -12,6 +12,7 @@ import os
 import rospy
 import rospkg
 import rocon_uri
+import threading
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Qt, Signal, SIGNAL
 from python_qt_binding.QtGui import QWidget, QMessageBox, QTreeWidgetItem, QBrush, QColor
@@ -32,6 +33,7 @@ class QResourceChooser(QWidget):
         self.current_captured_resource = None
         self.current_resource = None
         self.resource_item_list = {}
+        self._lock = threading.Lock()
 
 
     def _load_ui(self): 
@@ -64,6 +66,7 @@ class QResourceChooser(QWidget):
         self._callback['release_event'] = []
 
     def _resource_selected(self, item):
+        self._lock.acquire()
         if not item in self.resource_item_list.keys():
             print "HAS NO KEY"
         else:
@@ -72,6 +75,7 @@ class QResourceChooser(QWidget):
                 self.release_resource_btn.setEnabled(True)
             else:
                 self.release_resource_btn.setEnabled(False)
+        self._lock.release()
 
     def _resource_double_clicked(self):
         if self.current_captured_resource == None:
@@ -119,6 +123,7 @@ class QResourceChooser(QWidget):
             pass
     
     def _show_capture_resource_message(self, rtn):
+        self._lock.acquire()
         if rtn:
             QMessageBox.warning(self, 'SUCCESS', "CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
             for k in self.resource_item_list.keys():
@@ -137,8 +142,10 @@ class QResourceChooser(QWidget):
         else:
             QMessageBox.warning(self, 'FAIL', "FAIURE CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
         self.setDisabled(False)
+        self._lock.release()
 
     def _show_release_resource_message(self, rtn):
+        self._lock.acquire()
         if rtn:
             QMessageBox.warning(self, 'SUCCESS', "RELEASE!!!!", QMessageBox.Ok | QMessageBox.Ok)
             for k in self.resource_item_list.keys():
@@ -153,6 +160,7 @@ class QResourceChooser(QWidget):
         self.capture_resource_btn.setEnabled(True)
         self.release_resource_btn.setEnabled(False)
         self.current_captured_resource= None
+        self._lock.release()
 
     def _show_error_resource_message(self, error_message):
         QMessageBox.warning(self, 'ERROR', error_message, QMessageBox.Ok | QMessageBox.Ok)
@@ -168,6 +176,7 @@ class QResourceChooser(QWidget):
 
 
     def _refresh_resource_list(self, resource_list):
+        self._lock.acquire()
         self.resource_list_tree_widget.clear()
 
         for r in resource_list:
@@ -175,3 +184,4 @@ class QResourceChooser(QWidget):
             resource_item = QTreeWidgetItem(self.resource_list_tree_widget)
             resource_item.setText(0, uri.name.string)
             self.resource_item_list[resource_item] = r
+        self._lock.release()
