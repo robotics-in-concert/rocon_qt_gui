@@ -11,4 +11,7 @@ install(
   FILES concert_map_annotation_plugin.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-
+install(
+   DIRECTORY ui resources
+   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
