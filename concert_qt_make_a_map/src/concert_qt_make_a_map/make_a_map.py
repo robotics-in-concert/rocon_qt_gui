@@ -92,7 +92,7 @@ class MakeAMap(Plugin):
             with self._lock:
                 self._widget.video_teleop_widget.reset()
 
-    def _unset_slam_interface(self, uri, msg):
+    def _unset_slam_interface(self, uri):
         self._widget.slam_widget.unset_slam_interface()
 
     def _set_slam_view_interface(self, uri, msg):
