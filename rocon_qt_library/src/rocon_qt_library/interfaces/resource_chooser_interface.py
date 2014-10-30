@@ -112,9 +112,10 @@ class ResourceChooserInterface(QObject):
         Receives available resource list from resource pimp.
         '''
         diff = lambda l1, l2: [x for x in l1 if x not in [l for l in l2]]
-        result = diff(msg.strings, self._resource_list)
+        new_resources = diff(msg.strings, self._resource_list)
+        gone_resources = diff(self._resource_list, msg.strings)
 
-        if result:
+        if new_resources or gone_resources:
             self._resource_list = msg.strings
             for callback in self._callback['refresh_list']:
                 callback(msg.strings)
