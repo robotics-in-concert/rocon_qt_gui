@@ -38,39 +38,51 @@ class QMasterChooser(QMainWindow):
 
     def __init__(self, parent, title, application):
         self._context = parent
-
+        self.application = application
         super(QMasterChooser, self).__init__()
-        self.initialised = False
-        self.setObjectName('Remocon')
+        utils.setup_home_dirs()
 
+        self._init_widget()
+        self._init_interface()
+
+        # start application
+        self._widget_main.show()
+        self._widget_main.activateWindow()  # give it the focus
+        self._widget_main.raise_()          # make sure it is on top
+        self._update_rocon_master_list()
+
+    def __del__(self):
+        console.loginfo("RemoconMain: Destroy")
+
+    def _init_host_configuration(self):
         self.host_name = "localhost"
         self.master_uri = "http://%s:11311" % (self.host_name)
 
         self.env_host_name = os.getenv("ROS_HOSTNAME")
         self.env_master_uri = os.getenv("ROS_MASTER_URI")
-        if self.env_host_name == None:
-            self.env_host_name = 'localhost'
+        if self.env_host_name:
+            self.host_name = self.env_host_name
         if self.env_master_uri == None:
-            self.env_master_uri = "http://%s:11311" % (self.env_host_name)
+            self.env_master_uri = "http://%s:11311" % (self.host_name)
+        elif self.env_master_uri:
+            self.master_uri = self.env_master_uri
 
-        self.application = application
-        self._widget_main = QWidget()
-
-        self.rocon_masters = RoconMasters()
-        self.cur_selected_rocon_master = None
-        self.is_init = False
-
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/remocon.ui")
-        loadUi(path, self._widget_main)
-
-        utils.setup_home_dirs()
-
+    def _init_icon_paths(self):
         self.icon_paths = {}
         try:
             self.icon_paths['unknown'] = rocon_python_utils.ros.find_resource_from_string('rocon_icons/unknown', extension='png')
         except (rospkg.ResourceNotFound, ValueError):
             console.logerror("Remocon : couldn't find icons on the ros package path (install rocon_icons and rocon_bubble_icons")
             sys.exit(1)
+
+    def _init_widget(self):
+        self._init_icon_paths()
+
+        self.setObjectName('Remocon')
+        self._widget_main = QWidget()
+
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/remocon.ui")
+        loadUi(path, self._widget_main)
 
         #main widget
         self._widget_main.list_widget.setIconSize(QSize(50, 50))
@@ -82,21 +94,15 @@ class QMasterChooser(QMainWindow):
         self._widget_main.delete_all_btn.pressed.connect(self._delete_all_rocon_masters)  # delete all button event
         self._widget_main.refresh_btn.pressed.connect(self._refresh_all_rocon_master_list)  # refresh all button event
 
-        #init
-        self._init()
-        self._widget_main.show()
-        self._widget_main.activateWindow()  # give it the focus
-        self._widget_main.raise_()          # make sure it is on top
+        self._widget_main.list_info_widget.clear()
 
-    def __del__(self):
-        console.loginfo("RemoconMain: Destroy")
+    def _init_interface(self):
+        self._init_host_configuration()
 
-    def _init(self):
-
+        self.rocon_masters = RoconMasters()
         self._connect_dlg_isValid = False
         self.cur_selected_rocon_master = None
-        self._refresh_all_rocon_master_list()
-        self.is_init = True
+        self._is_init = True
 
     def _delete_all_rocon_masters(self):
         self.rocon_masters.clear()
@@ -166,26 +172,6 @@ class QMasterChooser(QMainWindow):
         uri_text_widget = context_widget1
         host_name_text_widget = context_widget2
 
-        #check box
-        use_env_var_check = QCheckBox("Use environment variables")
-        use_env_var_check.setCheckState(Qt.Unchecked)
-
-        def set_use_env_var(data, text_widget1, text_widget2):
-            if data == Qt.Unchecked:
-                text_widget1.setText(self.master_uri)
-                text_widget2.setText(self.host_name)
-            elif data == Qt.Checked:
-                self.master_uri = str(text_widget1.toPlainText())
-                self.host_name = str(text_widget2.toPlainText())
-                text_widget1.setText(self.env_master_uri)
-                text_widget2.setText(self.env_host_name)
-
-        def check_event(data):
-            set_use_env_var(data, context_widget1, context_widget2)
-
-        use_env_var_check.stateChanged.connect(check_event)
-        ver_layout.addWidget(use_env_var_check)
-
         #button
         btn_call = QPushButton("Add")
         btn_cancel = QPushButton("Cancel")
@@ -211,8 +197,7 @@ class QMasterChooser(QMainWindow):
         self._update_rocon_master_list()
 
     def _refresh_all_rocon_master_list(self):
-        if self.is_init:
-            self.rocon_masters.check()
+        self.rocon_masters.check()
         self._widget_main.list_info_widget.clear()
         self._update_rocon_master_list()
 
@@ -230,7 +215,6 @@ class QMasterChooser(QMainWindow):
         self._widget_main.list_widget.insertItem(self._widget_main.list_widget.count(), display_name)
 
         #setting the list font
-
         font = self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).font()
         font.setPointSize(13)
         self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setFont(font)
