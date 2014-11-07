@@ -100,7 +100,7 @@ class QMasterChooser(QMainWindow):
         self._init_host_configuration()
 
         self.rocon_masters = RoconMasters()
-        self._connect_dlg_isValid = False
+        self._connect_dlg = None
         self.cur_selected_rocon_master = None
         self._is_init = True
 
@@ -120,76 +120,13 @@ class QMasterChooser(QMainWindow):
         self._refresh_rocon_master(rocon_master)
 
     def _set_add_rocon_master(self):
-
-        if self._connect_dlg_isValid:
+        if self._connect_dlg:
             console.logdebug("Dialog is live!!")
             self._connect_dlg.done(0)
 
-        #dialog
-        self._connect_dlg = QDialog(self._widget_main)
-        self._connect_dlg.setWindowTitle("Add Ros Master")
-        self._connect_dlg.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
-        self._connect_dlg.setMinimumSize(350, 0)
-        # dlg_rect = self._connect_dlg.geometry()
-
-        #dialog layout
-        ver_layout = QVBoxLayout(self._connect_dlg)
-        ver_layout.setContentsMargins(9, 9, 9, 9)
-
-        #param layout
-        text_grid_sub_widget = QWidget()
-        text_grid_layout = QGridLayout(text_grid_sub_widget)
-        text_grid_layout.setColumnStretch(1, 0)
-        text_grid_layout.setRowStretch(2, 0)
-
-        #param 1
-        title_widget1 = QLabel("MASTER_URI: ")
-        context_widget1 = QTextEdit()
-        context_widget1.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
-        context_widget1.setMinimumSize(0, 30)
-        context_widget1.append(self.master_uri)
-
-        #param 2
-        title_widget2 = QLabel("HOST_NAME: ")
-        context_widget2 = QTextEdit()
-        context_widget2.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
-        context_widget2.setMinimumSize(0, 30)
-        context_widget2.append(self.host_name)
-
-        #add param
-        text_grid_layout.addWidget(title_widget1)
-        text_grid_layout.addWidget(context_widget1)
-        text_grid_layout.addWidget(title_widget2)
-        text_grid_layout.addWidget(context_widget2)
-
-        #add param layout
-        ver_layout.addWidget(text_grid_sub_widget)
-
-        #button layout
-        button_hor_sub_widget = QWidget()
-        button_hor_layout = QHBoxLayout(button_hor_sub_widget)
-
-        uri_text_widget = context_widget1
-        host_name_text_widget = context_widget2
-
-        #button
-        btn_call = QPushButton("Add")
-        btn_cancel = QPushButton("Cancel")
-
-        btn_call.clicked.connect(lambda: self._connect_dlg.done(0))
-        btn_call.clicked.connect(lambda: self._add_rocon_master(uri_text_widget, host_name_text_widget))
-
-        btn_cancel.clicked.connect(lambda: self._connect_dlg.done(0))
-
-        #add button
-        button_hor_layout.addWidget(btn_call)
-        button_hor_layout.addWidget(btn_cancel)
-
-        #add button layout
-        ver_layout.addWidget(button_hor_sub_widget)
+        self._connect_dlg = self._create_add_rocon_master_dialog()
         self._connect_dlg.setVisible(True)
         self._connect_dlg.finished.connect(self._destroy_connect_dlg)
-        self._connect_dlg_isValid = True
 
     def _refresh_rocon_master(self, rocon_master):
         rocon_master.check()
@@ -257,7 +194,7 @@ class QMasterChooser(QMainWindow):
         self._widget_main.list_info_widget.appendHtml(info_text)
 
     def _destroy_connect_dlg(self):
-        self._connect_dlg_isValid = False
+        self._connect_dlg = None
 
     def _connect_rocon_master(self):
         rocon_master_name = str(self.rocon_masters[self.cur_selected_rocon_master].name)
@@ -278,3 +215,69 @@ class QMasterChooser(QMainWindow):
         arguments = ["", rocon_master_index, rocon_master_name, rocon_master_uri, rocon_master_host_name]
         os.execv(QMasterChooser.rocon_remocon_sub_script, arguments)
         console.logdebug("Spawning: %s with args %s" % (QMasterChooser.rocon_remocon_sub_script, arguments))
+
+    def _create_add_rocon_master_dialog(self):
+        #dialog
+        connect_dlg = QDialog(self._widget_main)
+        connect_dlg.setWindowTitle("Add Ros Master")
+        connect_dlg.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
+        connect_dlg.setMinimumSize(350, 0)
+        # dlg_rect = self._connect_dlg.geometry()
+
+        #dialog layout
+        ver_layout = QVBoxLayout(connect_dlg)
+        ver_layout.setContentsMargins(9, 9, 9, 9)
+
+        #param layout
+        text_grid_sub_widget = QWidget()
+        text_grid_layout = QGridLayout(text_grid_sub_widget)
+        text_grid_layout.setColumnStretch(1, 0)
+        text_grid_layout.setRowStretch(2, 0)
+
+        #param 1
+        title_widget1 = QLabel("MASTER_URI: ")
+        context_widget1 = QTextEdit()
+        context_widget1.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
+        context_widget1.setMinimumSize(0, 30)
+        context_widget1.append(self.master_uri)
+
+        #param 2
+        title_widget2 = QLabel("HOST_NAME: ")
+        context_widget2 = QTextEdit()
+        context_widget2.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
+        context_widget2.setMinimumSize(0, 30)
+        context_widget2.append(self.host_name)
+
+        #add param
+        text_grid_layout.addWidget(title_widget1)
+        text_grid_layout.addWidget(context_widget1)
+        text_grid_layout.addWidget(title_widget2)
+        text_grid_layout.addWidget(context_widget2)
+
+        #add param layout
+        ver_layout.addWidget(text_grid_sub_widget)
+
+        #button layout
+        button_hor_sub_widget = QWidget()
+        button_hor_layout = QHBoxLayout(button_hor_sub_widget)
+
+        uri_text_widget = context_widget1
+        host_name_text_widget = context_widget2
+
+        #button
+        btn_call = QPushButton("Add")
+        btn_cancel = QPushButton("Cancel")
+
+        btn_call.clicked.connect(lambda: connect_dlg.done(0))
+        btn_call.clicked.connect(lambda: self._add_rocon_master(uri_text_widget, host_name_text_widget))
+
+        btn_cancel.clicked.connect(lambda: connect_dlg.done(0))
+
+        #add button
+        button_hor_layout.addWidget(btn_call)
+        button_hor_layout.addWidget(btn_cancel)
+
+        #add button layout
+        ver_layout.addWidget(button_hor_sub_widget) 
+
+        return connect_dlg
