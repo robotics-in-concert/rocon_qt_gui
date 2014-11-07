@@ -202,7 +202,7 @@ class QMasterChooser(QMainWindow):
         rocon_master_host_name = str(self.rocon_masters[self.cur_selected_rocon_master].host_name)
 
         rocon_master_index = str(self.cur_selected_rocon_master)
-        self.rocon_masters[rocon_master_index].check()
+        #self.rocon_masters[rocon_master_index].check()
         # Todo this use of flags is spanky
         if self.rocon_masters[rocon_master_index].flag == '0':
             QMessageBox.warning(self, 'Rocon Master Connection Error', "Could not find a rocon master at %s" % self.rocon_masters[rocon_master_index].uri, QMessageBox.Ok)

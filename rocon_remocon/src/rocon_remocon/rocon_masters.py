@@ -49,6 +49,12 @@ class RoconMaster(object):
         s = self.name
         return s
 
+    def set_unknown(self):
+        self.name = "Unknown"
+        self.description = "Unknown."
+        self.icon = "unknown.png"
+        self.flag = '0'
+
     def check(self):
         '''
         Given the uri and hostname, this proceeds to try and ping the rocon master to detect if it is available and
@@ -61,7 +67,6 @@ class RoconMaster(object):
         output = subprocess.Popen([RoconMaster.rocon_remocon_check_up_script, self.uri, self.host_name], stdout=subprocess.PIPE)
         time_out_cnt = 0
         while True:
-            print(self)
             result = output.poll()
             if time_out_cnt > 30:
                 console.logdebug("timeout: %s" % self.uri)
@@ -69,10 +74,7 @@ class RoconMaster(object):
                     output.terminate()
                 except:
                     console.logdebug("Error: output.terminate()")
-                self.name = "Unknown"
-                self.description = "Unknown."
-                self.icon = "unknown.png"
-                self.flag = '0'
+                self.set_unknown()
                 break
             elif result == 0:
                 args = output.communicate()[0]
