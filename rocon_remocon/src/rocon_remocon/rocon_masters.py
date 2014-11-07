@@ -12,6 +12,7 @@ import string
 import subprocess
 import time
 import uuid
+import threading
 
 import rocon_console.console as console
 
@@ -60,6 +61,7 @@ class RoconMaster(object):
         output = subprocess.Popen([RoconMaster.rocon_remocon_check_up_script, self.uri, self.host_name], stdout=subprocess.PIPE)
         time_out_cnt = 0
         while True:
+            print(self)
             result = output.poll()
             if time_out_cnt > 30:
                 console.logdebug("timeout: %s" % self.uri)
@@ -208,5 +210,11 @@ class RoconMasters(object):
         """
         Ping and update information for all registered rocon masters.
         """
+        thread_pool = []
         for rocon_master in self.rocon_masters.values():
-            rocon_master.check()
+            t = threading.Thread(target=rocon_master.check)
+            t.start()
+            thread_pool.append(t)
+
+        for t in thread_pool:
+            t.join()
