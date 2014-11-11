@@ -12,6 +12,7 @@ import string
 import subprocess
 import time
 import uuid
+import threading
 
 import rocon_console.console as console
 
@@ -48,6 +49,12 @@ class RoconMaster(object):
         s = self.name
         return s
 
+    def set_unknown(self):
+        self.name = "Unknown"
+        self.description = "Unknown."
+        self.icon = "unknown.png"
+        self.flag = '0'
+
     def check(self):
         '''
         Given the uri and hostname, this proceeds to try and ping the rocon master to detect if it is available and
@@ -67,10 +74,7 @@ class RoconMaster(object):
                     output.terminate()
                 except:
                     console.logdebug("Error: output.terminate()")
-                self.name = "Unknown"
-                self.description = "Unknown."
-                self.icon = "unknown.png"
-                self.flag = '0'
+                self.set_unknown()
                 break
             elif result == 0:
                 args = output.communicate()[0]
@@ -208,5 +212,11 @@ class RoconMasters(object):
         """
         Ping and update information for all registered rocon masters.
         """
+        thread_pool = []
         for rocon_master in self.rocon_masters.values():
-            rocon_master.check()
+            t = threading.Thread(target=rocon_master.check)
+            t.start()
+            thread_pool.append(t)
+
+        for t in thread_pool:
+            t.join()
