@@ -71,7 +71,8 @@ class QVideoTeleop(QWidget):
         self._teleop_interface = VideoTeleopInterface(image_received_slot=self.on_compressed_image_received, cmd_vel_topic_name=cmd_vel_topic_name, compressed_image_topic_name=compressed_image_topic_name)
 
     def shutdown_plugin(self):
-        self._teleop_interface.shutdown()
+        if self._teleop_interface:
+            self._teleop_interface.shutdown()
 
     def on_key_release(self, e):
         if e.isAutoRepeat():

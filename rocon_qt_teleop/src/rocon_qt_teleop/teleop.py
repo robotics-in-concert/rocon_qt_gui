@@ -39,3 +39,6 @@ class Teleop(Plugin):
         self._default_cmd_vel_topic = 'cmd_vel'
         self._default_compressed_image_topic = 'compressed_image'
         self._widget.init_teleop_interface(self._default_cmd_vel_topic, self._default_compressed_image_topic)
+
+    def shutdown_plugin(self):
+        self._widget.shutdown_plugin()

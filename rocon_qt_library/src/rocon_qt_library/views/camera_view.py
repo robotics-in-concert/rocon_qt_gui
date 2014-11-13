@@ -38,9 +38,10 @@ class QCameraView(QGraphicsView):
     def _load_default_image(self):
         joystick_icon = os.path.join(rospkg.RosPack().get_path('rocon_bubble_icons'), 'icons', 'joystick.png')
         pixmap = QPixmap(joystick_icon, format="png")
-        self.scene.addPixmap(pixmap)
-        self.scene.update()
-        self.fitInView(QRectF(0, 0, self.scene.width(), self.scene.height()), Qt.KeepAspectRatio)
+        if self.scene:
+            self.scene.addPixmap(pixmap)
+            self.scene.update()
+            self.fitInView(QRectF(0, 0, self.scene.width(), self.scene.height()), Qt.KeepAspectRatio)
 
     def load_default_image(self): 
         self.emit(SIGNAL("load_default_image"))
