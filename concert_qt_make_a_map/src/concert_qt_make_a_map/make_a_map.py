@@ -112,3 +112,8 @@ class MakeAMap(Plugin):
                                                                 robot_pose_topic=robot_pose_topic,
                                                                 wc_namespace=wc_namespace,
                                                                 map_saved_callbacks=map_saved_callbacks)
+
+    def shutdown_plugin(self):
+        self._widget.slam_widget.unset_slam_interface()
+        self._widget.video_teleop_widget.reset()
+        self._widget.resource_chooser_widget.shutdown()

@@ -85,8 +85,10 @@ class VideoTeleopInterface(QObject):
         """
         self._cmd_vel_publisher_timer.shutdown()
         with self._lock:
-            self._cmd_vel_publisher.unregister()
-            self._compressed_image_subscriber.unregister()
+            if self._cmd_vel_publisher:
+                self._cmd_vel_publisher.unregister()
+            if self._compressed_image_subscriber:
+                self._compressed_image_subscriber.unregister()
             self._cmd_vel_publisher = self._compressed_image_subscriber = None
 
     @property

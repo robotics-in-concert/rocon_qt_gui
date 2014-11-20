@@ -95,10 +95,11 @@ class QResourceChooser(QWidget):
             self.setDisabled(True)
 
     def _release_resource(self):
-        if self.current_captured_resource != self.current_resource: 
-            print "cannot release not captured robot.(Captured: %s)" % self.current_captured_resource['name'].string
-        elif self.current_captured_resource == None:
+
+        if self.current_captured_resource == None:
             print "No resource has been captured yet!"
+        elif self.current_captured_resource != self.current_resource:
+            print "cannot release not captured robot.(Captured: %s)" % self.current_captured_resource['name'].string
         else:
             for callback in self._callback['release_event']:
                 callback(self.current_captured_resource)
@@ -185,3 +186,6 @@ class QResourceChooser(QWidget):
             resource_item.setText(0, uri.name.string)
             self.resource_item_list[resource_item] = r
         self._lock.release()
+
+    def shutdown(self):
+        self._release_resource()

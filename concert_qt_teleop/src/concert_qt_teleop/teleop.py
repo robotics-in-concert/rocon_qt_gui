@@ -92,3 +92,7 @@ class Teleop(Plugin):
         if msg.result:
             with self._lock:    
                 self._widget.video_teleop_widget.reset()
+
+    def shutdown_plugin(self):
+        self._widget.video_teleop_widget.shutdown_plugin()
+        self._widget.resource_chooser_widget.shutdown()
