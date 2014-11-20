@@ -10,6 +10,7 @@
 import os
 import rocon_python_utils
 import rospkg
+import rocon_std_msgs.msg as rocon_std_msgs
 
 ##############################################################################
 # Methods
@@ -84,3 +85,13 @@ def get_web_browser():
     elif rocon_python_utils.system.which("chromium-browser"):
         return 'chromium-browser'
     return None
+
+def get_web_browser_codename():
+    """
+    returns available browsers codename
+
+    :returns:  web browser code name
+    :rtype: str
+    """
+    # Currently it only supports chrome
+    return rocon_std_msgs.Strings.OS_CHROME
