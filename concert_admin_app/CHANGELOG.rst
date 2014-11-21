@@ -2,8 +2,8 @@
 Changelog for package concert_admin_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.1 (2014-11-21)
+------------------
 * cleanup. sync version
 * fix conflicts merging indigo back into make a map.
 * add message box and save config button disable when service is started

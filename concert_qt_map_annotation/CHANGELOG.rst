@@ -2,8 +2,8 @@
 Changelog for package concert_qt_map_annotation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.1 (2014-11-21)
+------------------
 * cleanup. sync version
 * removing unncessary image reosurces
 * fixing script usage description `#162 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/162>`_

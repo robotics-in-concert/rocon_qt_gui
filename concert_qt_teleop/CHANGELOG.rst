@@ -2,8 +2,8 @@
 Changelog for package concert_qt_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.1 (2014-11-21)
+------------------
 * shutdown_plugin hook to releasing resources resolves `#165 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/165>`_
 * add concert_qt_make_a_map
 * resource chooser and teleop interface are now separated. rocon_teleop and concert_teleop works fine

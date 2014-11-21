@@ -2,8 +2,8 @@
 Changelog for package rocon_qt_library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.1 (2014-11-21)
+------------------
 * shutdown_plugin hook to releasing resources resolves `#165 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/165>`_
 * it now reveals gone resource and updates lists Closes `#163 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/163>`_
 * having lock around resource_item_list to avoid racing condition. close`#161 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/161>`_

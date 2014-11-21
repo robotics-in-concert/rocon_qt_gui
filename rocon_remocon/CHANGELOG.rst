@@ -2,8 +2,8 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.1 (2014-11-21)
+------------------
 * add web codename in remocon uri closes `#166 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/166>`_
 * updates
 * dialog creation refactored
