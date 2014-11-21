@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>concert_admin_app</name>
-  <version>0.7.1</version>
+  <version>0.7.2</version>
   <description>The concert_admin_app package</description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>
