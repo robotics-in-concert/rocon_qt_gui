@@ -2,6 +2,9 @@
 Changelog for package concert_conductor_graph
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.1 (2014-11-21)
 ------------------
 

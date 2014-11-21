@@ -2,6 +2,9 @@
 Changelog for package concert_admin_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.1 (2014-11-21)
 ------------------
 * cleanup. sync version

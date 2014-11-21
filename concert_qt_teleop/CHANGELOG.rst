@@ -2,6 +2,9 @@
 Changelog for package concert_qt_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.1 (2014-11-21)
 ------------------
 * shutdown_plugin hook to releasing resources resolves `#165 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/165>`_

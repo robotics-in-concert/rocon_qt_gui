@@ -2,6 +2,9 @@
 Changelog for package rocon_qt_listener
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.1 (2014-11-21)
 ------------------
 * cleanup. sync version
