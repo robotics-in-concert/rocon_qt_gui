@@ -2,6 +2,9 @@
 Changelog for package rocon_qt_master_info
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.0 (2014-08-25)
 ------------------
 * Mismatched install file reference fix

@@ -2,6 +2,14 @@
 Changelog for package rocon_qt_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* shutdown_plugin hook to releasing resources resolves `#165 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/165>`_
+* fixing cmake rule in rocon_qt_telop. ui has migrated to rocon_qt_library
+* resource directory was removed by mistake
+* resource chooser and teleop interface are now separated. rocon_teleop and concert_teleop works fine
+* Contributors: Jihoon Lee
+
 0.7.0 (2014-08-25)
 ------------------
 * add changelogs

@@ -2,6 +2,45 @@
 Changelog for package rocon_qt_library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* shutdown_plugin hook to releasing resources resolves `#165 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/165>`_
+* it now reveals gone resource and updates lists Closes `#163 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/163>`_
+* having lock around resource_item_list to avoid racing condition. close`#161 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/161>`_
+* pep8 style method names in world_canvas library Fix `#159 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/159>`_
+* bug fixed
+* blocks improper save button use
+* now listworld is available
+* ignore combobox reset event
+* remove log
+* change draw viz_marker
+* load map implemented
+* upgrade map drawing
+* updates mirror transition
+* adjust x-axis symmetry to annotations
+* change display method about annotation info at textbox
+* minor update
+* updates
+* add destroyed hook in resource chooser
+* display unit in ui
+* create concert qt map annotater
+* save working
+* updates
+* updates
+* skipping processing scan and robot pose if it didn't receive map
+* removing unnecessary files
+* delete usused code
+* fixed map save btn layout
+* make slam widget instead of slam view
+* migrate code into util directory
+* create rocon qt util and update slam viewer code clean
+* delete unused code
+* rendering robot pose and laser scan info
+* scan and robot pose topic set
+* add concert_qt_make_a_map
+* resource chooser and teleop interface are now separated. rocon_teleop and concert_teleop works fine
+* Contributors: DongWook Lee, Jihoon Lee, dwlee
+
 0.7.0 (2014-08-25)
 ------------------
 * remove debugging print.
