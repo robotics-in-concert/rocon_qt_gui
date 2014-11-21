@@ -13,9 +13,12 @@
   <author>Daniel Stonier</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>concert_admin_app</run_depend>
   <run_depend>concert_conductor_graph</run_depend>
+  <run_depend>concert_qt_make_a_map</run_depend>
+  <run_depend>concert_qt_map_annotation</run_depend>
+  <run_depend>concert_qt_service_info</run_depend>
   <run_depend>concert_qt_teleop</run_depend>
-  <run_depend>rocon_admin_app</run_depend>
   <run_depend>rocon_gateway_graph</run_depend>
   <run_depend>rocon_qt_app_manager</run_depend>
   <run_depend>rocon_qt_library</run_depend>
