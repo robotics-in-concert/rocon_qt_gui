@@ -92,8 +92,10 @@ class QSlamWidget(QWidget):
     def save_map(self):
         if self._slam_widget_interface:
             self.setDisabled(True)
-            map_name = str(self.map_name_txt.toPlainText())
-            world_name = str(self.world_name_txt.toPlainText())
+            map_name = str(self.map_name_txt.toPlainText()).lower().replace(' ', '_')
+            world_name = str(self.world_name_txt.toPlainText()).lower().replace(' ', '_')
+            self.map_name_txt.setPlainText(map_name)
+            self.world_name_txt.setPlainText(world_name_txt)
             self._callback['save_map'](world=world_name, map_name=map_name)
         else:
             QMessageBox.warning(self, 'FAIL', "No map has created",QMessageBox.Ok | QMessageBox.Ok)
