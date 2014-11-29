@@ -85,7 +85,7 @@ class AdminApp(Plugin):
             msg = "service is already enabled!"
         elif self.params_layout_items:
             for item in self.params_layout_items:
-                    params[item[0].text()] = item[1].toPlainText()
+                    params[item[0].text()] = item[1].toPlainText().strip()
             result = self.admin_app_interface.set_srv_parameters(params)
         else:
             msg = "No params infomation"
