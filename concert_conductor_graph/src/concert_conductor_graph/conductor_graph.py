@@ -252,7 +252,7 @@ class ConductorGraph(Plugin):
         self.signal_update_conductor_graph.emit()
 
     def _update_client_tab(self):
-        print('[conductor graph]: _update_client_tab')
+        #print('[conductor graph]: _update_client_tab')
         self.pre_selected_client_name = self.cur_selected_client_name
         self._widget.tabWidget.clear()
 
@@ -321,7 +321,7 @@ class ConductorGraph(Plugin):
         pass
 
     def _redraw_graph_view(self):
-        print("[conductor graph]: _redraw_graph_view")
+        #print("[conductor graph]: _redraw_graph_view")
         # regenerate the dotcode
         current_dotcode = self.dotcode_generator.generate_dotcode(
                                                        conductor_graph_instance=self._graph,

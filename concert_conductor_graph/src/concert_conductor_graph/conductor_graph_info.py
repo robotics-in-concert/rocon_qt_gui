@@ -69,7 +69,7 @@ class ConductorGraphInfo(object):
         changes its state. This update happens rather infrequently with every
         message supplied by the conductor's latched graph publisher.
         '''
-        print("[conductor_graph_info] : update clients callback")
+        #print("[conductor_graph_info] : update clients callback")
         self._graph = msg
         # sneaky way of getting all the states and the lists
         visible_concert_clients_by_name = []
@@ -98,7 +98,7 @@ class ConductorGraphInfo(object):
 
         :param msg concert_msgs.ConcertClients : graph of concert connected/connectable clients.
         '''
-        print("[conductor_graph_info]: update_connection_statistics")
+        #print("[conductor_graph_info]: update_connection_statistics")
         for state in msg.__slots__:
             concert_clients = getattr(msg, state)  # by state
             for concert_client in concert_clients:  # concert_msgs.ConcertClient
