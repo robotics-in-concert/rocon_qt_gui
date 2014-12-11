@@ -391,7 +391,7 @@ class QMapAnnotation(QWidget):
                 self.point_x = e.scenePos().x()
                 self.point_y = e.scenePos().y()
 
-                height = 0.5
+                height = 0.36
                 radius = 1
                 roll = 90.0 if self.anno_type == 'ar_track_alvar_msgs/AlvarMarker' else 0.0
                 self._set_annotating_info(anno_type=self.anno_type, x=self.point_x, y=self.point_y, yaw=0.0, radius=radius, roll=roll, pitch=0.0, height=height)
