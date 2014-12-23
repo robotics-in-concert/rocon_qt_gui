@@ -56,9 +56,9 @@ class QInteractionsChooser(QMainWindow):
 
         self.interactions_widget = QWidget()
         self.roles_widget = QWidget()
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/interactions_list.ui")
+        path = os.path.join(rospack.get_path('rocon_remocon'), 'ui', 'interactions_list.ui')
         loadUi(path, self.interactions_widget)
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/role_list.ui")
+        path = os.path.join(rospack.get_path('rocon_remocon'), 'ui', 'role_list.ui')
         loadUi(path, self.roles_widget)
 
         # role list widget

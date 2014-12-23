@@ -81,7 +81,8 @@ class QMasterChooser(QMainWindow):
         self.setObjectName('Remocon')
         self._widget_main = QWidget()
 
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../ui/remocon.ui")
+        rospack = rospkg.RosPack()
+        path = os.path.join(rospack.get_path('rocon_remocon'), 'ui', 'remocon.ui')
         loadUi(path, self._widget_main)
 
         #main widget
