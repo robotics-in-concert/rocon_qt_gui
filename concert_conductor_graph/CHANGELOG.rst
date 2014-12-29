@@ -2,8 +2,8 @@
 Changelog for package concert_conductor_graph
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.3 (2014-12-29)
+------------------
 * commenting out debug messages `#169 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/169>`_
 * Contributors: Jihoon Lee
 

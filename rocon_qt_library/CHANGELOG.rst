@@ -2,8 +2,8 @@
 Changelog for package rocon_qt_library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.3 (2014-12-29)
+------------------
 * relocate ar_marker height as waiterbot
 * force to use lower case and underscore instead of capitals and space in world and map name `#167 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/167>`_
 * Contributors: Jihoon Lee
