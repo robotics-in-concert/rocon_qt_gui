@@ -2,6 +2,9 @@
 Changelog for package rocon_rqt_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.2 (2014-11-21)
 ------------------
 * add new packages in meta pkg

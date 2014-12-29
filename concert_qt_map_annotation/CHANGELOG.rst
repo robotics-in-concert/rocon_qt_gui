@@ -2,6 +2,9 @@
 Changelog for package concert_qt_map_annotation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.2 (2014-11-21)
 ------------------
 
