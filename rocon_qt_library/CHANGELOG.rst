@@ -2,8 +2,8 @@
 Changelog for package rocon_qt_library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.4 (2014-12-30)
+------------------
 * update setup.py to install submodules fixes `#173 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/173>`_
 * Contributors: Jihoon Lee
 

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>concert_conductor_graph</name>
-  <version>0.7.3</version>
+  <version>0.7.4</version>
   <description>The concert_conductor_graph package</description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>
