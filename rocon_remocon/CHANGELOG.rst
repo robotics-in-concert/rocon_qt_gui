@@ -2,6 +2,9 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.3 (2014-12-29)
 ------------------
 * patch ui file search logic. `#172 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/172>`_

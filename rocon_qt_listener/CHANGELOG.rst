@@ -2,6 +2,9 @@
 Changelog for package rocon_qt_listener
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.3 (2014-12-29)
 ------------------
 

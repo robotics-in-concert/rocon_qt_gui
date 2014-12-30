@@ -2,6 +2,9 @@
 Changelog for package concert_admin_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.3 (2014-12-29)
 ------------------
 * remove leading and ending white space in parameter closes `#168 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/168>`_
