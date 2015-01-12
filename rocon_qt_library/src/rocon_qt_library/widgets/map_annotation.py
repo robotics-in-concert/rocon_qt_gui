@@ -91,7 +91,7 @@ class QMapAnnotation(QWidget):
         self.map_view._scene.mouseMoveEvent = self._mouseMoveEvent
 
         self.ar_marker_cbox.stateChanged.connect(self._check_ar_marker_cbox)
-        self.table_cbox.stateChanged.connect(self._check_table_cbox)
+        self.location_cbox.stateChanged.connect(self._check_location_cbox)
         self.add_annotation_btn.clicked.connect(self._add_annotation)
         self.remove_annotation_btn.clicked.connect(self._remove_annotation)
         self.save_annotation_btn.clicked.connect(self._save_annotation)
@@ -184,7 +184,7 @@ class QMapAnnotation(QWidget):
                 self.emit(SIGNAL("update_annotation_list"))
                 self._clear_on_annotation()
                 self.ar_marker_cbox.setCheckState(Qt.Unchecked)
-                self.table_cbox.setCheckState(Qt.Unchecked)
+                self.location_cbox.setCheckState(Qt.Unchecked)
                 self._clear_edit_annotation_box()
 
     def _remove_annotation(self):
@@ -317,7 +317,7 @@ class QMapAnnotation(QWidget):
 
             x = -((data['x'] - origin.position.x) / resolution - w)
             y = (data['y'] - origin.position.y) / resolution
-            if data['type'] == "yocs_msgs/Table":
+            if data['type'] == "yocs_msgs/Waypoint":
                 #annotation_item = self._scene.addEllipse(x - (data['scale'][0] / resolution), y -(data['scale'][1] / resolution), data['scale'][0] / resolution * 2, data['scale'][1] / resolution * 2, pen=QPen(QColor(0, 0, 255)), brush=QBrush(QColor(0, 0, 255, 125)))
                 viz_marker_pose = QMatrix().rotate(-data['yaw']+180).map(self._viz_marker_polygon).translated(x, y)
                 annotation_item = self._scene.addPolygon(viz_marker_pose, pen=QPen(QColor(0, 0, 255)), brush=QBrush(QColor(0, 0, 255, 125)))
@@ -347,7 +347,7 @@ class QMapAnnotation(QWidget):
                 # Everything must be mirrored
                 viz_marker_pose_item.translate(-viz_marker['x'], viz_marker['y'])
             elif viz_marker['type'] is Marker.CYLINDER:
-                # # table
+                # # waypoint 
                 # viz_marker_pose_item = self._scene.addEllipse(viz_marker['x'] - viz_marker['scale'][0] / 2, viz_marker['y'] - viz_marker['scale'][1] / 2, viz_marker['scale'][0], viz_marker['scale'][1], pen=QPen(QColor(255, 0, 0)), brush=QBrush(QColor(255, 0, 0)))
                 # # Everything must be mirrored
                 # self._mirror(viz_marker_pose_item)
@@ -453,21 +453,21 @@ class QMapAnnotation(QWidget):
 ###############################################################
     def _check_ar_marker_cbox(self, data):
         if data == Qt.Checked:
-            self.table_cbox.setCheckState(Qt.Unchecked)
+            self.location_cbox.setCheckState(Qt.Unchecked)
             self.map_view.setDragMode(QGraphicsView.NoDrag)
             self.anno_type = "ar_track_alvar_msgs/AlvarMarker"
         else:
             self.map_view.setDragMode(QGraphicsView.ScrollHandDrag)
-            if self.table_cbox.checkState() == Qt.Unchecked:
+            if self.location_cbox.checkState() == Qt.Unchecked:
                 self.anno_type = None
         self._clear_on_annotation()
         self._deselect_list_annotation()
 
-    def _check_table_cbox(self, data):
+    def _check_location_cbox(self, data):
         if data == Qt.Checked:
             self.ar_marker_cbox.setCheckState(Qt.Unchecked)
             self.map_view.setDragMode(QGraphicsView.NoDrag)
-            self.anno_type = "yocs_msgs/Table" 
+            self.anno_type = "yocs_msgs/Waypoint" 
         else:
             self.map_view.setDragMode(QGraphicsView.ScrollHandDrag)
 

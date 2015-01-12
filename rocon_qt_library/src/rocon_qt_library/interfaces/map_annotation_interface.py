@@ -229,8 +229,8 @@ class MapAnnotationInterface(QObject):
     def add_annotation(self, annotation_info, annotation_type):
         if annotation_type == "ar_track_alvar_msgs/AlvarMarker": 
             anno, data = utils.create_alvar_marker_from_info(annotation_info, self._world, self._map.header.frame_id)
-        elif annotation_type == "yocs_msgs/Table":
-            anno, data = utils.create_table_from_info(annotation_info, self._world, self._map.header.frame_id)
+        elif annotation_type == "yocs_msgs/Waypoint":
+            anno, data = utils.create_waypoint_from_info(annotation_info, self._world, self._map.header.frame_id)
 
         self._new_annotations.append(anno)
         self._new_annotations_data.append(data)

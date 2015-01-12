@@ -66,13 +66,13 @@ def create_alvar_marker_from_info(annotation_info, world, frame_id):
 
     return ann, obj
 
-def create_table_from_info(annotation_info, world, frame_id):
+def create_waypoint_from_info(annotation_info, world, frame_id):
     ann = Annotation()
     ann.timestamp = rospy.Time.now()
     ann.id = unique_id.toMsg(unique_id.fromRandom())
     ann.world = world
     ann.name = annotation_info['name']
-    ann.type = 'yocs_msgs/Table'
+    ann.type = 'yocs_msgs/Waypoint'
     ann.keywords.append(str(world))
     ann.shape = 3 # Arrow
     ann.color.r = 0.2
@@ -89,19 +89,17 @@ def create_table_from_info(annotation_info, world, frame_id):
     ann.pose.pose.pose.position.z = 0.0#annotation_info['height']
     (ann.pose.pose.pose.orientation.x, ann.pose.pose.pose.orientation.y, ann.pose.pose.pose.orientation.z, ann.pose.pose.pose.orientation.w) = tf.transformations.quaternion_from_euler(radians(annotation_info['roll']), radians(annotation_info['pitch']), radians(annotation_info['yaw']))
 
-    obj = yocs_msgs.Table()
+    obj = yocs_msgs.Waypoint()
     obj.name = annotation_info['name'] 
-    obj.radius = annotation_info['radius']
-    obj.height = annotation_info['height']
-    obj.pose.header.frame_id = frame_id
-    obj.pose.header.stamp = rospy.Time.now()
-    obj.pose.pose.pose.position.x = annotation_info['x']
-    obj.pose.pose.pose.position.y = annotation_info['y']
-    obj.pose.pose.pose.position.z = 0.0
-    (obj.pose.pose.pose.orientation.x, obj.pose.pose.pose.orientation.y, obj.pose.pose.pose.orientation.z, obj.pose.pose.pose.orientation.w) = tf.transformations.quaternion_from_euler(radians(annotation_info['roll']), radians(annotation_info['pitch']), radians(annotation_info['yaw']))
+    obj.header.frame_id = frame_id
+    obj.header.stamp = rospy.Time.now()
+    obj.pose.position.x = annotation_info['x']
+    obj.pose.position.y = annotation_info['y']
+    obj.pose.position.z = 0.0
+    (obj.pose.orientation.x, obj.pose.orientation.y, obj.pose.orientation.z, obj.pose.orientation.w) = tf.transformations.quaternion_from_euler(radians(annotation_info['roll']), radians(annotation_info['pitch']), radians(annotation_info['yaw']))
 
-    # tables are assumed to lay on the floor, so z coordinate is zero;
+    # waypoints are assumed to lay on the floor, so z coordinate is zero;
     # but WCF assumes that the annotation pose is the center of the object
-    ann.pose.pose.pose.position.z += ann.size.z/2.0
+    ann.pose.position.z += ann.size.z/2.0
 
     return ann, obj
