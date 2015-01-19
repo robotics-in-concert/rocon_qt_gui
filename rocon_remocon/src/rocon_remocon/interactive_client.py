@@ -294,15 +294,16 @@ class InteractiveClient():
         launch_configuration = rocon_launch.RosLaunchConfiguration(
             name=roslaunch_filename,
             package=None,
-            port=self._ros_master_port,
+            #port=self._ros_master_port,
+            port=11314,
             title=interaction.display_name,
             namespace=interaction.namespace,
             args=self._prepare_roslaunch_args(interaction.parameters),
             options="--screen"
             )
         env = {}
-        env['ROS_MASTER_URI'] = self.ros_master_uri
-        env['ROS_HOSTNAME'] = self.host_name
+        #env['ROS_MASTER_URI'] = "http://192.168.10.35:11314"
+        #env['ROS_HOSTNAME'] = self.host_name
 
         process_listener = partial(self._process_listeners, anonymous_name, 1)
         (process, meta_roslauncher) = self._roslaunch_terminal.spawn_roslaunch_window(launch_configuration, postexec_fn=process_listener, env = env)
