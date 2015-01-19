@@ -86,17 +86,12 @@ class InteractiveClient():
         # expose underlying functionality higher up
         self.interactions = self._interactions_table.generate_role_view
         """Get a dictionary of interactions belonging to the specified role."""
-        self.ros_master_uri = ""
-        self.host_name = ""
 
     def _connect(self, rocon_master_name="", ros_master_uri="http://localhost:11311", host_name='localhost'):
 
         # uri is obtained from the user, stored in ros_master_uri
         os.environ["ROS_MASTER_URI"] = ros_master_uri
         os.environ["ROS_HOSTNAME"] = host_name
-        self.ros_master_uri = ros_master_uri
-        self.host_name = host_name
-
         self._ros_master_port = urlparse(os.environ["ROS_MASTER_URI"]).port
 
         console.logdebug("Interactive Client : Connection Details")
@@ -109,11 +104,8 @@ class InteractiveClient():
         # for the remocon-role manager interaction anyway:
         rospy.init_node(self.name, disable_signals=True)
         try:
-            print "get_interactions_service_name"
             get_interactions_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions', timeout=rospy.rostime.Duration(5.0), unique=True)
-            print "get_roles_service_name"
             get_roles_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetRoles', timeout=rospy.rostime.Duration(5.0), unique=True)
-            print "request_interaction_service_name"
             request_interaction_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/RequestInteraction', timeout=rospy.rostime.Duration(5.0), unique=True)
         except rocon_python_comms.NotFoundException as e:
             message = "failed to find all of the interactions' publications and services [%s]" % str(e)
@@ -127,16 +119,13 @@ class InteractiveClient():
 
         try:
             # if its available, should be quick to find this one since we found the others...
-            print "pairing_topic_name"
             pairing_topic_name = rocon_python_comms.find_topic('rocon_interaction_msgs/Pair', timeout=rospy.rostime.Duration(0.5), unique=True)
-            
             self.pairing_status_subscriber = rospy.Subscriber(pairing_topic_name, rocon_interaction_msgs.Pair, self._subscribe_pairing_status_callback)
         except rocon_python_comms.NotFoundException as e:
             console.logdebug("Interactive Client : support for paired interactions disabled [not found]")
 
         self._publish_remocon_status()
         self.is_connect = True
-        print "Connecting!!!"
         return (True, "success")
 
     def shutdown(self):
@@ -294,19 +283,14 @@ class InteractiveClient():
         launch_configuration = rocon_launch.RosLaunchConfiguration(
             name=roslaunch_filename,
             package=None,
-            #port=self._ros_master_port,
-            port=11314,
+            port=self._ros_master_port,
             title=interaction.display_name,
             namespace=interaction.namespace,
             args=self._prepare_roslaunch_args(interaction.parameters),
             options="--screen"
             )
-        env = {}
-        #env['ROS_MASTER_URI'] = "http://192.168.10.35:11314"
-        #env['ROS_HOSTNAME'] = self.host_name
-
         process_listener = partial(self._process_listeners, anonymous_name, 1)
-        (process, meta_roslauncher) = self._roslaunch_terminal.spawn_roslaunch_window(launch_configuration, postexec_fn=process_listener, env = env)
+        (process, meta_roslauncher) = self._roslaunch_terminal.spawn_roslaunch_window(launch_configuration, postexec_fn=process_listener)
         interaction.launch_list[anonymous_name] = RosLaunchInfo(anonymous_name, True, process, self._roslaunch_terminal.shutdown_roslaunch_windows, [meta_roslauncher])
         return True
 
