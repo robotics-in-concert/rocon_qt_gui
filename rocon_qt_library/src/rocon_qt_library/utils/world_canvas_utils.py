@@ -100,6 +100,6 @@ def create_waypoint_from_info(annotation_info, world, frame_id):
 
     # waypoints are assumed to lay on the floor, so z coordinate is zero;
     # but WCF assumes that the annotation pose is the center of the object
-    ann.pose.position.z += ann.size.z/2.0
+    ann.pose.pose.pose.position.z += ann.size.z/2.0
 
     return ann, obj
