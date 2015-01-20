@@ -26,8 +26,7 @@ class AdminAppInterface(object):
         self.service_list = {}
         self.ros_subscribers = {}
         self.ros_services = {}
-        
-        
+
     def _init_admin_app_interface(self):
         self._init_ros_subscriber()
         self._init_ros_service()
@@ -42,7 +41,7 @@ class AdminAppInterface(object):
     def _init_ros_service(self):
         try:
             enable_service = rocon_python_comms.find_service('concert_msgs/EnableService', timeout=rospy.rostime.Duration(5.0), unique=True)
-            self.ros_services['enable_service'] = rospy.ServiceProxy(enable_service, EnableService)    
+            self.ros_services['enable_service'] = rospy.ServiceProxy(enable_service, EnableService)
             update_service_config = rocon_python_comms.find_service('concert_msgs/UpdateServiceConfig', timeout=rospy.rostime.Duration(5.0), unique=True)
             self.ros_services['update_service_config'] = rospy.ServiceProxy(update_service_config, UpdateServiceConfig)
         except NotFoundException as e:
@@ -74,6 +73,7 @@ class AdminAppInterface(object):
         return params
 
     def set_srv_parameters(self, srv_name, param_data):
+        result = False
         try:
             srv_profile_msg = concert_msgs.ServiceProfile()
             srv_profile_msg.name = srv_name
@@ -82,12 +82,12 @@ class AdminAppInterface(object):
                 parameter = rocon_std_msgs.KeyValue(key, param_data[key])
                 parameter_detail.append(parameter)
             srv_profile_msg.parameters_detail = parameter_detail
-            self.update_service_config(srv_profile_msg)
+            result = self.update_service_config(srv_profile_msg)
         except Exception, e:
             rospy.loginfo(e)
-            return False
-        else:
-            return True
+            result = False
+
+        return result
 
     def update_service_list(self, data):
 
