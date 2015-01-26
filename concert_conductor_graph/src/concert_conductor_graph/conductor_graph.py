@@ -26,7 +26,6 @@ threading._DummyThread._Thread__stop = lambda x: 42
 
 ###########################
 
-from .dotcode import ConductorGraphDotcodeGenerator
 from .interactive_graphics_view import InteractiveGraphicsView
 from qt_dotgraph.dot_to_qt import DotToQtGenerator
 from qt_gui.plugin import Plugin
@@ -36,7 +35,8 @@ from qt_dotgraph.pydotfactory import PydotFactory
 # TODO: use pygraphviz instead, but non-deterministic layout will first be resolved in graphviz 2.30
 # from qtgui_plugin.pygraphvizfactory import PygraphvizFactory
 
-from conductor_graph_info import ConductorGraphInfo
+from concert_utilities.conductor_graph import ConductorGraphDotcodeGenerator
+from concert_utilities.conductor_graph import ConductorGraphInfo
 
 ##############################################################################
 # Utility Classes
