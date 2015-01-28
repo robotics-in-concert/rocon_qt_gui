@@ -95,7 +95,7 @@ class QSlamWidget(QWidget):
             map_name = str(self.map_name_txt.toPlainText()).lower().replace(' ', '_')
             world_name = str(self.world_name_txt.toPlainText()).lower().replace(' ', '_')
             self.map_name_txt.setPlainText(map_name)
-            self.world_name_txt.setPlainText(world_name_txt)
+            self.world_name_txt.setPlainText(world_name)
             self._callback['save_map'](world=world_name, map_name=map_name)
         else:
             QMessageBox.warning(self, 'FAIL', "No map has created",QMessageBox.Ok | QMessageBox.Ok)
