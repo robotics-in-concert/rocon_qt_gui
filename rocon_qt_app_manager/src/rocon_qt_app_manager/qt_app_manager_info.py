@@ -13,10 +13,8 @@ import rospy
 import rocon_python_comms
 #rocon
 from rocon_std_msgs.msg import Remapping, KeyValue
-from rocon_app_manager_msgs.msg import Status
-from rocon_app_manager_msgs.srv import StartRapp
-from rocon_app_manager_msgs.srv import StopRapp
-from rocon_app_manager_msgs.srv import GetRappList
+from rocon_app_manager_msgs.msg import Status, RappList
+from rocon_app_manager_msgs.srv import StartRapp, StopRapp
 
 ##############################################################################
 # QtRappManagerInfo
@@ -28,27 +26,33 @@ def list_rapp_msg_to_dict(list_rapp):
     """
     dict_rapp = {}
     for rapp in list_rapp:
-        dict_rapp[rapp] = {}
-        dict_rapp[rapp]["status"] = rapp.status
-        dict_rapp[rapp]["name"] = rapp.name
-        dict_rapp[rapp]["display_name"] = rapp.display_name
-        dict_rapp[rapp]["description"] = rapp.description
-        dict_rapp[rapp]["compatibility"] = rapp.compatibility
-        dict_rapp[rapp]["preferred"] = rapp.preferred
-        dict_rapp[rapp]["icon"] = rapp.icon
-        dict_rapp[rapp]["implementations"] = rapp.implementations
-        dict_rapp[rapp]["public_interface"] = rapp.public_interface
-        dict_rapp[rapp]["public_parameters"] = rapp.public_parameters
+        name = rapp.name
+        dict_rapp[name] = {}
+        dict_rapp[name]["status"] = rapp.status
+        dict_rapp[name]["name"] = rapp.name
+        dict_rapp[name]["display_name"] = rapp.display_name
+        dict_rapp[name]["description"] = rapp.description
+        dict_rapp[name]["compatibility"] = rapp.compatibility
+        dict_rapp[name]["preferred"] = rapp.preferred
+        dict_rapp[name]["icon"] = rapp.icon
+        dict_rapp[name]["implementations"] = rapp.implementations
+        dict_rapp[name]["public_interface"] = rapp.public_interface
+        dict_rapp[name]["public_parameters"] = rapp.public_parameters
     return dict_rapp
 
 
+RAPP_LIST_TOPIC = 'rapp_list'
+
 class QtRappManagerInfo(object):
-    def __init__(self):
-        self.rapps = {}
-        self.running_rapps = {}
-        self._update_rapps_callback = None
-        self.current_namespace = ''
-        self.current_subscriber = None
+
+
+    def __init__(self, update_rapp_callback):
+        self._available_rapps = {}
+        self._running_rapps = {}
+        self._update_rapps_callback = update_rapp_callback
+
+        self._current_namespace = ''
+        self._current_subscriber = None
 
     def _update_rapps(self, data):
         """
@@ -57,21 +61,31 @@ class QtRappManagerInfo(object):
         @param data: information of rapps
         @type rocon_app_manager_msgs/RappList
         """
-        self.rapps = list_rapp_msg_to_dict(data.available_rapps)
-        self.running_rapps = list_rapp_msg_to_dict(data.running_rapps)
+        self._available_rapps = list_rapp_msg_to_dict(data.available_rapps)
+        self._running_rapps = list_rapp_msg_to_dict(data.running_rapps)
 
-        #Call update callback
+
+    def _process_rapp_list_msg(self, msg):
+        """
+        Update the available rapp list
+                                      
+        @param data: information of rapps
+        @type rocon_app_manager_msgs/RappList
+        """
+        
+        self._available_rapps = list_rapp_msg_to_dict(msg.available_rapps)
+        self._running_rapps = list_rapp_msg_to_dict(msg.running_rapps)
         self._update_rapps_callback()
 
-    def _update_rapp_status(self, data):
-        self._get_rapps(self.current_namespace)
+    def select_rapp_manager(self, namespace):
+        if self._current_subscriber and self._current_namespace != namespace:
+            self._current_subscriber.unregister()
+            self._current_subscriber = None
+        self._current_subscriber = rospy.Subscriber(namespace + RAPP_LIST_TOPIC, RappList, self._process_rapp_list_msg)
+        self._current_namespace = namespace
 
-    def _set_update_status(self, namespace):
-        if self.current_subscriber:
-            self.current_subscriber.unregister()
-            self.current_subscriber = None
-        self.current_subscriber = rospy.Subscriber(namespace + 'status', Status, self._update_rapp_status)
-        self.current_namespace = namespace
+    def get_available_rapps(self):
+        return self._available_rapps
 
     def _get_namespaces(self):
         """

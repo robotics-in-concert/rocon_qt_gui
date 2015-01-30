@@ -12,14 +12,8 @@ import os
 
 #pyqt
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel, pyqtSignal
-from python_qt_binding.QtCore import pyqtSlot, SIGNAL,SLOT, QRectF , QTimer, QEvent, QUrl
-from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QLabel, QComboBox
-from python_qt_binding.QtGui import QSizePolicy,QTextEdit, QCompleter, QBrush, QDialog, QColor, QPen, QPushButton
-from python_qt_binding.QtGui import QTabWidget, QPlainTextEdit,QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox, QWidgetItem, QSpacerItem
-from python_qt_binding.QtGui import QTreeWidgetItem, QPixmap, QGraphicsScene
-from python_qt_binding.QtDeclarative import QDeclarativeView
-from python_qt_binding.QtSvg import QSvgGenerator
+from python_qt_binding.QtCore import Signal, QSize
+from python_qt_binding.QtGui import QListView, QWidget, QStandardItemModel, QStandardItem, QIcon, QPixmap 
 #ros
 import rospkg
 from qt_app_manager_info import QtRappManagerInfo
@@ -70,95 +64,74 @@ class QtRappManager(Plugin):
     def __init__(self, context):
         self._context = context
         super(QtRappManager, self).__init__(context)
-        self.initialised = False
+
+
+        self._init_ui(context)
+        self._init_events()
+        self._init_variables()
+        self._start()
+
+    def _init_ui(self, context):
+        self._widget = QWidget()
         self.setObjectName('QtRappManger')
 
-        self._widget = QWidget()
         rospack = rospkg.RosPack()
         ui_file = os.path.join(rospack.get_path('rocon_qt_app_manager'), 'ui', 'qt_rapp_manager.ui')
         self._widget.setObjectName('QtRappManger')
         loadUi(ui_file, self._widget, {})
+
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
-
-        # rapp list item click event
-        self._widget.rapp_tree_widget.itemClicked.connect(self._select_rapp_tree_item)
-
-        # implementation item click
-        self._widget.implementation_tree_widget.itemClicked.connect(self._select_implementation_tree_item)
-
-        #button event connection
-        self._widget.start_rapp_btn.pressed.connect(self._start_rapp)
-        self._widget.stop_rapp_btn.pressed.connect(self._stop_rapp)
-        #signal event connection
-        self._widget.destroyed.connect(self._exit)
-        self._update_rapps_signal.connect(self._update_rapp_list)
-        #combo box change event
-        self._widget.namespace_cbox.currentIndexChanged.connect(self._change_namespace)
         context.add_widget(self._widget)
 
+        # Set view mode
+        self._widget.rapp_grid.setViewMode(QListView.IconMode)
+        #self._widget.rapp_grid.setViewMode(QListView.ListMode)
+
+    def _init_events(self):
+        #combo box change event
+        self._widget.namespace_cbox.currentIndexChanged.connect(self._change_namespace)
+
+    def _init_variables(self):
+        self.initialised = False
+
         #init
-        self.qt_rapp_manager_info = QtRappManagerInfo()
-        self.qt_rapp_manager_info._reg_update_rapps_callback(self._refresh_rapps)
+        self._qt_rapp_manager_info = QtRappManagerInfo(self._refresh_rapps)
+        self._update_rapps_signal.connect(self._update_rapp_list)
 
-        self.rapps = {}
-        self.current_rapp = None
-        self.selected_impl = None
-        self.current_captured_robot = None
+        self._rapp_view_model = QStandardItemModel()
+        self._widget.rapp_grid.setModel(self._rapp_view_model)
+        self._widget.rapp_grid.setWrapping(True)
+        self._widget.rapp_grid.setIconSize(QSize(90,90))
+        self._widget.rapp_grid.setSpacing(10)
 
-        self._get_name_spaces()
+
+    def _start(self):
+        self._get_appmanager_namespaces()
 
     def _change_namespace(self, event):
-        self.qt_rapp_manager_info._get_rapps(self._widget.namespace_cbox.currentText())
-        self.qt_rapp_manager_info._set_update_status(self._widget.namespace_cbox.currentText())
-        pass
+        self._cleanup_rapps()
+        self._qt_rapp_manager_info.select_rapp_manager(self._widget.namespace_cbox.currentText())
 
-    def _get_name_spaces(self):
-        for namespace in self.qt_rapp_manager_info._get_namespaces():
+    def _cleanup_rapps(self):
+        pass 
+
+    def _get_appmanager_namespaces(self):
+        namespaces = self._qt_rapp_manager_info._get_namespaces()
+        for namespace in namespaces:
             ns = namespace[:namespace.find('list_rapps')]
             self._widget.namespace_cbox.addItem(ns)
-        self.qt_rapp_manager_info._get_rapps(self._widget.namespace_cbox.currentText())
-        self.qt_rapp_manager_info._set_update_status(self._widget.namespace_cbox.currentText())
-
-    def _exit(self):
-        pass
-
-    def _start_rapp(self):
-        ns = self._widget.namespace_cbox.currentText()
-        
-        if not self.selected_impl and not self.current_rapp:
-            print "No rapp has been selected yet" 
-            return
-            
-        rapp = self.selected_impl if self.selected_impl else self.current_rapp['name']
-        parameters = self._get_public_parameters()
-
-        result = self.qt_rapp_manager_info._start_rapp(ns, rapp, parameters)
-        self._widget.service_result_text.appendHtml(result)
-        self._widget.icon_label.clear()
-
-    def _stop_rapp(self):
-        ns = self._widget.namespace_cbox.currentText()
-        result = self.qt_rapp_manager_info._stop_rapp(ns)
-        self._widget.service_result_text.appendHtml(result)
 
     def _update_rapp_list(self):
-        self._widget.rapp_info_text.clear()
-        self._widget.rapp_tree_widget.clear()
-        self.rapps = {}
-        rapps = self.qt_rapp_manager_info.rapps
-        for k in rapps.values():
-            rapp = QTreeWidgetItem(self._widget.rapp_tree_widget)
-            rapp.setText(0, k["name"])
-            self.rapps[rapp] = k
+        rapps = self._qt_rapp_manager_info.get_available_rapps()
 
-        self._widget.running_rapp_tree_widget.clear()
-        rapps = self.qt_rapp_manager_info.running_rapps
-        self._manage_buttons()
-        for k in rapps.values():
-            rapp = QTreeWidgetItem(self._widget.running_rapp_tree_widget)
-            rapp.setText(0, k["name"])
-            self.rapps[rapp] = k
+        for r, v in rapps.items():
+            item = QStandardItem(v['display_name'])
+            item.setSizeHint(QSize(100,100))
+            icon = self._get_qicon(v['icon'])
+            item.setIcon(icon)
+            self._rapp_view_model.appendRow(item)
+
 
     def _select_rapp_tree_item(self, item):
         if not item in self.rapps.keys():
@@ -216,11 +189,34 @@ class QtRappManager(Plugin):
             self._widget.icon_label.clear()
             self._set_icon()
 
-    def _set_icon(self):
+    def _get_qicon(self, icon):
         pixmap = QPixmap()
-        pixmap.loadFromData(self.qt_rapp_manager_info._get_icon().data, format=self.qt_rapp_manager_info._get_icon().format)
-        self._widget.icon_label.setPixmap(pixmap)
-        self._widget.icon_label.resize(pixmap.width(), pixmap.height())
+        pixmap.loadFromData(icon.data, format=icon.format)
+        
+        return QIcon(pixmap)
         
     def _refresh_rapps(self):
         self._update_rapps_signal.emit()
+
+    def _start_rapp(self):
+        ns = self._widget.namespace_cbox.currentText()
+        
+        if not self.selected_impl and not self.current_rapp:
+            print "No rapp has been selected yet" 
+            return
+            
+        rapp = self.selected_impl if self.selected_impl else self.current_rapp['name']
+        parameters = self._get_public_parameters()
+
+        result = self.qt_rapp_manager_info._start_rapp(ns, rapp, parameters)
+        self._widget.service_result_text.appendHtml(result)
+        self._widget.icon_label.clear()
+
+    def _stop_rapp(self):
+        ns = self._widget.namespace_cbox.currentText()
+        result = self.qt_rapp_manager_info._stop_rapp(ns)
+        self._widget.service_result_text.appendHtml(result)
+
+
+    def _exit(self):
+        pass
