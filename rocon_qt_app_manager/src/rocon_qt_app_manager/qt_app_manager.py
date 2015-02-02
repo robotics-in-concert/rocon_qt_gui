@@ -20,37 +20,10 @@ from qt_app_manager_info import QtRappManagerInfo
 #rqt
 from qt_gui.plugin import Plugin
 
-##############################################################################
-# Utils
-##############################################################################
 
-def create_label_textedit_pair(key, value):
-
-    param_layout = QHBoxLayout()
-
-    name_widget = QLabel(key)
-    textedit_widget = QTextEdit() 
-    textedit_widget.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
-    textedit_widget.setMinimumSize(0,30)
-    textedit_widget.append(str(value))
-
-    param_layout.addWidget(name_widget)
-    param_layout.addWidget(textedit_widget)
-
-    return param_layout
- 
-
-def clear_layout(layout):
-    for i in reversed(range(layout.count())):
-        item = layout.itemAt(i)
-
-        if isinstance(item, QWidgetItem):
-            item.widget().close()
-        else:
-            clear_layout(item.layout())
-
-        # remove the item from layout
-        layout.removeItem(item)    
+from rocon_qt_library.utils import show_message
+from .utils import QRappItem
+from .qt_rapp_status_dialog import QtRappDialog
 
 
 ##############################################################################
@@ -65,11 +38,10 @@ class QtRappManager(Plugin):
         self._context = context
         super(QtRappManager, self).__init__(context)
 
-
         self._init_ui(context)
         self._init_events()
         self._init_variables()
-        self._start()
+        self.spin()
 
     def _init_ui(self, context):
         self._widget = QWidget()
@@ -92,6 +64,11 @@ class QtRappManager(Plugin):
         #combo box change event
         self._widget.namespace_cbox.currentIndexChanged.connect(self._change_namespace)
 
+        # Rapp single click event
+        self._widget.rapp_grid.clicked.connect(self._rapp_single_click)
+        # Rapp double click event
+        self._widget.rapp_grid.doubleClicked.connect(self._rapp_double_click)
+
     def _init_variables(self):
         self.initialised = False
 
@@ -105,15 +82,13 @@ class QtRappManager(Plugin):
         self._widget.rapp_grid.setIconSize(QSize(90,90))
         self._widget.rapp_grid.setSpacing(10)
 
+        self._selected_rapp = None
 
-    def _start(self):
+    def spin(self):
         self._get_appmanager_namespaces()
 
-    def _change_namespace(self, event):
-        self._cleanup_rapps()
-        self._qt_rapp_manager_info.select_rapp_manager(self._widget.namespace_cbox.currentText())
-
     def _cleanup_rapps(self):
+        self._rapp_view_model.clear()
         pass 
 
     def _get_appmanager_namespaces(self):
@@ -122,17 +97,59 @@ class QtRappManager(Plugin):
             ns = namespace[:namespace.find('list_rapps')]
             self._widget.namespace_cbox.addItem(ns)
 
-    def _update_rapp_list(self):
-        rapps = self._qt_rapp_manager_info.get_available_rapps()
+    def _exit(self):
+        pass
 
+###################################################################
+# Events
+###################################################################
+    def _change_namespace(self, event):
+        self._cleanup_rapps()
+        self._qt_rapp_manager_info.select_rapp_manager(self._widget.namespace_cbox.currentText())
+
+    def _refresh_rapps(self):
+        """
+        Updates from qt_app_manager_info.
+        """
+        self._update_rapps_signal.emit()
+
+    def _update_rapp_list(self):
+        """
+        Rapp manager namespace event
+        """
+        rapps = self._qt_rapp_manager_info.get_available_rapps()
         for r, v in rapps.items():
-            item = QStandardItem(v['display_name'])
-            item.setSizeHint(QSize(100,100))
-            icon = self._get_qicon(v['icon'])
-            item.setIcon(icon)
+            item = QRappItem(v)
             self._rapp_view_model.appendRow(item)
 
+    def _rapp_single_click(self, index):
+        qrapp = self._rapp_view_model.item(index.row())
+        rapp = qrapp.getRapp()
+        self._create_rapp_dialog(rapp)
 
+    def _create_rapp_dialog(self, rapp):
+            self._selected_rapp = rapp
+            self._dialog = QtRappDialog(self._widget,rapp)
+            self._dialog.show()
+
+    def _rapp_double_click(self, item):
+        running_rapps = self._qt_rapp_manager_info.get_running_rapps()
+        if len(running_rapps) > 0:
+            names = [r['display_name'] for r in running_rapps.values()]
+            show_message(self._widget, "Error", "Rapp %s are already running"%names)
+        else:
+            self._start_rapp()
+
+    def _start_rapp(self):
+        result = self._qt_rapp_manager_info.start_rapp(self._selected_rapp['name'], self._selected_rapp['public_interface'], self._selected_rapp['public_parameters'])
+        show_message(self._widget, str(result.started), result.message)
+        self._selected_rapp = None
+
+
+
+########################################
+# Legacy
+########################################
     def _select_rapp_tree_item(self, item):
         if not item in self.rapps.keys():
             print "HAS NO KEY"
@@ -189,15 +206,6 @@ class QtRappManager(Plugin):
             self._widget.icon_label.clear()
             self._set_icon()
 
-    def _get_qicon(self, icon):
-        pixmap = QPixmap()
-        pixmap.loadFromData(icon.data, format=icon.format)
-        
-        return QIcon(pixmap)
-        
-    def _refresh_rapps(self):
-        self._update_rapps_signal.emit()
-
     def _start_rapp(self):
         ns = self._widget.namespace_cbox.currentText()
         
@@ -216,7 +224,3 @@ class QtRappManager(Plugin):
         ns = self._widget.namespace_cbox.currentText()
         result = self.qt_rapp_manager_info._stop_rapp(ns)
         self._widget.service_result_text.appendHtml(result)
-
-
-    def _exit(self):
-        pass

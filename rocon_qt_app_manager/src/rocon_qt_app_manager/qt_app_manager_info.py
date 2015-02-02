@@ -127,31 +127,28 @@ class QtRappManagerInfo(object):
         rapp_info += "</html>"
         return rapp_info
 
-    def _start_rapp(self, namespace, rapp_name, parameters):
+    def start_rapp(self, rapp_name, remappings, parameters):
         """
         Start rapp
 
         :param rapp_name: rapp to start
         :type rapp_name: str 
-        :param namespace: name space of running rapp
-        :type namespace: str
+        :param remappings: remapping rules
+        :type remappings: list
         :param parameters: public parameters
-        :type parameters: dict
+        :type parameters: list
         """
         #not yet
-        remapping = Remapping()
-        params = [KeyValue(key, value) for key, value in parameters.items()]
-        print('Starting %s with %s'%(rapp_name, str(params)))
+        #remaps = [Remapping(key, value) for key, value in remappings.items()]
 
-        service_handle = rospy.ServiceProxy(namespace + 'start_rapp', StartRapp)
-        call_result = service_handle(rapp_name, [], params) 
-        call_result_html = "<html>"
-        call_result_html += "<p>-------------------------------------------</p>"
-        call_result_html += "<p><b>started: </b>" + str(call_result.started) + "</p>"
-        call_result_html += "<p><b>error_code: </b>" + str(call_result.error_code) + "</p>"
-        call_result_html += "<p><b>message: </b>" + call_result.message + "</p>"
-        call_result_html += "</html>"
-        return call_result_html
+        print('Starting %s with %s'%(rapp_name, str(parameters)))
+        service_handle = rospy.ServiceProxy(self._current_namespace + 'start_rapp', StartRapp)
+        call_result = service_handle(rapp_name, [], parameters)
+
+        if call_result.started:
+            self._current_rapp = rapp_name
+
+        return call_result
 
     def _stop_rapp(self, namespace):
         """
@@ -170,10 +167,11 @@ class QtRappManagerInfo(object):
         call_result_html += "</html>"
         return call_result_html
 
-    def _get_icon(self):
-        rapps = self.running_rapps
-        for k in rapps.values():
-            return k['icon']
+    def get_running_rapps(self):
+        return self._running_rapps
 
-    def _reg_update_rapps_callback(self, func):
-        self._update_rapps_callback = func
+    def is_running_rapp(self, rapp):
+        if rapp in self._running_rapps:
+            return True
+        else:
+            return False
