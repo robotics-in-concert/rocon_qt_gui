@@ -108,25 +108,6 @@ class QtRappManagerInfo(object):
         service_handle = rospy.ServiceProxy(namespace + 'list_rapps', GetRappList)
         self._update_rapps(service_handle())
 
-    def _get_rapp_info(self, rapp):
-        """
-        Getting the rapp information to html type
-        @param rapp: information of rapp
-        @type dict
-
-        @return the rapp information
-        @type String
-        """
-
-        rapp_info = "<html>"
-        rapp_info += "<p>-------------------------------------------</p>"
-        for info_key in rapp.keys():
-            if info_key is 'icon':
-                continue
-            rapp_info += "<p><b>%s: </b>%s</p>" % (info_key, str(rapp[info_key]))
-        rapp_info += "</html>"
-        return rapp_info
-
     def start_rapp(self, rapp_name, remappings, parameters):
         """
         Start rapp
@@ -140,38 +121,33 @@ class QtRappManagerInfo(object):
         """
         #not yet
         #remaps = [Remapping(key, value) for key, value in remappings.items()]
+        params = [KeyValue(k,v) for k, v in parameters]
 
-        print('Starting %s with %s'%(rapp_name, str(parameters)))
+        print('Starting %s with %s'%(rapp_name, str(params)))
         service_handle = rospy.ServiceProxy(self._current_namespace + 'start_rapp', StartRapp)
-        call_result = service_handle(rapp_name, [], parameters)
+        call_result = service_handle(rapp_name, [], params)
 
         if call_result.started:
             self._current_rapp = rapp_name
 
         return call_result
 
-    def _stop_rapp(self, namespace):
+    def stop_rapp(self):
         """
         Stop rapp
 
         @param namespace: name space of running rapp
         @type String
         """
-        service_handle = rospy.ServiceProxy(namespace + 'stop_rapp', StopRapp)
+        service_handle = rospy.ServiceProxy(self._current_namespace + 'stop_rapp', StopRapp)
         call_result = service_handle()
-        call_result_html = "<html>"
-        call_result_html += "<p>-------------------------------------------</p>"
-        call_result_html += "<p><b>stopped: </b>" + str(call_result.stopped) + "</p>"
-        call_result_html += "<p><b>error_code: </b>" + str(call_result.error_code) + "</p>"
-        call_result_html += "<p><b>message: </b>" + call_result.message + "</p>"
-        call_result_html += "</html>"
-        return call_result_html
+        return call_result
 
     def get_running_rapps(self):
         return self._running_rapps
 
     def is_running_rapp(self, rapp):
-        if rapp in self._running_rapps:
+        if rapp['name'] in self._running_rapps.keys():
             return True
         else:
             return False

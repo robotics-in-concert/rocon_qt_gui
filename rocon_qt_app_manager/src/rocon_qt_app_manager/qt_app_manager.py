@@ -12,7 +12,7 @@ import os
 
 #pyqt
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import Signal, QSize
+from python_qt_binding.QtCore import Signal, QSize, SIGNAL
 from python_qt_binding.QtGui import QListView, QWidget, QStandardItemModel, QStandardItem, QIcon, QPixmap 
 #ros
 import rospkg
@@ -104,7 +104,6 @@ class QtRappManager(Plugin):
 # Events
 ###################################################################
     def _change_namespace(self, event):
-        self._cleanup_rapps()
         self._qt_rapp_manager_info.select_rapp_manager(self._widget.namespace_cbox.currentText())
 
     def _refresh_rapps(self):
@@ -117,6 +116,7 @@ class QtRappManager(Plugin):
         """
         Rapp manager namespace event
         """
+        self._cleanup_rapps()
         rapps = self._qt_rapp_manager_info.get_available_rapps()
         for r, v in rapps.items():
             item = QRappItem(v)
@@ -128,9 +128,10 @@ class QtRappManager(Plugin):
         self._create_rapp_dialog(rapp)
 
     def _create_rapp_dialog(self, rapp):
-            self._selected_rapp = rapp
-            self._dialog = QtRappDialog(self._widget,rapp)
-            self._dialog.show()
+        is_running = self._qt_rapp_manager_info.is_running_rapp(rapp)
+        self._selected_rapp = rapp
+        self._dialog = QtRappDialog(self._widget,rapp, self._qt_rapp_manager_info.start_rapp, self._qt_rapp_manager_info.stop_rapp, is_running)
+        self._dialog.show()
 
     def _rapp_double_click(self, item):
         running_rapps = self._qt_rapp_manager_info.get_running_rapps()
@@ -144,8 +145,13 @@ class QtRappManager(Plugin):
         result = self._qt_rapp_manager_info.start_rapp(self._selected_rapp['name'], self._selected_rapp['public_interface'], self._selected_rapp['public_parameters'])
         show_message(self._widget, str(result.started), result.message)
         self._selected_rapp = None
+        return result
 
-
+    def _stop_rapp(self):
+        result = self._qt_rapp_manager_info.stop_rapp()
+        show_message(self._widget, str(result.stopped), result.message)
+        self._selected_rapp = None
+        return result
 
 ########################################
 # Legacy
@@ -205,22 +211,3 @@ class QtRappManager(Plugin):
             self._widget.start_rapp_btn.setEnabled(False)
             self._widget.icon_label.clear()
             self._set_icon()
-
-    def _start_rapp(self):
-        ns = self._widget.namespace_cbox.currentText()
-        
-        if not self.selected_impl and not self.current_rapp:
-            print "No rapp has been selected yet" 
-            return
-            
-        rapp = self.selected_impl if self.selected_impl else self.current_rapp['name']
-        parameters = self._get_public_parameters()
-
-        result = self.qt_rapp_manager_info._start_rapp(ns, rapp, parameters)
-        self._widget.service_result_text.appendHtml(result)
-        self._widget.icon_label.clear()
-
-    def _stop_rapp(self):
-        ns = self._widget.namespace_cbox.currentText()
-        result = self.qt_rapp_manager_info._stop_rapp(ns)
-        self._widget.service_result_text.appendHtml(result)
