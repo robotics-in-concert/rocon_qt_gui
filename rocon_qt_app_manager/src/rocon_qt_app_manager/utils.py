@@ -15,7 +15,7 @@ from python_qt_binding.QtGui import QIcon, QPixmap, QStandardItem, QHBoxLayout, 
 # Rapp item
 ############################################
 class QRappItem(QStandardItem):
-    def __init__(self, rapp):
+    def __init__(self, rapp, running):
         QStandardItem.__init__(self, rapp['display_name'])
         self.setSizeHint(QSize(100,100))
         icon = get_qicon(rapp['icon'])
@@ -26,6 +26,13 @@ class QRappItem(QStandardItem):
         self.setToolTip(rapp['description'])
         self.setEditable(False)
         self.setRapp(rapp)
+        self.setEnabled(running)
+
+    def compare_name(self, display_name, name):
+        if self._rapp['display_name'] == display_name and self._rapp['name'] == name:
+            return True
+        else:
+            return False
         
     def setRapp(self, rapp):
         self._rapp = rapp

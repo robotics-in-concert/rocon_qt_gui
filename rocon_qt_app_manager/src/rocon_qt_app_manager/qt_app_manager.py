@@ -117,10 +117,17 @@ class QtRappManager(Plugin):
         Rapp manager namespace event
         """
         self._cleanup_rapps()
-        rapps = self._qt_rapp_manager_info.get_available_rapps()
-        for r, v in rapps.items():
-            item = QRappItem(v)
+        available_rapps = self._qt_rapp_manager_info.get_available_rapps()
+        running_rapps = self._qt_rapp_manager_info.get_running_rapps()
+
+        rapp_items = []
+        for r, v in available_rapps.items():
+            if r in running_rapps.keys():
+                item = QRappItem(v, running=True)
+            else:
+                item = QRappItem(v, running=False)
             self._rapp_view_model.appendRow(item)
+
 
     def _rapp_single_click(self, index):
         qrapp = self._rapp_view_model.item(index.row())
@@ -199,15 +206,3 @@ class QtRappManager(Plugin):
             value_textbox = item.itemAt(1).widget()
             public_parameters[key_label.text()] = str(value_textbox.toPlainText())
         return public_parameters
-
-    def _manage_buttons(self):
-        rapps = self.qt_rapp_manager_info.running_rapps
-        if(rapps == {}):
-            self._widget.icon_label.clear()
-            self._widget.stop_rapp_btn.setEnabled(False)
-            self._widget.start_rapp_btn.setEnabled(True)
-        else:
-            self._widget.stop_rapp_btn.setEnabled(True)
-            self._widget.start_rapp_btn.setEnabled(False)
-            self._widget.icon_label.clear()
-            self._set_icon()
