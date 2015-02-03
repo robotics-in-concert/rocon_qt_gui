@@ -9,7 +9,7 @@
 from __future__ import division
 
 from python_qt_binding.QtCore import QSize
-from python_qt_binding.QtGui import QIcon, QPixmap, QStandardItem, QHBoxLayout, QLabel, QTextEdit, QSizePolicy
+from python_qt_binding.QtGui import QIcon, QPixmap, QStandardItem, QHBoxLayout, QLabel, QTextEdit, QSizePolicy, QFont
 
 ############################################
 # Rapp item
@@ -20,6 +20,9 @@ class QRappItem(QStandardItem):
         self.setSizeHint(QSize(100,100))
         icon = get_qicon(rapp['icon'])
         self.setIcon(icon)
+        f = QFont()
+        f.setPointSize(10)
+        self.setFont(f)
         self.setToolTip(rapp['description'])
         self.setEditable(False)
         self.setRapp(rapp)
@@ -43,25 +46,27 @@ def get_qpixmap(icon):
     return pixmap
 
 def create_label_textedit_pair(key, value):
-    param_layout = QHBoxLayout()
+    '''
+        Probabaly there should be better way to lay out param and remappings
+    '''
+    #param_layout = QHBoxLayout()
     name = QLabel(key)
-    name.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-    name.setMinimumSize(40,30)
+    name.setToolTip(key)
+    name.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+    name.setMinimumWidth(400)
+    name.setMaximumHeight(30)
+    name.setWordWrap(True)
 
     textedit = QTextEdit() 
-    textedit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Ignored)
-    textedit.setMinimumSize(0,30)
+    textedit.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+    textedit.setMinimumWidth(320)
+    textedit.setMaximumHeight(30)
     textedit.append(str(value))
-    param_layout.addWidget(name)
-    param_layout.addWidget(textedit)
-    return param_layout
+    return name, textedit
 
-def clear_layout(layout):
-    for i in reversed(range(layout.count())):
-        item = layout.itemAt(i)
-        if isinstance(item, QWidgetItem):
-            item.widget().close()
-        else:
-            clear_layout(item.layout())
-        # remove the item from layout
-        layout.removeItem(item)    
+def create_label(name, is_bold=False):
+    qname = QLabel(name)
+    f = QFont()
+    f.setBold(is_bold)
+    qname.setFont(f)
+    return qname 

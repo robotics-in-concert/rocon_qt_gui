@@ -79,7 +79,7 @@ class QtRappManager(Plugin):
         self._rapp_view_model = QStandardItemModel()
         self._widget.rapp_grid.setModel(self._rapp_view_model)
         self._widget.rapp_grid.setWrapping(True)
-        self._widget.rapp_grid.setIconSize(QSize(90,90))
+        self._widget.rapp_grid.setIconSize(QSize(60,60))
         self._widget.rapp_grid.setSpacing(10)
 
         self._selected_rapp = None
