@@ -120,12 +120,12 @@ class QtRappManagerInfo(object):
         :type parameters: list
         """
         #not yet
-        #remaps = [Remapping(key, value) for key, value in remappings.items()]
+        remaps = [Remapping(key, value) for key, value in remappings]
         params = [KeyValue(k,v) for k, v in parameters]
 
-        print('Starting %s with %s'%(rapp_name, str(params)))
+        print('Starting %s with %s, %s'%(rapp_name, str(params), str(remaps)))
         service_handle = rospy.ServiceProxy(self._current_namespace + 'start_rapp', StartRapp)
-        call_result = service_handle(rapp_name, [], params)
+        call_result = service_handle(rapp_name, remaps, params)
 
         if call_result.started:
             self._current_rapp = rapp_name

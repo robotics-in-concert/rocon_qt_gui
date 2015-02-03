@@ -142,7 +142,7 @@ class QtRappManager(Plugin):
             self._start_rapp()
 
     def _start_rapp(self):
-        result = self._qt_rapp_manager_info.start_rapp(self._selected_rapp['name'], self._selected_rapp['public_interface'], self._selected_rapp['public_parameters'])
+        result = self._qt_rapp_manager_info.start_rapp(self._selected_rapp['name'], [], self._selected_rapp['public_parameters'])
         show_message(self._widget, str(result.started), result.message)
         self._selected_rapp = None
         return result
