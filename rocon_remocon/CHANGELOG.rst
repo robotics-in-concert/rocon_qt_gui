@@ -2,6 +2,13 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* restore rocon_remocon src
+* update ros service and subscriber init function
+* make test brach
+* Contributors: dwlee
+
 0.7.4 (2014-12-30)
 ------------------
 

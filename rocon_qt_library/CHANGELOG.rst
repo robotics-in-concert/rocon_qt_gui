@@ -2,6 +2,13 @@
 Changelog for package rocon_qt_library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix name typo
+* ann use pose covariance
+* rocon_qt_library convert table to waypoint
+* Contributors: Jihoon Lee
+
 0.7.4 (2014-12-30)
 ------------------
 * update setup.py to install submodules fixes `#173 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/173>`_
