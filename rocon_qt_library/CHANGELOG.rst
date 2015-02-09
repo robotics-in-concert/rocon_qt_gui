@@ -2,8 +2,8 @@
 Changelog for package rocon_qt_library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.5 (2015-02-09)
+------------------
 * fix name typo
 * ann use pose covariance
 * rocon_qt_library convert table to waypoint

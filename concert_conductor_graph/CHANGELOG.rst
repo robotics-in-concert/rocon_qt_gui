@@ -2,8 +2,8 @@
 Changelog for package concert_conductor_graph
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.5 (2015-02-09)
+------------------
 * migrate concert conductor dotcode generator to new base closes `#176 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/176>`_
 * Contributors: Jihoon Lee
 

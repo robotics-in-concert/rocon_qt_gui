@@ -2,8 +2,8 @@
 Changelog for package rocon_qt_app_manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.5 (2015-02-09)
+------------------
 * icon enable disable works
 * support remapping
 * start stop works

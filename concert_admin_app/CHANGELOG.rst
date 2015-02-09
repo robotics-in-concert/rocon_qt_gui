@@ -2,8 +2,8 @@
 Changelog for package concert_admin_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.5 (2015-02-09)
+------------------
 * fix return value regarding service profile update function
 * update ros service and subscriber init function
 * Contributors: dwlee
