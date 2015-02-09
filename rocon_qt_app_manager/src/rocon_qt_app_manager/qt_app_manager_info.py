@@ -13,10 +13,8 @@ import rospy
 import rocon_python_comms
 #rocon
 from rocon_std_msgs.msg import Remapping, KeyValue
-from rocon_app_manager_msgs.msg import Status
-from rocon_app_manager_msgs.srv import StartRapp
-from rocon_app_manager_msgs.srv import StopRapp
-from rocon_app_manager_msgs.srv import GetRappList
+from rocon_app_manager_msgs.msg import Status, RappList
+from rocon_app_manager_msgs.srv import StartRapp, StopRapp
 
 ##############################################################################
 # QtRappManagerInfo
@@ -28,27 +26,33 @@ def list_rapp_msg_to_dict(list_rapp):
     """
     dict_rapp = {}
     for rapp in list_rapp:
-        dict_rapp[rapp] = {}
-        dict_rapp[rapp]["status"] = rapp.status
-        dict_rapp[rapp]["name"] = rapp.name
-        dict_rapp[rapp]["display_name"] = rapp.display_name
-        dict_rapp[rapp]["description"] = rapp.description
-        dict_rapp[rapp]["compatibility"] = rapp.compatibility
-        dict_rapp[rapp]["preferred"] = rapp.preferred
-        dict_rapp[rapp]["icon"] = rapp.icon
-        dict_rapp[rapp]["implementations"] = rapp.implementations
-        dict_rapp[rapp]["public_interface"] = rapp.public_interface
-        dict_rapp[rapp]["public_parameters"] = rapp.public_parameters
+        name = rapp.name
+        dict_rapp[name] = {}
+        dict_rapp[name]["status"] = rapp.status
+        dict_rapp[name]["name"] = rapp.name
+        dict_rapp[name]["display_name"] = rapp.display_name
+        dict_rapp[name]["description"] = rapp.description
+        dict_rapp[name]["compatibility"] = rapp.compatibility
+        dict_rapp[name]["preferred"] = rapp.preferred
+        dict_rapp[name]["icon"] = rapp.icon
+        dict_rapp[name]["implementations"] = rapp.implementations
+        dict_rapp[name]["public_interface"] = rapp.public_interface
+        dict_rapp[name]["public_parameters"] = rapp.public_parameters
     return dict_rapp
 
 
+RAPP_LIST_TOPIC = 'rapp_list'
+
 class QtRappManagerInfo(object):
-    def __init__(self):
-        self.rapps = {}
-        self.running_rapps = {}
-        self._update_rapps_callback = None
-        self.current_namespace = ''
-        self.current_subscriber = None
+
+
+    def __init__(self, update_rapp_callback):
+        self._available_rapps = {}
+        self._running_rapps = {}
+        self._update_rapps_callback = update_rapp_callback
+
+        self._current_namespace = ''
+        self._current_subscriber = None
 
     def _update_rapps(self, data):
         """
@@ -57,21 +61,31 @@ class QtRappManagerInfo(object):
         @param data: information of rapps
         @type rocon_app_manager_msgs/RappList
         """
-        self.rapps = list_rapp_msg_to_dict(data.available_rapps)
-        self.running_rapps = list_rapp_msg_to_dict(data.running_rapps)
+        self._available_rapps = list_rapp_msg_to_dict(data.available_rapps)
+        self._running_rapps = list_rapp_msg_to_dict(data.running_rapps)
 
-        #Call update callback
+
+    def _process_rapp_list_msg(self, msg):
+        """
+        Update the available rapp list
+                                      
+        @param data: information of rapps
+        @type rocon_app_manager_msgs/RappList
+        """
+        
+        self._available_rapps = list_rapp_msg_to_dict(msg.available_rapps)
+        self._running_rapps = list_rapp_msg_to_dict(msg.running_rapps)
         self._update_rapps_callback()
 
-    def _update_rapp_status(self, data):
-        self._get_rapps(self.current_namespace)
+    def select_rapp_manager(self, namespace):
+        if self._current_subscriber and self._current_namespace != namespace:
+            self._current_subscriber.unregister()
+            self._current_subscriber = None
+        self._current_subscriber = rospy.Subscriber(namespace + RAPP_LIST_TOPIC, RappList, self._process_rapp_list_msg)
+        self._current_namespace = namespace
 
-    def _set_update_status(self, namespace):
-        if self.current_subscriber:
-            self.current_subscriber.unregister()
-            self.current_subscriber = None
-        self.current_subscriber = rospy.Subscriber(namespace + 'status', Status, self._update_rapp_status)
-        self.current_namespace = namespace
+    def get_available_rapps(self):
+        return self._available_rapps
 
     def _get_namespaces(self):
         """
@@ -94,72 +108,46 @@ class QtRappManagerInfo(object):
         service_handle = rospy.ServiceProxy(namespace + 'list_rapps', GetRappList)
         self._update_rapps(service_handle())
 
-    def _get_rapp_info(self, rapp):
-        """
-        Getting the rapp information to html type
-        @param rapp: information of rapp
-        @type dict
-
-        @return the rapp information
-        @type String
-        """
-
-        rapp_info = "<html>"
-        rapp_info += "<p>-------------------------------------------</p>"
-        for info_key in rapp.keys():
-            if info_key is 'icon':
-                continue
-            rapp_info += "<p><b>%s: </b>%s</p>" % (info_key, str(rapp[info_key]))
-        rapp_info += "</html>"
-        return rapp_info
-
-    def _start_rapp(self, namespace, rapp_name, parameters):
+    def start_rapp(self, rapp_name, remappings, parameters):
         """
         Start rapp
 
         :param rapp_name: rapp to start
         :type rapp_name: str 
-        :param namespace: name space of running rapp
-        :type namespace: str
+        :param remappings: remapping rules
+        :type remappings: list
         :param parameters: public parameters
-        :type parameters: dict
+        :type parameters: list
         """
         #not yet
-        remapping = Remapping()
-        params = [KeyValue(key, value) for key, value in parameters.items()]
-        print('Starting %s with %s'%(rapp_name, str(params)))
+        remaps = [Remapping(key, value) for key, value in remappings]
+        params = [KeyValue(k,v) for k, v in parameters]
 
-        service_handle = rospy.ServiceProxy(namespace + 'start_rapp', StartRapp)
-        call_result = service_handle(rapp_name, [], params) 
-        call_result_html = "<html>"
-        call_result_html += "<p>-------------------------------------------</p>"
-        call_result_html += "<p><b>started: </b>" + str(call_result.started) + "</p>"
-        call_result_html += "<p><b>error_code: </b>" + str(call_result.error_code) + "</p>"
-        call_result_html += "<p><b>message: </b>" + call_result.message + "</p>"
-        call_result_html += "</html>"
-        return call_result_html
+        print('Starting %s with %s, %s'%(rapp_name, str(params), str(remaps)))
+        service_handle = rospy.ServiceProxy(self._current_namespace + 'start_rapp', StartRapp)
+        call_result = service_handle(rapp_name, remaps, params)
 
-    def _stop_rapp(self, namespace):
+        if call_result.started:
+            self._current_rapp = rapp_name
+
+        return call_result
+
+    def stop_rapp(self):
         """
         Stop rapp
 
         @param namespace: name space of running rapp
         @type String
         """
-        service_handle = rospy.ServiceProxy(namespace + 'stop_rapp', StopRapp)
+        service_handle = rospy.ServiceProxy(self._current_namespace + 'stop_rapp', StopRapp)
         call_result = service_handle()
-        call_result_html = "<html>"
-        call_result_html += "<p>-------------------------------------------</p>"
-        call_result_html += "<p><b>stopped: </b>" + str(call_result.stopped) + "</p>"
-        call_result_html += "<p><b>error_code: </b>" + str(call_result.error_code) + "</p>"
-        call_result_html += "<p><b>message: </b>" + call_result.message + "</p>"
-        call_result_html += "</html>"
-        return call_result_html
+        return call_result
 
-    def _get_icon(self):
-        rapps = self.running_rapps
-        for k in rapps.values():
-            return k['icon']
+    def get_running_rapps(self):
+        return self._running_rapps
 
-    def _reg_update_rapps_callback(self, func):
-        self._update_rapps_callback = func
+    def is_running_rapp(self, rapp):
+        if rapp['name'] in self._running_rapps.keys():
+            return True
+        else:
+            return False
