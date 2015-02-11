@@ -135,11 +135,11 @@ class QMasterChooser(QMainWindow):
         self._update_rocon_master_list()
 
     def _refresh_all_rocon_master_list(self):
-        self.rocon_masters.check()
         self._widget_main.list_info_widget.clear()
         self._update_rocon_master_list()
 
     def _update_rocon_master_list(self):
+        self.rocon_masters.check()
         self._widget_main.list_widget.clear()
         for rocon_master in self.rocon_masters.values():
             self._add_rocon_master_list_item(rocon_master)
@@ -175,7 +175,6 @@ class QMasterChooser(QMainWindow):
             self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setIcon(icon)
         else:
             console.logdebug("%s : No icon" % rocon_master.name)
-        pass
 
     def _select_rocon_master(self, Item):
         list_widget = Item.listWidget()
