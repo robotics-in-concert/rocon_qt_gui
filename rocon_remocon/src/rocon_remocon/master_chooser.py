@@ -135,11 +135,11 @@ class QMasterChooser(QMainWindow):
         self._update_rocon_master_list()
 
     def _refresh_all_rocon_master_list(self):
+        self.rocon_masters.check()
         self._widget_main.list_info_widget.clear()
         self._update_rocon_master_list()
 
     def _update_rocon_master_list(self):
-        self.rocon_masters.check()
         self._widget_main.list_widget.clear()
         for rocon_master in self.rocon_masters.values():
             self._add_rocon_master_list_item(rocon_master)
@@ -202,7 +202,7 @@ class QMasterChooser(QMainWindow):
         rocon_master_host_name = str(self.rocon_masters[self.cur_selected_rocon_master].host_name)
 
         rocon_master_index = str(self.cur_selected_rocon_master)
-        #self.rocon_masters[rocon_master_index].check()
+        self.rocon_masters[rocon_master_index].check()
         # Todo this use of flags is spanky
         if self.rocon_masters[rocon_master_index].flag == '0':
             QMessageBox.warning(self, 'Rocon Master Connection Error', "Could not find a rocon master at %s" % self.rocon_masters[rocon_master_index].uri, QMessageBox.Ok)
