@@ -63,7 +63,7 @@ class AdminAppInterface(object):
     def update_service_config(self, srv_profile):
         # todo
         call_result = self.ros_services['update_service_config'](srv_profile)
-        return call_result.success, call_result.error_message
+        return (call_result.success, call_result.error_message)
 
     def get_srv_parameters(self, parameters_detail):
         params = None
@@ -74,6 +74,7 @@ class AdminAppInterface(object):
 
     def set_srv_parameters(self, srv_name, param_data):
         result = False
+        message = ""
         try:
             srv_profile_msg = concert_msgs.ServiceProfile()
             srv_profile_msg.name = srv_name
@@ -82,12 +83,12 @@ class AdminAppInterface(object):
                 parameter = rocon_std_msgs.KeyValue(key, param_data[key])
                 parameter_detail.append(parameter)
             srv_profile_msg.parameters_detail = parameter_detail
-            result = self.update_service_config(srv_profile_msg)
+            (result, message) = self.update_service_config(srv_profile_msg)
         except Exception, e:
             rospy.loginfo(e)
+            message = str(e)            
             result = False
-
-        return result
+        return (result, message)
 
     def update_service_list(self, data):
 

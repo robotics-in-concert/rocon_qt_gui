@@ -96,7 +96,7 @@ class AdminApp(Plugin):
         elif self.params_layout_items:
             for item in self.params_layout_items:
                 params[item[0].text()] = item[1].toPlainText().strip()
-            result = self.admin_app_interface.set_srv_parameters(self.current_service['name'], params)
+            (result, msg) = self.admin_app_interface.set_srv_parameters(self.current_service['name'], params)
         else:
             msg = "No params infomation"
 
