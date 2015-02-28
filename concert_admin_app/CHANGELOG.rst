@@ -2,6 +2,11 @@
 Changelog for package concert_admin_app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix return values of  setting configuration in admin app
+* Contributors: dwlee
+
 0.7.5 (2015-02-09)
 ------------------
 * fix return value regarding service profile update function

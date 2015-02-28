@@ -2,6 +2,12 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* reverting the master checking process `#180 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/180>`_
+* check all cached master status when it starts up. closes `#180 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/180>`_
+* Contributors: Jihoon Lee
+
 0.7.5 (2015-02-09)
 ------------------
 * restore rocon_remocon src
