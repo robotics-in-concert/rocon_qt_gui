@@ -104,17 +104,21 @@ class InteractiveClient():
         # for the remocon-role manager interaction anyway:
         rospy.init_node(self.name, disable_signals=True)
         try:
-            get_interactions_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions', timeout=rospy.rostime.Duration(5.0), unique=True)
-            get_roles_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetRoles', timeout=rospy.rostime.Duration(5.0), unique=True)
-            request_interaction_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/RequestInteraction', timeout=rospy.rostime.Duration(5.0), unique=True)
+            console.logdebug("Interactive Client : Get interactions service Handle")
+            interactions_namespace = rocon_python_comms.find_service_namespace('get_interactions', 'rocon_interaction_msgs/GetInteractions', unique=True)
+            remocon_services = self._set_remocon_services(interactions_namespace)
+        except rocon_python_comms.MultipleFoundException as e:
+            message = "multiple interactions' publications and services [%s] are found. Please check services" % str(e)
+            console.logerror("InteractiveClient : %s" % message)
+            return (False, message)
         except rocon_python_comms.NotFoundException as e:
-            message = "failed to find all of the interactions' publications and services [%s]" % str(e)
+            message = "failed to find all of the interactions' publications and services for [%s]" % str(e)
             console.logerror("InteractiveClient : %s" % message)
             return (False, message)
 
-        self.get_interactions_service_proxy = rospy.ServiceProxy(get_interactions_service_name, rocon_interaction_srvs.GetInteractions)
-        self.get_roles_service_proxy = rospy.ServiceProxy(get_roles_service_name, rocon_interaction_srvs.GetRoles)
-        self.request_interaction_service_proxy = rospy.ServiceProxy(request_interaction_service_name, rocon_interaction_srvs.RequestInteraction)
+        self.get_interactions_service_proxy = rospy.ServiceProxy(remocon_services['get_interactions'], rocon_interaction_srvs.GetInteractions)
+        self.get_roles_service_proxy = rospy.ServiceProxy(remocon_services['get_roles'], rocon_interaction_srvs.GetRoles)
+        self.request_interaction_service_proxy = rospy.ServiceProxy(remocon_services['request_interaction'], rocon_interaction_srvs.RequestInteraction)
         self.remocon_status_pub = rospy.Publisher("remocons/" + self.name, rocon_interaction_msgs.RemoconStatus, latch=True, queue_size=10)
 
         try:
@@ -463,6 +467,26 @@ class InteractiveClient():
     ######################################
     # Utilities
     ######################################
+
+    def _set_remocon_services(self, interactions_namespace):
+        """
+            setting up remocon-interaction manager apis. and check if the services are available
+
+            :param str interactions_namespace : namespace to contact interaction manager
+
+            :returns: remocon service apis
+            :rtype: dict
+        """
+        remocon_services = {}
+        remocon_services['get_interactions'] = interactions_namespace + '/' + 'get_interactions'
+        remocon_services['get_roles'] = interactions_namespace + '/' + 'get_roles'
+        remocon_services['request_interaction'] = interactions_namespace + '/' + 'request_interaction'
+
+        for service_name in remocon_services.keys():
+            if not rocon_python_comms.service_is_available(remocon_services[service_name]):
+                raise rocon_python_comms.NotFoundException("'%s' service is not validated" % service_name)
+
+        return remocon_services
 
     def _prepare_webapp_url(self, interaction, base_url):
         """
