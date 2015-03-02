@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>concert_qt_make_a_map</name>
-  <version>0.7.6</version>
+  <version>0.7.7</version>
   <description>An rqt plugin for SLAM using concert robots</description>
 
   <maintainer email="jihoonlee.in@gmail.com">Jihoon Lee</maintainer>

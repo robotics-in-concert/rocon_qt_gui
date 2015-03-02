@@ -2,8 +2,8 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.7 (2015-03-02)
+------------------
 * service proxy's are now get set properly.
 * update connection way to improve slow connection issue
 * Contributors: Jihoon Lee, dwlee
