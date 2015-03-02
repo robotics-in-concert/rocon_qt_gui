@@ -104,9 +104,21 @@ class InteractiveClient():
         # for the remocon-role manager interaction anyway:
         rospy.init_node(self.name, disable_signals=True)
         try:
-            get_interactions_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions', timeout=rospy.rostime.Duration(5.0), unique=True)
-            get_roles_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/GetRoles', timeout=rospy.rostime.Duration(5.0), unique=True)
-            request_interaction_service_name = rocon_python_comms.find_service('rocon_interaction_msgs/RequestInteraction', timeout=rospy.rostime.Duration(5.0), unique=True)
+            console.logdebug("Interactive Client : Get interactions service Handle")
+            interactions_namespace = rocon_python_comms.find_namespace('get_interactions', 'rocon_interaction_msgs/GetInteractions')
+
+            remocon_services = {}
+            remocon_services['get_interactions'] = interactions_namespace + '/' + 'get_interactions'
+            remocon_services['get_roles'] = interactions_namespace + '/' + 'get_roles'
+            remocon_services['request_interaction'] = interactions_namespace + '/' + 'request_interaction'
+
+            for service_name in remocon_services.keys():
+                if not rocon_python_comms.is_valid_service(remocon_services[service_name]):
+                    raise rocon_python_comms.NotFoundException("'%s' service is not validated" % service_name)
+        except rocon_python_comms.MultipleFoundException as e:
+            message = "find multiple interactions' publications and services [%s]. Please check interactions remap rules" % str(e)
+            console.logwarning("InteractiveClient : %s" % message)
+            return (False, message)
         except rocon_python_comms.NotFoundException as e:
             message = "failed to find all of the interactions' publications and services [%s]" % str(e)
             console.logerror("InteractiveClient : %s" % message)
