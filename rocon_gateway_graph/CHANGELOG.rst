@@ -2,6 +2,9 @@
 Changelog for package rocon_gateway_graph
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.6 (2015-02-28)
 ------------------
 

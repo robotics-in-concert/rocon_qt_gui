@@ -2,6 +2,12 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* service proxy's are now get set properly.
+* update connection way to improve slow connection issue
+* Contributors: Jihoon Lee, dwlee
+
 0.7.6 (2015-02-28)
 ------------------
 * reverting the master checking process `#180 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/180>`_
