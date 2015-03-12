@@ -31,4 +31,8 @@
   <run_depend>rocon_uri</run_depend>
   <run_depend>roslaunch</run_depend>
   <run_depend>rospy</run_depend>
+
+  <export>
+    <rqt_gui plugin="${prefix}/rqt_remocon_plugin.xml"/>
+  </export>
 </package>

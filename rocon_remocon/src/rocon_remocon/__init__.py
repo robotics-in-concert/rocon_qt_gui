@@ -7,7 +7,10 @@
 # Imports
 ##############################################################################
 
-from .interactions_chooser import QInteractionsChooser
 from .master_chooser import QMasterChooser
-from .interactive_client import InteractiveClient
+from .interactive_client_ui import InteractiveClientUI
+from .interactive_client_interface import InteractiveClientInterface
 from .utils import *
+from .rqt_remocon import RqtRemocon
+from .role_chooser import QRoleChooser
+from .interactions_chooser import QInteractionsChooser
