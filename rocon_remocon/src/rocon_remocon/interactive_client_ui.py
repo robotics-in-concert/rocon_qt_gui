@@ -14,7 +14,6 @@ from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Signal
 from python_qt_binding.QtCore import Qt, QSize, QEvent
 from python_qt_binding.QtGui import QIcon, QWidget
-from python_qt_binding.QtGui import QColor
 from python_qt_binding.QtGui import QMainWindow, QVBoxLayout
 
 from python_qt_binding.QtGui import QMessageBox
@@ -30,7 +29,7 @@ from .role_chooser import QRoleChooser
 from .interactions_chooser import QInteractionsChooser
 
 ##############################################################################
-# Remocon
+# Interactive Client UI
 ##############################################################################
 
 
@@ -39,10 +38,11 @@ class InteractiveClientUI(QMainWindow):
     # pyqt signals are always defined as class attributes
     signal_interactions_updated = Signal()
 
-    def __init__(self, parent, title, application, rocon_master_uri='localhost', host_name='localhost', standalone=True):
+    def __init__(self, parent, title, application, rocon_master_uri='localhost', host_name='localhost', with_rqt=False):
         super(InteractiveClientUI, self).__init__(parent)
         self.rocon_master_uri = rocon_master_uri
         self.host_name = host_name
+        self.with_rqt = with_rqt
         self.cur_selected_interaction = None
         self.cur_selected_role = 0
         self.interactions = {}
@@ -59,20 +59,22 @@ class InteractiveClientUI(QMainWindow):
 
         # connect to the ros master with init node
         self.interactive_client_interface = InteractiveClientInterface(stop_interaction_postexec_fn=self.interactions_updated_relay)
-        if standalone:
-            (result, message) = self.interactive_client_interface._connect_with_ros_init_node(self.rocon_master_uri, self.host_name)
-        else:
+
+        if self.with_rqt:
             (result, message) = self.interactive_client_interface._connect(self.rocon_master_uri, self.host_name)
-        
+        else:
+            (result, message) = self.interactive_client_interface._connect_with_ros_init_node(self.rocon_master_uri, self.host_name)
+
         if not result:
             QMessageBox.warning(self, 'Connection Failed', "%s." % message.capitalize(), QMessageBox.Ok)
             self._switch_to_master_chooser()
             return
+
         # interactive_client_ui widget setting
         self._interactive_client_ui_widget = QWidget()
         self._interactive_client_ui_layout = QVBoxLayout()
 
-        self._role_chooser = QRoleChooser(self.interactive_client_interface)
+        self._role_chooser = QRoleChooser(self.interactive_client_interface, with_rqt)
         self._role_chooser.bind_function('shutdown', self._switch_to_master_chooser)
         self._role_chooser.bind_function('back', self._switch_to_master_chooser)
         self._role_chooser.bind_function('select_role', self._switch_to_interactions_list)
@@ -90,6 +92,7 @@ class InteractiveClientUI(QMainWindow):
         """
         todo
         """
+        self._interactive_client_ui_widget.setWindowTitle('Role Chooser')
         self._interactive_client_ui_widget.show()
         self._role_chooser.show()
         self._interactions_chooser.hide()
@@ -112,23 +115,26 @@ class InteractiveClientUI(QMainWindow):
         """
         todo
         """
-        console.logdebug("InteractiveClientUI : switching back to the master chooser")
         self.shutdown()
-        os.execv(QMasterChooser.rocon_remocon_script, ['', self.host_name])
+        if not self.with_rqt:
+            console.logdebug("InteractiveClientUI : switching back to the master chooser")
+            os.execv(QMasterChooser.rocon_remocon_script, ['', self.host_name])
 
     def _switch_to_interactions_list(self):
         """
         Take the selected role and switch to an interactions view of that role.
         """
         console.logdebug("InteractiveClientUI : switching to the interactions list")
+        self._interactive_client_ui_widget.setWindowTitle('Interactions Chooser')
         self._interactions_chooser.select_role(self._role_chooser.cur_selected_role)
-        self._interactions_chooser.show(self._role_chooser.roles_widget.pos())
+        self._interactions_chooser.show(self._role_chooser.pos())
         self._role_chooser.hide()
 
     def _switch_to_role_list(self):
         """
         todo
         """
+        self._interactive_client_ui_widget.setWindowTitle('Role Chooser')
         console.logdebug("InteractiveClientUI : switching to the role list")
         self._role_chooser.show(self._interactions_chooser.interactions_widget.pos())
         self._interactions_chooser.hide()
@@ -145,8 +151,5 @@ class InteractiveClientUI(QMainWindow):
         update occurred.
         """
         console.logdebug("InteractiveClientUI : interactions_updated_relay")
-
-        # self.signal_interactions_updated.emit()
-        # this connects to:
-        #  - self._refresh_interactions_list()
-        #  - self._set_stop_interactions_button()
+        self._interactions_chooser.refresh_interactions_list()
+        self._role_chooser.refresh_role_list()

@@ -38,7 +38,7 @@ from .interactions import Interaction
 from .interactions_table import InteractionsTable
 
 ##############################################################################
-# InteractiveClientInterface
+# Interactive Client Interface
 ##############################################################################
 
 
