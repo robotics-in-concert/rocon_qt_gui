@@ -125,7 +125,8 @@ class QInteractionsChooser(QMainWindow):
 
     def _start_interaction(self):
         """
-        todo
+        Start selected interactions when user hits start button and does doubleclicking interaction item.
+        The interactions can be launched in duplicate.
         """
         console.logdebug("Interactions Chooser : starting interaction [%s]" % str(self.cur_selected_interaction.name))
         (result, message) = self.interactive_client_interface.start_interaction(self.cur_selected_role,
@@ -140,7 +141,8 @@ class QInteractionsChooser(QMainWindow):
 
     def _stop_interaction(self):
         """
-        todo
+        Stop running interactions when user hits `stop` or 'all stop interactions button` button.
+        If no interactions is running, buttons are disabled.
         """
         console.logdebug("Interactions Chooser : stopping interaction %s " % str(self.cur_selected_interaction.name))
         (result, message) = self.interactive_client_interface.stop_interaction(self.cur_selected_interaction.hash)
@@ -155,13 +157,13 @@ class QInteractionsChooser(QMainWindow):
 
     def bind_function(self, name, function_handle):
         """
-        Todo
+        Binding external function to map with ui button
         """
         self.binded_function[name] = function_handle
 
     def show(self, pos=None):
         """
-        Todo
+        Showing the interactions chooser
         """
         self.interactions_widget.show()
         if pos is not None:
@@ -174,13 +176,16 @@ class QInteractionsChooser(QMainWindow):
 
     def hide(self):
         """
-        Todo
+        Hiding the interactions chooser
         """
         self.interactions_widget.hide()
 
     def select_role(self, role):
         """
-        Todo
+        Take the selected role to get a list of interaction.
+
+        :param role: role name from role chooser.
+        :type role: string
         """
         self.cur_selected_role = role
         self.interactive_client_interface.select_role(self.cur_selected_role)
@@ -191,8 +196,6 @@ class QInteractionsChooser(QMainWindow):
         This just does a complete redraw of the interactions with the
         currently selected role. It's a bit brute force doing this
         every time the interactions' 'state' changes, but this suffices for now.
-
-        :param str role_name: role to request list of interactions for.
         """
         console.logdebug("Interactions Chooser : refreshing the interactions list")
         self.interactions = self.interactive_client_interface.interactions(self.cur_selected_role)

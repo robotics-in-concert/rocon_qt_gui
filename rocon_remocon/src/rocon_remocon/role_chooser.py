@@ -46,13 +46,12 @@ class QRoleChooser():
         self.roles_widget.back_btn.pressed.connect(self._back)
         self.roles_widget.stop_all_interactions_button.pressed.connect(self._stop_all_interactions)
         self.roles_widget.closeEvent = self._close_event
-
         self._init()
-        console.logdebug('init QRoleChooser')
 
     def _init(self):
         """
-        todo
+        Initialization of role chooser. It it launced with rqt, the back button is disabled. 
+        Viewer of interactions chooser is launched at once when the role list has one role.
         """
         if self.with_rqt:
             self.roles_widget.back_btn.setEnabled(False)
@@ -79,19 +78,21 @@ class QRoleChooser():
         console.logdebug("Role Chooser : Role Chooser shutting down.")
         self._back()
 
-    def _select_role(self, Item):
+    def _select_role(self, item):
         """
-        Todo
-        Take the selected role and switch to an interactions view of that role.
+        Take the selected role to switch interactions viewer as it.
+
+        :param item: qt list widget item of selected role. The user does double click on item wanted to launch
+        :type item: python_qt_binding.QtGui.QListWidgetItem
         """
         console.logdebug("Role Chooser : switching to the interactions list")
-        self.cur_selected_role = str(Item.text())
+        self.cur_selected_role = str(item.text())
         if 'select_role' in self.binded_function.keys() and self.binded_function['select_role'] is not None:
             self.binded_function['select_role']()
 
     def _stop_all_interactions(self):
         """
-        Todo
+        Stopping all running interactions. If no interactions is running, stop interactions button is disables.
         """
         console.logdebug("Role Chooser : stopping all running interactions")
         self.interactive_client_interface.stop_all_interactions()
@@ -99,14 +100,15 @@ class QRoleChooser():
 
     def bind_function(self, name, function_handle):
         """
-        Todo
+        Binding external function to map with ui button
         """
         self.binded_function[name] = function_handle
 
     def show(self, pos=None):
         """
-        Todo
+        Showing the role chooser with rereshing role list
         """
+
         self.roles_widget.show()
         if pos is not None:
             self.roles_widget.move(pos)
@@ -114,25 +116,22 @@ class QRoleChooser():
 
     def hide(self):
         """
-        Todo
+        Hiding the role chooser to show other widget
         """
         self.roles_widget.hide()
 
     def pos(self):
         """
-        todo
+        Postion of role chooser
+
+        :return: xy position on desktop
+        :rtype: python_qt_binding.QtCore.QPoint
         """
         return self.roles_widget.pos()
 
-    def close(self):
-        """
-        todo
-        """
-        self.roles_widget.close()
-
     def refresh_role_list(self):
         """
-        Todo
+        Update a list of roles. define status of all interaction stop button as checking running interactions.
         """
         if self.interactive_client_interface.has_running_interactions():
             self.roles_widget.stop_all_interactions_button.setEnabled(True)

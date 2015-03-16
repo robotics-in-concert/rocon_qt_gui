@@ -9,15 +9,10 @@
 
 import os
 import rospkg
-#from PyQt4 import uic
-from python_qt_binding import loadUi
-from python_qt_binding.QtCore import Signal
-from python_qt_binding.QtCore import Qt, QSize, QEvent
-from python_qt_binding.QtGui import QIcon, QWidget
-from python_qt_binding.QtGui import QMainWindow, QVBoxLayout
 
-from python_qt_binding.QtGui import QMessageBox
-#from PyQt4.QtSvg import QSvgGenerator
+from python_qt_binding import loadUi
+from python_qt_binding.QtCore import Signal, Qt, QSize, QEvent
+from python_qt_binding.QtGui import QIcon, QWidget, QMainWindow, QVBoxLayout, QMessageBox
 
 from rocon_console import console
 import rocon_interactions.web_interactions as web_interactions
@@ -90,7 +85,7 @@ class InteractiveClientUI(QMainWindow):
 
     def _init(self):
         """
-        todo
+        Initialization of interactive client UI. First, show the role chooser and hide interactions chooser. 
         """
         self._interactive_client_ui_widget.setWindowTitle('Role Chooser')
         self._interactive_client_ui_widget.show()
@@ -99,7 +94,10 @@ class InteractiveClientUI(QMainWindow):
 
     def get_main_ui_handle(self):
         """
-        return 
+        Returning an instance of interactive client ui widget. It is used to handle it in other widget.
+
+        :return: return main qt widget. 
+        :rtype: python_qt_binding.QtGui.QWidget
         """
         return self._interactive_client_ui_widget
 
@@ -113,7 +111,7 @@ class InteractiveClientUI(QMainWindow):
 
     def _switch_to_master_chooser(self):
         """
-        todo
+        Switch to master chooser from role chooser. If it was launced by rqt or rqt standalone, It is just shutdown.
         """
         self.shutdown()
         if not self.with_rqt:
@@ -132,7 +130,7 @@ class InteractiveClientUI(QMainWindow):
 
     def _switch_to_role_list(self):
         """
-        todo
+        Switch to role chooser from interactions chooser.
         """
         self._interactive_client_ui_widget.setWindowTitle('Role Chooser')
         console.logdebug("InteractiveClientUI : switching to the role list")
