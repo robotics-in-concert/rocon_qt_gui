@@ -136,7 +136,7 @@ class QInteractionsChooser(QMainWindow):
                 self.refresh_interactions_list()  # make sure the highlight is working
             self.interactions_widget.stop_interactions_button.setDisabled(False)
         else:
-            QMessageBox.warning(None, 'Start Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
+            QMessageBox.warning(self.interactions_widget, 'Start Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
             console.logwarn("Interactions Chooser : start interaction failed [%s]" % message)
 
     def _stop_interaction(self):
@@ -152,7 +152,7 @@ class QInteractionsChooser(QMainWindow):
             self._set_stop_interactions_button()
             # self.interactions_widget.stop_interactions_button.setDisabled(True)
         else:
-            QMessageBox.warning(None, 'Stop Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
+            QMessageBox.warning(self.interactions_widget, 'Stop Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
             console.logwarn("Interactions Chooser : stop interaction failed [%s]" % message)
 
     def bind_function(self, name, function_handle):
