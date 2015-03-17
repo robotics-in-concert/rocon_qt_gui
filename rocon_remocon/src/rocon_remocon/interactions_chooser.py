@@ -12,7 +12,7 @@ import rospkg
 #from PyQt4 import uic
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Signal, Qt, QSize, QEvent
-from python_qt_binding.QtGui import QIcon, QWidget, QColor, QMainWindow
+from python_qt_binding.QtGui import QIcon, QWidget, QColor, QMainWindow, QMessageBox
 
 from rocon_console import console
 import rocon_interactions.web_interactions as web_interactions

@@ -53,7 +53,7 @@ class InteractiveClientUI(QMainWindow):
         utils.setup_home_dirs()
 
         # connect to the ros master with init node
-        self.interactive_client_interface = InteractiveClientInterface(stop_interaction_postexec_fn=self.interactions_updated_relay)
+        self.interactive_client_interface = InteractiveClientInterface(stop_interaction_postexec_fn=lambda: self.signal_interactions_updated.emit())
 
         if self.with_rqt:
             (result, message) = self.interactive_client_interface._connect(self.rocon_master_uri, self.host_name)
@@ -81,6 +81,9 @@ class InteractiveClientUI(QMainWindow):
         self._interactive_client_ui_layout.addWidget(self._interactions_chooser.interactions_widget)
         self._interactive_client_ui_layout.addWidget(self._role_chooser.roles_widget)
         self._interactive_client_ui_widget.setLayout(self._interactive_client_ui_layout)
+
+        self.signal_interactions_updated.connect(self.interactions_updated_relay)
+
         self._init()
 
     def _init(self):
