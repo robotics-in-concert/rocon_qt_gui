@@ -92,7 +92,7 @@ class InteractiveClientInterface():
         os.environ["ROS_MASTER_URI"] = ros_master_uri
         os.environ["ROS_HOSTNAME"] = host_name
         rospy.init_node(self.name, disable_signals=True)
-        return self._connect(ros_master_uri, host_name='localhost')
+        return self._connect(ros_master_uri, host_name)
 
     def _connect(self, ros_master_uri="http://localhost:11311", host_name='localhost'):
 

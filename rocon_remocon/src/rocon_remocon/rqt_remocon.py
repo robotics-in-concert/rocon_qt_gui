@@ -34,10 +34,13 @@ class RqtRemocon(Plugin):
 
         try:
             self.rocon_master_uri = os.environ["ROS_MASTER_URI"]
-            self.host_name = os.environ["ROS_MASTER_URI"]
+            self.host_name = os.environ["ROS_HOSTNAME"]
         except KeyError as e:
             console.logerror("Rqt Remocon: %s " % str(e))
 
         self.setObjectName('Rqt Remocon')
         self._rqt_remocon = InteractiveClientUI(None, "Rqt remocon", None, self.rocon_master_uri, self.host_name, True)
         context.add_widget(self._rqt_remocon.get_main_ui_handle())
+    
+    def shutdown_plugin(self):
+        self._rqt_remocon.shutdown()
