@@ -40,10 +40,8 @@ def signal_handler(signum, f):
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
 
-    index = sys.argv[1]  # name
-    name = sys.argv[2]  # ip
-    ip = sys.argv[3]  # ip
-    host_name = sys.argv[4]  # ip
+    ip = sys.argv[1]  # ip
+    host_name = sys.argv[2]  # ip
 
     app = QApplication(sys.argv)
 
@@ -52,5 +50,5 @@ if __name__ == "__main__":
     timer.start(200)
     timer.timeout.connect(lambda: None)
 
-    interactions_chooser = rocon_remocon.QInteractionsChooser(None, "Interactions Chooser", app, index, name, ip, host_name)
+    interactions_chooser = rocon_remocon.InteractiveClientUI(None, "Interactions Chooser", app, ip, host_name, False)
     app.exec_()

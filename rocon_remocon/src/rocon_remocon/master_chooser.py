@@ -85,7 +85,7 @@ class QMasterChooser(QMainWindow):
         path = os.path.join(rospack.get_path('rocon_remocon'), 'ui', 'remocon.ui')
         loadUi(path, self._widget_main)
 
-        #main widget
+        # main widget
         self._widget_main.list_widget.setIconSize(QSize(50, 50))
         self._widget_main.list_widget.itemDoubleClicked.connect(self._connect_rocon_master)  # list item double click event
         self._widget_main.list_widget.itemClicked.connect(self._select_rocon_master)  # list item double click event
@@ -152,12 +152,12 @@ class QMasterChooser(QMainWindow):
         display_name = str(rocon_master.name) + "\n" + "[" + str(rocon_master.uri) + "]"
         self._widget_main.list_widget.insertItem(self._widget_main.list_widget.count(), display_name)
 
-        #setting the list font
+        # setting the list font
         font = self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).font()
         font.setPointSize(13)
         self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setFont(font)
 
-        #setToolTip
+        # setToolTip
         rocon_master_info = ""
         rocon_master_info += "rocon_master_index: " + str(rocon_master.index) + "\n"
         rocon_master_info += "rocon_master_name: " + str(rocon_master.name) + "\n"
@@ -166,7 +166,7 @@ class QMasterChooser(QMainWindow):
         rocon_master_info += "description:  " + str(rocon_master.description)
         self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setToolTip(rocon_master_info)
 
-        #set icon
+        # set icon
         if rocon_master.icon == "unknown.png":
             icon = QIcon(self.icon_paths['unknown'])
             self._widget_main.list_widget.item(self._widget_main.list_widget.count() - 1).setIcon(icon)
@@ -212,59 +212,59 @@ class QMasterChooser(QMainWindow):
             return
 
         self._widget_main.hide()
-        arguments = ["", rocon_master_index, rocon_master_name, rocon_master_uri, rocon_master_host_name]
+        arguments = ["", rocon_master_uri, rocon_master_host_name]
         os.execv(QMasterChooser.rocon_remocon_sub_script, arguments)
         console.logdebug("Spawning: %s with args %s" % (QMasterChooser.rocon_remocon_sub_script, arguments))
 
     def _create_add_rocon_master_dialog(self):
-        #dialog
+        # dialog
         connect_dlg = QDialog(self._widget_main)
         connect_dlg.setWindowTitle("Add Ros Master")
         connect_dlg.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
         connect_dlg.setMinimumSize(350, 0)
         # dlg_rect = self._connect_dlg.geometry()
 
-        #dialog layout
+        # dialog layout
         ver_layout = QVBoxLayout(connect_dlg)
         ver_layout.setContentsMargins(9, 9, 9, 9)
 
-        #param layout
+        # param layout
         text_grid_sub_widget = QWidget()
         text_grid_layout = QGridLayout(text_grid_sub_widget)
         text_grid_layout.setColumnStretch(1, 0)
         text_grid_layout.setRowStretch(2, 0)
 
-        #param 1
+        # param 1
         title_widget1 = QLabel("MASTER_URI: ")
         context_widget1 = QTextEdit()
         context_widget1.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
         context_widget1.setMinimumSize(0, 30)
         context_widget1.append(self.master_uri)
 
-        #param 2
+        # param 2
         title_widget2 = QLabel("HOST_NAME: ")
         context_widget2 = QTextEdit()
         context_widget2.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Ignored)
         context_widget2.setMinimumSize(0, 30)
         context_widget2.append(self.host_name)
 
-        #add param
+        # add param
         text_grid_layout.addWidget(title_widget1)
         text_grid_layout.addWidget(context_widget1)
         text_grid_layout.addWidget(title_widget2)
         text_grid_layout.addWidget(context_widget2)
 
-        #add param layout
+        # add param layout
         ver_layout.addWidget(text_grid_sub_widget)
 
-        #button layout
+        # button layout
         button_hor_sub_widget = QWidget()
         button_hor_layout = QHBoxLayout(button_hor_sub_widget)
 
         uri_text_widget = context_widget1
         host_name_text_widget = context_widget2
 
-        #button
+        # button
         btn_call = QPushButton("Add")
         btn_cancel = QPushButton("Cancel")
 
@@ -273,11 +273,11 @@ class QMasterChooser(QMainWindow):
 
         btn_cancel.clicked.connect(lambda: connect_dlg.done(0))
 
-        #add button
+        # add button
         button_hor_layout.addWidget(btn_call)
         button_hor_layout.addWidget(btn_cancel)
 
-        #add button layout
-        ver_layout.addWidget(button_hor_sub_widget) 
+        # add button layout
+        ver_layout.addWidget(button_hor_sub_widget)
 
         return connect_dlg

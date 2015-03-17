@@ -11,22 +11,14 @@ import os
 import rospkg
 #from PyQt4 import uic
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import Signal
-from python_qt_binding.QtCore import Qt, QSize, QEvent
-from python_qt_binding.QtGui import QIcon, QWidget
-from python_qt_binding.QtGui import QColor
-from python_qt_binding.QtGui import QMainWindow
-
-from python_qt_binding.QtGui import QMessageBox
-#from PyQt4.QtSvg import QSvgGenerator
+from python_qt_binding.QtCore import Signal, Qt, QSize, QEvent
+from python_qt_binding.QtGui import QIcon, QWidget, QColor, QMainWindow, QMessageBox
 
 from rocon_console import console
 import rocon_interactions.web_interactions as web_interactions
 
-from rocon_remocon.interactive_client import InteractiveClient
+from rocon_remocon.interactive_client_interface import InteractiveClientInterface
 from . import utils
-from .master_chooser import QMasterChooser
-
 ##############################################################################
 # Remocon
 ##############################################################################
@@ -34,86 +26,34 @@ from .master_chooser import QMasterChooser
 
 class QInteractionsChooser(QMainWindow):
 
-    # pyqt signals are always defined as class attributes
-    signal_interactions_updated = Signal()
-
-    def __init__(self, parent, title, application, rocon_master_index="", rocon_master_name="", rocon_master_uri='localhost', host_name='localhost'):
-        super(QInteractionsChooser, self).__init__(parent)
-
-        self.rocon_master_index = rocon_master_index
-        self.rocon_master_uri = rocon_master_uri
-        self.rocon_master_name = rocon_master_name
-        self.host_name = host_name
+    def __init__(self, interactive_client_interface=None):
+        self.binded_function = {}
+        self.cur_selected_role = ''
         self.cur_selected_interaction = None
-        self.cur_selected_role = 0
         self.interactions = {}
-        self.interactive_client = InteractiveClient(stop_interaction_postexec_fn=self.interactions_updated_relay)
-
-        self.application = application
-        rospack = rospkg.RosPack()
-        icon_file = os.path.join(rospack.get_path('rocon_icons'), 'icons', 'rocon_logo.png')
-        self.application.setWindowIcon(QIcon(icon_file))
-
+        self.interactive_client_interface = interactive_client_interface
         self.interactions_widget = QWidget()
-        self.roles_widget = QWidget()
+        # load ui
+        rospack = rospkg.RosPack()
         path = os.path.join(rospack.get_path('rocon_remocon'), 'ui', 'interactions_list.ui')
         loadUi(path, self.interactions_widget)
-        path = os.path.join(rospack.get_path('rocon_remocon'), 'ui', 'role_list.ui')
-        loadUi(path, self.roles_widget)
 
-        # role list widget
-        self.roles_widget.role_list_widget.setIconSize(QSize(50, 50))
-        self.roles_widget.role_list_widget.itemDoubleClicked.connect(self._switch_to_interactions_list)
-        self.roles_widget.back_btn.pressed.connect(self._switch_to_master_chooser)
-        self.roles_widget.stop_all_interactions_button.pressed.connect(self._stop_all_interactions)
-        self.roles_widget.refresh_btn.pressed.connect(self._refresh_role_list)
-        self.roles_widget.closeEvent = self._close_event
         # interactions list widget
         self.interactions_widget.interactions_list_widget.setIconSize(QSize(50, 50))
         self.interactions_widget.interactions_list_widget.itemDoubleClicked.connect(self._start_interaction)
-        self.interactions_widget.back_btn.pressed.connect(self._switch_to_role_list)
+        self.interactions_widget.back_btn.pressed.connect(self._back)
         self.interactions_widget.interactions_list_widget.itemClicked.connect(self._display_interaction_info)  # rocon master item click event
         self.interactions_widget.stop_interactions_button.pressed.connect(self._stop_interaction)
         self.interactions_widget.stop_interactions_button.setDisabled(True)
         self.interactions_widget.closeEvent = self._close_event
 
-        # signals
-        self.signal_interactions_updated.connect(self._refresh_interactions_list, Qt.QueuedConnection)
-        self.signal_interactions_updated.connect(self._set_stop_interactions_button, Qt.QueuedConnection)
+        console.logdebug('init QInteractionsChooser')
 
-        # create a few directories for caching icons and ...
-        utils.setup_home_dirs()
-
-        # connect to the ros master
-        (result, message) = self.interactive_client._connect(self.rocon_master_name, self.rocon_master_uri, self.host_name)
-        if not result:
-            QMessageBox.warning(self, 'Connection Failed', "%s." % message.capitalize(), QMessageBox.Ok)
-            self._switch_to_master_chooser()
-            return
-        role_list = self._refresh_role_list()
-        # Ugly Hack : our window manager is not graying out the button when an interaction closes itself down and the appropriate
-        # callback (_set_stop_interactions_button) is fired. It does otherwise though so it looks like the window manager
-        # is getting confused when the original program doesn't have the focus.
-        #
-        # Taking control of it ourselves works...
-        self.interactions_widget.stop_interactions_button.setStyleSheet("QPushButton:disabled { color: gray }")
-
-        # show interactions list if there's no choice amongst roles, otherwise show the role list
-        if len(role_list) == 1:
-            self.cur_selected_role = role_list[0]
-            self.interactive_client.select_role(self.cur_selected_role)
-            self.interactions_widget.show()
-            self._refresh_interactions_list()
+    def _back(self):
+        if 'back' in self.binded_function.keys() and self.binded_function['back'] is not None:
+            self.binded_function['back']()
         else:
-            self.roles_widget.show()
-
-    def shutdown(self):
-        """
-        Public method to enable shutdown of the script - this function is primarily for
-        shutting down the interactions chooser from external signals (e.g. CTRL-C on the command
-        line).
-        """
-        self.interactive_client.shutdown()
+            console.logdebug("Interactions Chooser : None binded functione: shutdown")
 
     def _close_event(self, event):
         """
@@ -121,65 +61,14 @@ class QInteractionsChooser(QMainWindow):
         (i.e. role and interactions list widgets).
         """
         console.logdebug("Interactions Chooser : remocon shutting down.")
-        self.shutdown()
-
-    ######################################
-    # Roles List Widget
-    ######################################
-
-    def _switch_to_interactions_list(self, Item):
-        """
-        Take the selected role and switch to an interactions view of that role.
-        """
-        console.logdebug("Interactions Chooser : switching to the interactions list")
-        self.cur_selected_role = str(Item.text())
-        self.interactive_client.select_role(self.cur_selected_role)
-        self.interactions_widget.show()
-        self.interactions_widget.move(self.roles_widget.pos())
-        self.roles_widget.hide()
-        self._refresh_interactions_list()
-
-    def _switch_to_master_chooser(self):
-        console.logdebug("Interactions Chooser : switching back to the master chooser")
-        self.shutdown()
-        os.execv(QMasterChooser.rocon_remocon_script, ['', self.host_name])
-
-    def _refresh_role_list(self):
-        self.roles_widget.role_list_widget.clear()
-        role_list = self.interactive_client.get_role_list()
-        #set list widget item (reverse order because we push them on the top)
-        for role in reversed(role_list):
-            self.roles_widget.role_list_widget.insertItem(0, role)
-            #setting the list font
-            font = self.roles_widget.role_list_widget.item(0).font()
-            font.setPointSize(13)
-            self.roles_widget.role_list_widget.item(0).setFont(font)
-        return role_list
-
-    def _stop_all_interactions(self):
-        console.logdebug("Interactions Chooser : stopping all running interactions")
-        self.interactive_client.stop_all_interactions()
-        self.roles_widget.stop_all_interactions_button.setEnabled(False)
+        if 'shutdown' in self.binded_function.keys() and self.binded_function['shutdown'] is not None:
+            self.binded_function['shutdown']()
+        else:
+            console.logdebug("Interactions Chooser : None binded functione: shutdown")
 
     ######################################
     # Interactions List Widget
     ######################################
-
-    def _switch_to_role_list(self):
-        console.logdebug("Interactions Chooser : switching to the role list")
-
-        # show the roles widget
-        if self.interactive_client.has_running_interactions():
-            self.roles_widget.stop_all_interactions_button.setEnabled(True)
-        else:
-            self.roles_widget.stop_all_interactions_button.setEnabled(False)
-        self.roles_widget.show()
-        self.roles_widget.move(self.interactions_widget.pos())
-
-        # show the interactions widget
-        self.interactions_widget.stop_interactions_button.setEnabled(False)
-        self.interactions_widget.hide()
-
     def _display_interaction_info(self, Item):
         """
         Display the currently selected interaction's information. Triggered
@@ -215,65 +104,11 @@ class QInteractionsChooser(QMainWindow):
     # Gui Updates/Refreshes
     ######################################
 
-    def interactions_updated_relay(self):
-        """
-        Called by the underlying interactive client whenever the gui needs to be updated with
-        fresh information. Using this relay saves us from having to embed qt functions in the
-        underlying class but makes sure we signal across threads so the gui can update things
-        in its own thread.
-
-        Currently this only handles updates caused by termination of an interaction. If we wished to
-        handle additional situations, we should use an argument here indicating what kind of interaction
-        update occurred.
-        """
-        self.signal_interactions_updated.emit()
-        # this connects to:
-        #  - self._refresh_interactions_list()
-        #  - self._set_stop_interactions_button()
-
-    def _refresh_interactions_list(self):
-        """
-        This just does a complete redraw of the interactions with the
-        currently selected role. It's a bit brute force doing this
-        every time the interactions' 'state' changes, but this suffices for now.
-
-        :param str role_name: role to request list of interactions for.
-        """
-        console.logdebug("Interactions Chooser : refreshing the interactions list")
-        self.interactions = self.interactive_client.interactions(self.cur_selected_role)
-        self.interactions_widget.interactions_list_widget.clear()
-        index = 0
-        for interaction in self.interactions.values():
-            interaction.index = index
-            index = index + 1
-
-            self.interactions_widget.interactions_list_widget.insertItem(0, interaction.display_name)
-
-            # is it a currently running pairing
-            if self.interactive_client.pairing == interaction.hash:
-                self.interactions_widget.interactions_list_widget.item(0).setBackground(QColor(100, 100, 150))
-
-            #setting the list font
-            font = self.interactions_widget.interactions_list_widget.item(0).font()
-            font.setPointSize(13)
-            self.interactions_widget.interactions_list_widget.item(0).setFont(font)
-
-            #setting the icon
-            icon = interaction.icon
-            if icon == "unknown.png":
-                icon = QIcon(self.icon_paths['unknown'])
-                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
-            elif len(icon):
-                icon = QIcon(os.path.join(utils.get_icon_cache_home(), icon))
-                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
-            else:
-                console.logdebug("%s : No icon" % str(self.rocon_master_name))
-
     def _set_stop_interactions_button(self):
-        '''
+        """
           Disable or enable the stop button depending on whether the
           selected interaction has any currently launched processes,
-        '''
+        """
         if not self.interactions:
             console.logwarn("No interactions")
             return
@@ -289,25 +124,105 @@ class QInteractionsChooser(QMainWindow):
     ######################################
 
     def _start_interaction(self):
+        """
+        Start selected interactions when user hits start button and does doubleclicking interaction item.
+        The interactions can be launched in duplicate.
+        """
         console.logdebug("Interactions Chooser : starting interaction [%s]" % str(self.cur_selected_interaction.name))
-        (result, message) = self.interactive_client.start_interaction(self.cur_selected_role,
-                                                                      self.cur_selected_interaction.hash)
+        (result, message) = self.interactive_client_interface.start_interaction(self.cur_selected_role,
+                                                                                self.cur_selected_interaction.hash)
         if result:
             if self.cur_selected_interaction.is_paired_type():
-                self._refresh_interactions_list()  # make sure the highlight is working
+                self.refresh_interactions_list()  # make sure the highlight is working
             self.interactions_widget.stop_interactions_button.setDisabled(False)
         else:
-            QMessageBox.warning(self, 'Start Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
+            QMessageBox.warning(self.interactions_widget, 'Start Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
             console.logwarn("Interactions Chooser : start interaction failed [%s]" % message)
 
     def _stop_interaction(self):
+        """
+        Stop running interactions when user hits `stop` or 'all stop interactions button` button.
+        If no interactions is running, buttons are disabled.
+        """
         console.logdebug("Interactions Chooser : stopping interaction %s " % str(self.cur_selected_interaction.name))
-        (result, message) = self.interactive_client.stop_interaction(self.cur_selected_interaction.hash)
+        (result, message) = self.interactive_client_interface.stop_interaction(self.cur_selected_interaction.hash)
         if result:
             if self.cur_selected_interaction.is_paired_type():
-                self._refresh_interactions_list()  # make sure the highlight is disabled
+                self.refresh_interactions_list()  # make sure the highlight is disabled
             self._set_stop_interactions_button()
-            #self.interactions_widget.stop_interactions_button.setDisabled(True)
+            # self.interactions_widget.stop_interactions_button.setDisabled(True)
         else:
-            QMessageBox.warning(self, 'Stop Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
+            QMessageBox.warning(self.interactions_widget, 'Stop Interaction Failed', "%s." % message.capitalize(), QMessageBox.Ok)
             console.logwarn("Interactions Chooser : stop interaction failed [%s]" % message)
+
+    def bind_function(self, name, function_handle):
+        """
+        Binding external function to map with ui button
+        """
+        self.binded_function[name] = function_handle
+
+    def show(self, pos=None):
+        """
+        Showing the interactions chooser
+        """
+        self.interactions_widget.show()
+        if pos is not None:
+            self.interactions_widget.move(pos)
+
+        if self.interactive_client_interface.has_running_interactions():
+            self.interactions_widget.stop_interactions_button.setEnabled(True)
+        else:
+            self.interactions_widget.stop_interactions_button.setEnabled(False)
+
+    def hide(self):
+        """
+        Hiding the interactions chooser
+        """
+        self.interactions_widget.hide()
+
+    def select_role(self, role):
+        """
+        Take the selected role to get a list of interaction.
+
+        :param role: role name from role chooser.
+        :type role: string
+        """
+        self.cur_selected_role = role
+        self.interactive_client_interface.select_role(self.cur_selected_role)
+        self.refresh_interactions_list()
+
+    def refresh_interactions_list(self):
+        """
+        This just does a complete redraw of the interactions with the
+        currently selected role. It's a bit brute force doing this
+        every time the interactions' 'state' changes, but this suffices for now.
+        """
+        console.logdebug("Interactions Chooser : refreshing the interactions list")
+        self.interactions = self.interactive_client_interface.interactions(self.cur_selected_role)
+        self.interactions_widget.interactions_list_widget.clear()
+        index = 0
+        for interaction in self.interactions.values():
+            interaction.index = index
+            index = index + 1
+
+            self.interactions_widget.interactions_list_widget.insertItem(0, interaction.display_name)
+
+            # is it a currently running pairing
+            if self.interactive_client_interface.pairing == interaction.hash:
+                self.interactions_widget.interactions_list_widget.item(0).setBackground(QColor(100, 100, 150))
+
+            # setting the list font
+            font = self.interactions_widget.interactions_list_widget.item(0).font()
+            font.setPointSize(13)
+            self.interactions_widget.interactions_list_widget.item(0).setFont(font)
+
+            # setting the icon
+            icon = interaction.icon
+            if icon == "unknown.png":
+                icon = QIcon(self.icon_paths['unknown'])
+                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
+            elif len(icon):
+                icon = QIcon(os.path.join(utils.get_icon_cache_home(), icon))
+                self.interactions_widget.interactions_list_widget.item(0).setIcon(icon)
+            else:
+                console.logdebug("%s : No icon" % str(self.rocon_master_name))
