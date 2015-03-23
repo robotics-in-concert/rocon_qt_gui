@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rocon_qt_library</name>
-  <version>0.7.7</version>
+  <version>0.7.8</version>
   <description>Common widgets and modules for rocon qt development.</description>
 
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>

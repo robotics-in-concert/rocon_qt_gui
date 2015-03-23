@@ -2,8 +2,8 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.8 (2015-03-23)
+------------------
 * fix message box argument into parent widget from None
 * update QMessage box argument
 * update way of interactions status update to remove qt warning message
