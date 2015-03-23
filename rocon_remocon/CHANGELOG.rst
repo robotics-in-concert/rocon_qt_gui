@@ -2,6 +2,19 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix message box argument into parent widget from None
+* update QMessage box argument
+* update way of interactions status update to remove qt warning message
+* fix wrong parsor about ros host name and update shutdown process
+* update setup.py to launch rqt_remocon in global
+* delete unused resourece
+* update api document
+* update and test finish in rqt and rocon remocon
+* make rqt remocon
+* Contributors: dwlee
+
 0.7.7 (2015-03-02)
 ------------------
 * service proxy's are now get set properly.
