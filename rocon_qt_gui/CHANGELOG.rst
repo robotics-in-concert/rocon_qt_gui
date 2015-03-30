@@ -2,6 +2,9 @@
 Changelog for package rocon_rqt_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.8 (2015-03-23)
 ------------------
 

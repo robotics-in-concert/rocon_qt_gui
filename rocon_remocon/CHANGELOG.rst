@@ -2,6 +2,12 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* install scripts in local bin `#185 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/185>`_
+* add resource instal rule closes `#185 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/185>`_
+* Contributors: Jihoon Lee
+
 0.7.8 (2015-03-23)
 ------------------
 * fix message box argument into parent widget from None
