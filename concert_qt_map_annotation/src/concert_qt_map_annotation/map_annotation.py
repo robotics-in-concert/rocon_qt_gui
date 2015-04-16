@@ -49,6 +49,7 @@ class MapAnnotation(Plugin):
 
         self._default_map_topic = 'map'
         self._default_viz_markers_topic = 'viz_markers'
+        self._default_wc_namespace_param = 'wc_namespace_param'
         self._default_wc_namespace = 'world_canvas'
 
         context.add_widget(self._widget)
@@ -59,7 +60,9 @@ class MapAnnotation(Plugin):
 
     def _set_map_annotation_interface(self):
         # remappinags
-        wc_namespace = rospy.get_param('~wc_namespace', self._default_wc_namespace)
+        wc_namespace_param = rospy.get_param('~wc_namespace_param', self._default_wc_namespace_param)
+        wc_namespace = rospy.get_param(wc_namespace_param, self._default_wc_namespace)
+
 
         scene_slot = self._widget.map_annotation.draw_scene
 
