@@ -60,7 +60,7 @@ class MapAnnotation(Plugin):
 
     def _set_map_annotation_interface(self):
         # remappinags
-        wc_namespace_param = rospy.get_param('~wc_namespace_param', self._default_wc_namespace_param)
+        wc_namespace_param = rospy.get_param('~wc_namespace_param')
         wc_namespace = rospy.get_param(wc_namespace_param, self._default_wc_namespace)
 
 

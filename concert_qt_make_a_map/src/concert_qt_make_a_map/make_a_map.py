@@ -103,7 +103,7 @@ class MakeAMap(Plugin):
             scan_slot = self._widget.slam_widget.draw_scan
             robot_pose_slot = self._widget.slam_widget.draw_robot_pose
 
-            wc_namespace_param = rospy.get_param('~wc_namespace_param', self._default_wc_namespace_param)
+            wc_namespace_param = rospy.get_param('~wc_namespace_param')
             wc_namespace = rospy.get_param(wc_namespace_param, self._default_wc_namespace)
             map_topic = self._get_remaps(self._default_map_topic , msg.remappings)
             scan_topic = self._get_remaps(self._default_scan_topic, msg.remappings)
