@@ -60,8 +60,9 @@ class Teleop(Plugin):
 
     def _set_resource_chooser_interface(self):
         capture_timeout = rospy.get_param('~capture_timeout', 15.0)
-        available_resource_topic = '/services/teleop/available_teleops' 
-        capture_resource_pair_topic = '/services/teleop/capture_teleop'
+        service_name = rospy.get_param('~service_name')
+        available_resource_topic = '/services/%s/available_teleops'%service_name
+        capture_resource_pair_topic = '/services/%s/capture_teleop'%service_name
         capture_resource_callbacks = [self._widget.resource_chooser_widget.capture_resource_callback, self._init_teleop_interface]
         release_resource_callbacks = [self._widget.resource_chooser_widget.release_resource_callback, self._uninit_teleop_interface]
         error_resource_callbacks   = [self._widget.resource_chooser_widget.error_resource_callback]

@@ -61,10 +61,11 @@ class MakeAMap(Plugin):
 
     def _set_resource_chooser_interface(self):
         capture_timeout = rospy.get_param('~capture_timeout', 15.0)
+        service_name = rospy.get_param('~service_name')
 
         # TODO : Make it configurable
-        available_resource_topic = '/services/indoor_2d_map_prep/available_make_a_map'
-        capture_resource_pair_topic = '/services/indoor_2d_map_prep/capture_make_a_map'
+        available_resource_topic = '/services/%s/available_make_a_map'%service_name
+        capture_resource_pair_topic = '/services/%s/capture_make_a_map'%service_name
         capture_resource_callbacks = [self._widget.resource_chooser_widget.capture_resource_callback, self._init_teleop_interface, self._set_slam_view_interface]
         release_resource_callbacks = [self._widget.resource_chooser_widget.release_resource_callback, self._uninit_teleop_interface]
         error_resource_callbacks = [self._widget.resource_chooser_widget.error_resource_callback]
