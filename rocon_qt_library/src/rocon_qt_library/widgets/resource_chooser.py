@@ -179,6 +179,7 @@ class QResourceChooser(QWidget):
     def _refresh_resource_list(self, resource_list):
         self._lock.acquire()
         self.resource_list_tree_widget.clear()
+        self.resource_item_list = {}
 
         for r in resource_list:
             uri = rocon_uri.parse(r)
