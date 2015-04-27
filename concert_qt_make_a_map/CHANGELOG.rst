@@ -2,6 +2,13 @@
 Changelog for package concert_qt_make_a_map
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* use service name param to find resource capture topic
+* it errors if necessary param does not exist `#186 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/186>`_
+* configure world canvas param closes `#186 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/186>`_
+* Contributors: Jihoon Lee
+
 0.7.9 (2015-03-30)
 ------------------
 

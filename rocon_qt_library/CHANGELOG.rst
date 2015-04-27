@@ -2,6 +2,12 @@
 Changelog for package rocon_qt_library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add missing dependency closes `#189 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/189>`_
+* cleanup resource item list to closes `#187 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/187>`_
+* Contributors: Jihoon Lee
+
 0.7.9 (2015-03-30)
 ------------------
 

@@ -2,6 +2,11 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add missing dependency closes `#189 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/189>`_
+* Contributors: Jihoon Lee
+
 0.7.9 (2015-03-30)
 ------------------
 * install scripts in local bin `#185 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/185>`_
