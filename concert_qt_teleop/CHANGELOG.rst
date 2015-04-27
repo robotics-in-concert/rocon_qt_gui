@@ -2,8 +2,8 @@
 Changelog for package concert_qt_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.10 (2015-04-27)
+-------------------
 * use service name param to find resource capture topic
 * Contributors: Jihoon Lee
 

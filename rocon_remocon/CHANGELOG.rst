@@ -2,8 +2,8 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.10 (2015-04-27)
+-------------------
 * add missing dependency closes `#189 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/189>`_
 * Contributors: Jihoon Lee
 
