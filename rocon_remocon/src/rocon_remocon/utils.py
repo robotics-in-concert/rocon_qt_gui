@@ -84,6 +84,8 @@ def get_web_browser():
         return 'google-chrome-unstable'
     elif rocon_python_utils.system.which("chromium-browser"):
         return 'chromium-browser'
+    elif rocon_python_utils.system.which("firefox"):
+        return 'firefox'
     return None
 
 def get_web_browser_codename():
