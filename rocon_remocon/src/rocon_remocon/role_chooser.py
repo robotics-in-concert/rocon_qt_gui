@@ -32,6 +32,7 @@ class QRoleChooser():
         self.interactive_client_interface = interactive_client_interface
         self.with_rqt = with_rqt
         self.binded_function = {}
+        self.role_list = []
         self.cur_selected_role = ''
         self.roles_widget = QWidget()
         # load ui
@@ -50,14 +51,14 @@ class QRoleChooser():
 
     def _init(self):
         """
-        Initialization of role chooser. It it launced with rqt, the back button is disabled. 
+        Initialization of role chooser. It it launced with rqt, the back button is disabled.
         Viewer of interactions chooser is launched at once when the role list has one role.
         """
         if self.with_rqt:
             self.roles_widget.back_btn.setEnabled(False)
-        role_list = self.refresh_role_list()
-        if len(role_list) == 1:
-            self.cur_selected_role = role_list[0]
+        self.refresh_role_list()
+        if len(self.role_list) == 1:
+            self.cur_selected_role = self.role_list[0]
             self.interactive_client_interface.select_role(self.cur_selected_role)
 
     def _back(self):
@@ -139,13 +140,11 @@ class QRoleChooser():
             self.roles_widget.stop_all_interactions_button.setEnabled(False)
 
         self.roles_widget.role_list_widget.clear()
-        role_list = self.interactive_client_interface.get_role_list()
+        self.role_list = self.interactive_client_interface.get_role_list()
         # set list widget item (reverse order because we push them on the top)
-        for role in reversed(role_list):
+        for role in reversed(self.role_list):
             self.roles_widget.role_list_widget.insertItem(0, role)
             # setting the list font
             font = self.roles_widget.role_list_widget.item(0).font()
             font.setPointSize(13)
             self.roles_widget.role_list_widget.item(0).setFont(font)
-
-        return role_list

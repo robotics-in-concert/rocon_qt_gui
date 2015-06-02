@@ -88,18 +88,21 @@ class InteractiveClientUI(QMainWindow):
 
     def _init(self):
         """
-        Initialization of interactive client UI. First, show the role chooser and hide interactions chooser. 
+        Initialization of interactive client UI. First, show the role chooser and hide interactions chooser.
         """
-        self._interactive_client_ui_widget.setWindowTitle('Role Chooser')
-        self._interactive_client_ui_widget.show()
-        self._role_chooser.show()
-        self._interactions_chooser.hide()
+        if (len(self._role_chooser.role_list) != 1):
+            self._interactive_client_ui_widget.setWindowTitle('Role Chooser')
+            self._interactive_client_ui_widget.show()
+            self._role_chooser.show()
+            self._interactions_chooser.hide()
+        else:
+            self._switch_to_interactions_list()
 
     def get_main_ui_handle(self):
         """
         Returning an instance of interactive client ui widget. It is used to handle it in other widget.
 
-        :return: return main qt widget. 
+        :return: return main qt widget.
         :rtype: python_qt_binding.QtGui.QWidget
         """
         return self._interactive_client_ui_widget
