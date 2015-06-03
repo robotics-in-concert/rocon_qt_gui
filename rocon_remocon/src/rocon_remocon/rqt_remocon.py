@@ -41,6 +41,6 @@ class RqtRemocon(Plugin):
         self.setObjectName('Rqt Remocon')
         self._rqt_remocon = InteractiveClientUI(None, "Rqt remocon", None, self.rocon_master_uri, self.host_name, True)
         context.add_widget(self._rqt_remocon.get_main_ui_handle())
-    
+
     def shutdown_plugin(self):
         self._rqt_remocon.shutdown()
