@@ -44,7 +44,7 @@ class ImageStream(Plugin):
         self._widget = QWidget()
         rospack = rospkg.RosPack()
         ui_file = os.path.join(rospack.get_path('concert_qt_image_stream'), 'ui', 'concert_image_stream.ui')
-        loadUi(ui_file, self._widget, {'QResourceChooser' : QResourceChooser, 'QVideoStream' : QVideoStream})
+        loadUi(ui_file, self._widget, {'QResourceChooser' : QResourceChooser, 'QCameraView' : QCameraView})
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
@@ -66,7 +66,7 @@ class ImageStream(Plugin):
     def _set_resource_chooser_interface(self):
         capture_timeout = rospy.get_param('~capture_timeout', 15.0)
         service_name = rospy.get_param('~service_name')
-        available_resource_topic = '/services/%s/available_image_strea'%service_name
+        available_resource_topic = '/services/%s/available_image_stream'%service_name
         capture_resource_pair_topic = '/services/%s/capture_image_stream'%service_name
         capture_resource_callbacks = [self._widget.resource_chooser_widget.capture_resource_callback, self._init_image_stream_interface]
         release_resource_callbacks = [self._widget.resource_chooser_widget.release_resource_callback, self._uninit_image_stream_interface]
@@ -102,5 +102,4 @@ class ImageStream(Plugin):
         self.image_received.emit(msg)
 
     def shutdown_plugin(self):
-        self._widget.video_stream_widget.shutdown_plugin()
         self._widget.resource_chooser_widget.shutdown()
