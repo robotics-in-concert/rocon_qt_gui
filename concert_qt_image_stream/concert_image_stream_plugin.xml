@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="ImageStream" type="concert_qt_image_stream.image_stream.ImageStream" base_class_type="rqt_gui_py::Plugin">
+    <description>
+        Select and stream image from a client in concert.
+    </description>
+    <qtgui>
+      <group>
+        <label>Concert</label>
+        <icon type="theme">folder</icon>
+        <statustip>Concert plugins for ROCON.</statustip>
+      </group>
+      <label>Image Stream</label>
+      <icon type="file">./resources/images/rocon_logo.png</icon>
+      <statustip>Select and stream image from a client in concert.</statustip>
+    </qtgui>
+  </class>
+</library>

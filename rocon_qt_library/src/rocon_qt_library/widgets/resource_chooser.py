@@ -124,9 +124,12 @@ class QResourceChooser(QWidget):
             pass
     
     def _show_capture_resource_message(self, rtn):
-        self._lock.acquire()
         if rtn:
             QMessageBox.warning(self, 'SUCCESS', "CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
+        else:
+            QMessageBox.warning(self, 'FAIL', "FAIURE CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
+        self._lock.acquire()
+        if rtn:
             for k in self.resource_item_list.keys():
                 if self.resource_item_list[k] == self.current_resource:
                     k.setBackground(0, QBrush(Qt.SolidPattern))
@@ -140,23 +143,23 @@ class QResourceChooser(QWidget):
             self.capture_resource_btn.setEnabled(False)
             self.release_resource_btn.setEnabled(True)
             self.current_captured_resource = self.current_resource
-        else:
-            QMessageBox.warning(self, 'FAIL', "FAIURE CAPTURE!!!!", QMessageBox.Ok | QMessageBox.Ok)
         self.setDisabled(False)
         self._lock.release()
 
     def _show_release_resource_message(self, rtn):
-        self._lock.acquire()
         if rtn:
             QMessageBox.warning(self, 'SUCCESS', "RELEASE!!!!", QMessageBox.Ok | QMessageBox.Ok)
+        else:
+            QMessageBox.warning(self, 'FAIL', "FAIURE RELEASE!!!!", QMessageBox.Ok | QMessageBox.Ok)
+
+        self._lock.acquire()
+        if rtn:
             for k in self.resource_item_list.keys():
                 if self.resource_item_list[k] == self.current_captured_resource:
                     k.setBackground(0, QBrush(Qt.NoBrush))
                     k.setBackgroundColor(0, QColor(0, 0, 0, 0))
                     resource_name= k.text(0)
                     k.setText(0, resource_name[:resource_name.find(" (captured)")])
-        else:
-            QMessageBox.warning(self, 'FAIL', "FAIURE RELEASE!!!!", QMessageBox.Ok | QMessageBox.Ok)
         self.setDisabled(False)
         self.capture_resource_btn.setEnabled(True)
         self.release_resource_btn.setEnabled(False)

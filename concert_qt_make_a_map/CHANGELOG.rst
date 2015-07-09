@@ -2,6 +2,9 @@
 Changelog for package concert_qt_make_a_map
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.11 (2015-07-09)
+-------------------
+
 0.7.10 (2015-04-27)
 -------------------
 * use service name param to find resource capture topic
