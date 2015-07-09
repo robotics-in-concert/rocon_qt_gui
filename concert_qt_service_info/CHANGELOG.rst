@@ -2,6 +2,9 @@
 Changelog for package concert_qt_service_info
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.10 (2015-04-27)
 -------------------
 

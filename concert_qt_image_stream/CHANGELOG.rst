@@ -1,9 +1,16 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package rocon_gateway_graph
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package concert_qt_image_stream
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Forthcoming
 -----------
+* image stream gui works
+* add concert image stream qt
+* Contributors: Jihoon Lee
+
+* image stream gui works
+* add concert image stream qt
+* Contributors: Jihoon Lee
 
 0.7.10 (2015-04-27)
 -------------------
@@ -29,49 +36,35 @@ Forthcoming
 0.7.3 (2014-12-29)
 ------------------
 
-0.7.2 (2014-11-21)
-------------------
+0.7.2 (2014-11-21 17:49)
+------------------------
 
-0.7.1 (2014-11-21)
+0.7.1 (2014-11-21 17:47)
+------------------------
+
+0.7.0 (2014-08-25)
 ------------------
 
 0.5.4 (2013-09-11)
 ------------------
-* fixed the package description.
 
 0.5.3 (2013-08-30)
 ------------------
-* fixed the package description.
 
 0.5.2 (2013-07-17)
 ------------------
-* adding missing dependency
 
 0.5.1 (2013-06-10 16:50:50 +0900)
 ---------------------------------
-* 0.5.0
 
 0.5.0 (2013-05-27)
 ------------------
-* started looking to add tooltips, but it's not implemented yet.
-* rqt_gateway_grpah to rocon_gateway_graph
-* 0.4.1
-* relative path needs the .
-* 0.4.0
 
 0.3.1 (2013-04-09)
 ------------------
-* relative path needs the .
 
 0.3.0 (2013-02-05)
 ------------------
 
 0.2.0 (2013-01-31)
 ------------------
-* update dependency rospkg->python-rospkg
-* removed rosbuild legacy files.
-* catkinized.
-* eclipse files.
-* simple startup script, aka rqt_plot
-* eclipse project files.
-* rocon_gateway_graph imported from rocon_multimaster.

@@ -2,6 +2,9 @@
 Changelog for package rocon_qt_app_manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.10 (2015-04-27)
 -------------------
 

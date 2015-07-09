@@ -2,6 +2,11 @@
 Changelog for package rocon_qt_library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* resolve conflict between threading lock and qmessage box closes `#196 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/196>`_
+* Contributors: Jihoon Lee
+
 0.7.10 (2015-04-27)
 -------------------
 * add missing dependency closes `#189 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/189>`_

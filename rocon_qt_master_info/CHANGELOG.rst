@@ -2,6 +2,9 @@
 Changelog for package rocon_qt_master_info
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.10 (2015-04-27)
 -------------------
 
