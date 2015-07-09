@@ -2,8 +2,8 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.11 (2015-07-09)
+-------------------
 * [rocon_remocon] bypass role chooser if only one role.
 * add firefox closes `#190 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/190>`_
 * Contributors: Daniel Stonier, Jihoon Lee
