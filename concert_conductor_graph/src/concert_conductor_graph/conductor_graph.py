@@ -58,7 +58,7 @@ class GraphEventHandler():
 
     def EdgeEvent(self, event):
         self._callback_func(event)
-        self._item.set_color(QColor(0, 0, 255))
+        self._item.set_node_color(QColor(0, 0, 255))
 
 
 ##############################################################################
@@ -123,7 +123,7 @@ class DynamicArgumentLayer():
             added_arg_widget.setParent(None)
             added_arg_widget.deleteLater()
 
-        #resize
+        # resize
         dialog_widget = widget_layout.parentWidget().parentWidget()
         dialog_widget.resize(dialog_widget.minimumSize())
         for l in item_list:
@@ -252,7 +252,7 @@ class ConductorGraph(Plugin):
         self.signal_update_conductor_graph.emit()
 
     def _update_client_tab(self):
-        #print('[conductor graph]: _update_client_tab')
+        # print('[conductor graph]: _update_client_tab')
         self.pre_selected_client_name = self.cur_selected_client_name
         self._widget.tabWidget.clear()
 
@@ -268,13 +268,13 @@ class ConductorGraph(Plugin):
             ver_layout.setContentsMargins(9, 9, 9, 9)
             ver_layout.setSizeConstraint(ver_layout.SetDefaultConstraint)
 
-            #button layout
+            # button layout
             sub_widget = QWidget()
             sub_widget.setAccessibleName('sub_widget')
 
             ver_layout.addWidget(sub_widget)
 
-            #client information layout
+            # client information layout
             context_label = QLabel()
             context_label.setText("Client information")
             ver_layout.addWidget(context_label)
@@ -296,10 +296,10 @@ class ConductorGraph(Plugin):
                 # This only changes when the concert client changes topic publishes anew
                 path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../resources/images/new.gif")
 
-            #add tab
+            # add tab
             self._widget.tabWidget.addTab(main_widget, QIcon(path), k.concert_alias)
 
-        #set previous selected tab
+        # set previous selected tab
         for k in range(self._widget.tabWidget.count()):
             tab_text = self._widget.tabWidget.tabText(k)
             if tab_text == self.pre_selected_client_name:
@@ -311,9 +311,9 @@ class ConductorGraph(Plugin):
     def _set_network_statisics(self):
         # we currently redraw every statistics update (expensive!) so passing for now, but we should
         # reenable this and drop the change callback to be more efficient
-        #if self._edge_items == None:
+        # if self._edge_items == None:
         #    return
-        #else:
+        # else:
         #    for edge_items in self._edge_items.itervalues():
         #        for edge_item in edge_items:
         #            edge_dst_name = edge_item.to_node._label.text()
@@ -321,14 +321,14 @@ class ConductorGraph(Plugin):
         pass
 
     def _redraw_graph_view(self):
-        #print("[conductor graph]: _redraw_graph_view")
+        # print("[conductor graph]: _redraw_graph_view")
         # regenerate the dotcode
         current_dotcode = self.dotcode_generator.generate_dotcode(
-                                                       conductor_graph_instance=self._graph,
-                                                       dotcode_factory=self.dotcode_factory,
-                                                       clusters=self._widget.clusters_check_box.isChecked()
-                                                       )
-        #print("Dotgraph: \n%s" % current_dotcode)
+            conductor_graph_instance=self._graph,
+            dotcode_factory=self.dotcode_factory,
+            clusters=self._widget.clusters_check_box.isChecked()
+        )
+        # print("Dotgraph: \n%s" % current_dotcode)
         self._scene.clear()
         self._node_item_events = {}
         self._edge_item_events = {}
@@ -344,36 +344,36 @@ class ConductorGraph(Plugin):
         self._node_items = nodes
         self._edge_items = edges
 
-        #nodes - if we wish to make special nodes, do that here (maybe subclass GraphItem, just like NodeItem does
+        # nodes - if we wish to make special nodes, do that here (maybe subclass GraphItem, just like NodeItem does
         for node_item in nodes.itervalues():
             # redefine mouse event
-            #self._node_item_events[node_item._label.text()] = GraphEventHandler(self._widget.tabWidget, node_item, node_item.mouseDoubleClickEvent)
-            #node_item.mouseDoubleClickEvent = self._node_item_events[node_item._label.text()].NodeEvent
+            # self._node_item_events[node_item._label.text()] = GraphEventHandler(self._widget.tabWidget, node_item, node_item.mouseDoubleClickEvent)
+            # node_item.mouseDoubleClickEvent = self._node_item_events[node_item._label.text()].NodeEvent
             self._node_item_events[node_item._label.text()] = GraphEventHandler(self._widget.tabWidget, node_item, node_item.hoverEnterEvent)
             node_item.hoverEnterEvent = self._node_item_events[node_item._label.text()].NodeEvent
 
             self._scene.addItem(node_item)
 
-        #edges
+        # edges
         for edge_items in edges.itervalues():
             for edge_item in edge_items:
-                #redefine the edge hover event
+                # redefine the edge hover event
 
                 self._edge_item_events[edge_item._label.text()] = GraphEventHandler(self._widget.tabWidget, edge_item, edge_item._label.hoverEnterEvent)
                 edge_item._label.hoverEnterEvent = self._edge_item_events[edge_item._label.text()].EdgeEvent
 
-                #self._edge_item_events[edge_item._label.text()]=GraphEventHandler(self._widget.tabWidget,edge_item,edge_item.mouseDoubleClickEvent);
-                #edge_item.mouseDoubleClickEvent=self._edge_item_events[edge_item._label.text()].EdgeEvent;
+                # self._edge_item_events[edge_item._label.text()]=GraphEventHandler(self._widget.tabWidget,edge_item,edge_item.mouseDoubleClickEvent);
+                # edge_item.mouseDoubleClickEvent=self._edge_item_events[edge_item._label.text()].EdgeEvent;
 
                 edge_item.add_to_scene(self._scene)
 
-                #set the color of node as connection strength one of red, yellow, green
+                # set the color of node as connection strength one of red, yellow, green
                 edge_dst_name = edge_item.to_node._label.text()
                 if edge_dst_name in self._graph.concert_clients.keys():
                     link_strength_colour = ConductorGraph.link_strength_colours[self._graph.concert_clients[edge_dst_name].get_connection_strength()]
                     edge_item._default_color = link_strength_colour
                     edge_item.set_node_color(link_strength_colour)
-                #set the tooltip about network information
+                # set the tooltip about network information
                 edge_item.setToolTip(str(self._graph.concert_clients[edge_dst_name].msg.conn_stats))
 
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
