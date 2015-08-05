@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rocon_qt_library</name>
-  <version>0.7.11</version>
+  <version>0.7.12</version>
   <description>Common widgets and modules for rocon qt development.</description>
 
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
@@ -24,4 +24,5 @@
   <run_depend>rospy_message_converter</run_depend>
   <run_depend>world_canvas_client_py</run_depend>
   <run_depend>world_canvas_msgs</run_depend>
+  <run_depend>yocs_msgs</run_depend>
 </package>

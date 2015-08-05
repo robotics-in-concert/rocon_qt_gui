@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rocon_remocon</name>
-  <version>0.7.11</version>
+  <version>0.7.12</version>
   <description>A qt based remocon for interacting with ros systems.</description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>

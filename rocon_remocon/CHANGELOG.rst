@@ -2,6 +2,9 @@
 Changelog for package rocon_remocon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.12 (2015-08-05)
+-------------------
+
 0.7.11 (2015-07-09)
 -------------------
 * [rocon_remocon] bypass role chooser if only one role.
