@@ -24,4 +24,5 @@
   <run_depend>rospy_message_converter</run_depend>
   <run_depend>world_canvas_client_py</run_depend>
   <run_depend>world_canvas_msgs</run_depend>
+  <run_depend>yocs_msgs</run_depend>
 </package>
