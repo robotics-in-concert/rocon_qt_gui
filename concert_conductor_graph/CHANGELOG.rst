@@ -2,6 +2,11 @@
 Changelog for package concert_conductor_graph
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [concert_conductor_graph] bugfix set_color -> set_node_color, fixes `#194 <https://github.com/robotics-in-concert/rocon_qt_gui/issues/194>`_.
+* Contributors: Daniel Stonier
+
 0.7.11 (2015-07-09)
 -------------------
 

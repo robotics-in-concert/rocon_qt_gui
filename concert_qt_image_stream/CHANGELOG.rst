@@ -2,6 +2,9 @@
 Changelog for package concert_qt_image_stream
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.11 (2015-07-09)
 -------------------
 * image stream gui works
