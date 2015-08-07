@@ -67,7 +67,19 @@ class QtRappManagerInfo(object):
         @param data: information of rapps
         @type rocon_app_manager_msgs/RappList
         """
-        self._running_rapp = msg.rapp.name if msg.rapp_status != 'stopped' else None
+        self._running_rapp = None
+        running_rapp_name = msg.rapp.name if msg.rapp_status != 'stopped' else None
+        if running_rapp_name is not None:
+            try:
+                if running_rapp_name in self._available_rapps.keys():
+                    self._running_rapp = self._available_rapps[self._running_rapp]
+                else:
+                    for rapp in self._available_rapps.values():
+                        if running_rapp_name in rapp['implementations']:
+                            self._running_rapp = rapp['name']
+                            break
+            except KeyError:
+                pass
         self._update_rapps_callback()
 
     def select_rapp_manager(self, namespace):
@@ -127,7 +139,13 @@ class QtRappManagerInfo(object):
     def get_running_rapps(self):
         running_rapps = {}
         try:
-            running_rapps[self._running_rapp] = self._available_rapps[self._running_rapp]
+            if self._running_rapp in self._available_rapps.keys():
+                running_rapps[self._running_rapp] = self._available_rapps[self._running_rapp]
+            else:
+                for rapp in self._available_rapps.values():
+                    if self._running_rapp in rapp['implementations']:
+                        running_rapps[rapp['name']] = rapp
+                        break
         except KeyError:
             pass
         return running_rapps
