@@ -3,6 +3,7 @@
 	<name>rocon_qt_app_manager</name>
 	<comment></comment>
 	<projects>
+		<project>rocon_qt_library</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -50,16 +50,6 @@ class QtRappManagerInfo(object):
         self._rapp_list_subscriber = None
         self._status_subscriber = None
 
-#     def _update_rapps(self, data):
-#         """
-#         Update the available rapp list
-# 
-#         @param data: information of rapps
-#         @type rocon_app_manager_msgs/RappList
-#         """
-#         self._available_rapps = list_rapp_msg_to_dict(data.available_rapps)
-#         self._running_rapps = list_rapp_msg_to_dict(data.running_rapps)
-
     def _process_rapp_list_msg(self, msg):
         """
         Update the available rapp list
@@ -101,18 +91,6 @@ class QtRappManagerInfo(object):
         """
         get_rapp_list_service_names = rocon_python_comms.find_service('rocon_app_manager_msgs/GetRappList', timeout=rospy.rostime.Duration(5.0), unique=False)
         return get_rapp_list_service_names
-
-#     def _get_rapps(self, namespace):
-#         """
-#         Getting the rapp list using service calling
-#         @param namespace: namespace of running rapp
-#         @type String
-# 
-#         @param service_name: service_name
-#         @type String
-#         """
-#         service_handle = rospy.ServiceProxy(namespace + 'list_rapps', GetRappList)
-#         self._update_rapps(service_handle())
 
     def start_rapp(self, rapp_name, remappings, parameters):
         """
