@@ -6,18 +6,16 @@
 ##############################################################################
 # Imports
 ##############################################################################
-#system
+
 from __future__ import division
 import os
 
-#pyqt
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Signal, QSize, SIGNAL
 from python_qt_binding.QtGui import QListView, QWidget, QStandardItemModel, QStandardItem, QIcon, QPixmap 
-#ros
+
 import rospkg
 from qt_app_manager_info import QtRappManagerInfo
-#rqt
 from qt_gui.plugin import Plugin
 
 
@@ -72,14 +70,14 @@ class QtRappManager(Plugin):
     def _init_variables(self):
         self.initialised = False
 
-        #init
+        # init
         self._qt_rapp_manager_info = QtRappManagerInfo(self._refresh_rapps)
         self._update_rapps_signal.connect(self._update_rapp_list)
 
         self._rapp_view_model = QStandardItemModel()
         self._widget.rapp_grid.setModel(self._rapp_view_model)
         self._widget.rapp_grid.setWrapping(True)
-        self._widget.rapp_grid.setIconSize(QSize(60,60))
+        self._widget.rapp_grid.setIconSize(QSize(60, 60))
         self._widget.rapp_grid.setSpacing(10)
 
         self._selected_rapp = None
@@ -89,7 +87,6 @@ class QtRappManager(Plugin):
 
     def _cleanup_rapps(self):
         self._rapp_view_model.clear()
-        pass 
 
     def _get_appmanager_namespaces(self):
         namespaces = self._qt_rapp_manager_info._get_namespaces()
