@@ -18,6 +18,21 @@ from rocon_app_manager_msgs.srv import StartRapp, StopRapp
 ##############################################################################
 
 
+def rapp_msg_to_dict(msg):
+    rapp = {}
+    rapp["status"] = msg.status
+    rapp["name"] = msg.name
+    rapp["display_name"] = msg.display_name
+    rapp["description"] = msg.description
+    rapp["compatibility"] = msg.compatibility
+    rapp["preferred"] = msg.preferred
+    rapp["icon"] = msg.icon
+    rapp["implementations"] = msg.implementations
+    rapp["public_interface"] = msg.public_interface
+    rapp["public_parameters"] = msg.public_parameters
+    return rapp
+
+
 def list_rapp_msg_to_dict(list_rapp):
     """
     convert msg to dict
@@ -25,17 +40,7 @@ def list_rapp_msg_to_dict(list_rapp):
     dict_rapp = {}
     for rapp in list_rapp:
         name = rapp.name
-        dict_rapp[name] = {}
-        dict_rapp[name]["status"] = rapp.status
-        dict_rapp[name]["name"] = rapp.name
-        dict_rapp[name]["display_name"] = rapp.display_name
-        dict_rapp[name]["description"] = rapp.description
-        dict_rapp[name]["compatibility"] = rapp.compatibility
-        dict_rapp[name]["preferred"] = rapp.preferred
-        dict_rapp[name]["icon"] = rapp.icon
-        dict_rapp[name]["implementations"] = rapp.implementations
-        dict_rapp[name]["public_interface"] = rapp.public_interface
-        dict_rapp[name]["public_parameters"] = rapp.public_parameters
+        dict_rapp[name] = rapp_msg_to_dict(rapp)
     return dict_rapp
 
 
@@ -70,16 +75,7 @@ class QtRappManagerInfo(object):
         self._running_rapp = None
         running_rapp_name = msg.rapp.name if msg.rapp_status != 'stopped' else None
         if running_rapp_name is not None:
-            try:
-                if running_rapp_name in self._available_rapps.keys():
-                    self._running_rapp = self._available_rapps[self._running_rapp]
-                else:
-                    for rapp in self._available_rapps.values():
-                        if running_rapp_name in rapp['implementations']:
-                            self._running_rapp = rapp['name']
-                            break
-            except KeyError:
-                pass
+            self._running_rapp = rapp_msg_to_dict(msg.rapp)
         self._update_rapps_callback()
 
     def select_rapp_manager(self, namespace):
@@ -151,7 +147,10 @@ class QtRappManagerInfo(object):
         return running_rapps
 
     def is_running_rapp(self, rapp):
-        if self._running_rapp == rapp['name']:
-            return True
-        else:
-            return False
+        result = False
+        if self._running_rapp is not None:
+            if self._running_rapp['name'] == rapp['name']:
+                result = True
+            elif self._running_rapp['name'] in rapp['implementations']:
+                result = True
+        return result

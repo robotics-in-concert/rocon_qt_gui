@@ -54,10 +54,10 @@ class QtRappDialog(QDialog):
     def _init_overview(self):
         self.setWindowTitle(self._rapp['display_name'])
 
-        pixmap = get_qpixmap(self._rapp['icon']) 
+        pixmap = get_qpixmap(self._rapp['icon'])
         self.rapp_icon.setPixmap(pixmap)
 
-        self.rapp_name.setText("%s(%s)" % (self._rapp['display_name'], self._rapp['name']))
+        self.rapp_name.setText("%s (%s)" % (self._rapp['display_name'], self._rapp['name']))
         self.rapp_description.setText(self._rapp['description'])
 
     def _init_start_stop_buttons(self):
