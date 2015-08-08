@@ -96,6 +96,7 @@ class InteractiveClientUI(QMainWindow):
             self._role_chooser.show()
             self._interactions_chooser.hide()
         else:
+            console.logdebug("interface skipping the role chooser and switching directly to the interactions list [exactly one role available]")
             self._switch_to_interactions_list()
 
     def get_main_ui_handle(self):

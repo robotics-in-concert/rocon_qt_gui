@@ -107,7 +107,7 @@ class InteractionsTable(object):
         if not matches:
             self.interactions.append(interaction)
         else:
-            console.logwarn("Interactions Table : tried to append an already existing interaction [%s]" % interaction.hash)
+            console.logdebug("Interactions Table : interaction already stored, not appending to the table [%s]" % interaction.hash)
 
     def find(self, interaction_hash):
         '''
