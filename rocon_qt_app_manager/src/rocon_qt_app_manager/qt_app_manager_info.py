@@ -9,6 +9,7 @@
 
 import rospy
 import rocon_python_comms
+import rocon_std_msgs.msg as rocon_std_msgs
 from rocon_std_msgs.msg import Remapping, KeyValue
 from rocon_app_manager_msgs.msg import Status, RappList
 from rocon_app_manager_msgs.srv import StartRapp, StopRapp
@@ -29,7 +30,15 @@ def rapp_msg_to_dict(msg):
     rapp["icon"] = msg.icon
     rapp["implementations"] = msg.implementations
     rapp["public_interface"] = msg.public_interface
-    rapp["public_parameters"] = msg.public_parameters
+    rapp["public_parameters"] = []
+    for parameter in msg.public_parameters:
+        if parameter.value.lower() == "false":
+            value = False
+        elif parameter.value.lower() == "true":
+            value = True
+        else:
+            value = parameter.value
+        rapp["public_parameters"].append(rocon_std_msgs.KeyValue(parameter.key, value))
     return rapp
 
 
@@ -109,14 +118,13 @@ class QtRappManagerInfo(object):
         :param remappings: remapping rules
         :type remappings: list
         :param parameters: public parameters
-        :type parameters: list
+        :type parameters: list of rocon_std_msgs.KeyValue
         """
         remaps = [Remapping(key, value) for key, value in remappings]
-        params = [KeyValue(k, v) for k, v in parameters]
 
-        print('Starting %s with %s, %s' % (rapp_name, str(params), str(remaps)))
+        print('Starting %s with %s, %s' % (rapp_name, str(parameters), str(remaps)))
         service_handle = rospy.ServiceProxy(self._current_namespace + 'start_rapp', StartRapp)
-        call_result = service_handle(rapp_name, remaps, params)
+        call_result = service_handle(rapp_name, remaps, parameters)
         if call_result.started:
             self._current_rapp = rapp_name
         return call_result

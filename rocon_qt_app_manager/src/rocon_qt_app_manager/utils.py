@@ -9,7 +9,7 @@
 from __future__ import division
 
 from python_qt_binding.QtCore import QSize
-from python_qt_binding.QtGui import QIcon, QPixmap, QStandardItem, QHBoxLayout, QLabel, QTextEdit, QSizePolicy, QFont
+from python_qt_binding.QtGui import QIcon, QPixmap, QStandardItem, QHBoxLayout, QLabel, QTextEdit, QSizePolicy, QFont, QCheckBox
 
 ############################################
 # Rapp item
@@ -64,12 +64,26 @@ def create_label_textedit_pair(key, value):
     name.setMaximumHeight(30)
     name.setWordWrap(True)
 
-    textedit = QTextEdit() 
+    textedit = QTextEdit()
     textedit.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
     textedit.setMinimumWidth(320)
     textedit.setMaximumHeight(30)
     textedit.append(str(value))
     return name, textedit
+
+
+def create_label_checkbox_pair(key, value):
+    label = QLabel(key)
+    label.setToolTip(key)
+    label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+    label.setMinimumWidth(400)
+    label.setMaximumHeight(30)
+    label.setWordWrap(True)
+
+    checkbox = QCheckBox()
+    checkbox.setChecked(value)
+    return label, checkbox
+
 
 def create_label(name, is_bold=False):
     qname = QLabel(name)

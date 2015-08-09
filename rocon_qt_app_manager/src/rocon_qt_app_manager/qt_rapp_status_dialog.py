@@ -15,8 +15,10 @@ from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Qt, QEvent, SIGNAL
 from python_qt_binding.QtGui import QDialog, QCursor, QSpacerItem
 
+import rocon_std_msgs.msg as rocon_std_msgs
 from rocon_qt_library.utils import show_message
-from .utils import get_qpixmap, create_label_textedit_pair, create_label
+from . import utils
+from PyQt4.Qt import QCheckBox
 
 ##############################################################################
 # Dialog
@@ -54,7 +56,7 @@ class QtRappDialog(QDialog):
     def _init_overview(self):
         self.setWindowTitle(self._rapp['display_name'])
 
-        pixmap = get_qpixmap(self._rapp['icon'])
+        pixmap = utils.get_qpixmap(self._rapp['icon'])
         self.rapp_icon.setPixmap(pixmap)
 
         self.rapp_name.setText("%s (%s)" % (self._rapp['display_name'], self._rapp['name']))
@@ -85,12 +87,15 @@ class QtRappDialog(QDialog):
             self.parameters.setColumnStretch(1, 0)
             self.parameters.setRowStretch(2, 0)
             for p in self._rapp['public_parameters']:
-                name, textedit = create_label_textedit_pair(p.key, p.value)
-                self.parameters.addWidget(name)
-                self.parameters.addWidget(textedit)
-                self._parameters_items.append((p.key, textedit))
+                if isinstance(p.value, bool):
+                    label, box = utils.create_label_checkbox_pair(p.key, p.value)
+                else:
+                    label, box = utils.create_label_textedit_pair(p.key, p.value)
+                self.parameters.addWidget(label)
+                self.parameters.addWidget(box)
+                self._parameters_items.append((p.key, box))
         else:
-            label = create_label("No public parameters")
+            label = utils.create_label("No public parameters")
             self.parameters.addWidget(label)
 
     def _init_public_interface(self):
@@ -104,21 +109,21 @@ class QtRappDialog(QDialog):
                 remap_list = eval(i.value)
 
                 if len(remap_list) > 0:
-                    qname = create_label(type_name, is_bold=True)
+                    qname = utils.create_label(type_name, is_bold=True)
                     self.remappings.addWidget(qname)
                     self.remappings.addItem(QSpacerItem(20, 40))
                     for remap in remap_list:
                         key = remap['name']
                         remap_type = remap['type']
                         n = "%s  [%s]" % (key, remap_type)
-                        name, textedit = create_label_textedit_pair(n, key)
+                        name, textedit = utils.create_label_textedit_pair(n, key)
                         self.remappings.addWidget(name)
                         self.remappings.addWidget(textedit)
                         self._remappings_items.append((key, textedit))
                         flag = True
 
         if not flag:
-            label = create_label("No public interface")
+            label = utils.create_label("No public interface")
             self.remappings.addWidget(label)
 
     def _press_start_button(self):
@@ -140,8 +145,13 @@ class QtRappDialog(QDialog):
             show_message(self, str(result.stopped), result.message)
 
     def _prepare_start_rapp(self):
-
-        parameters = [(k, v.toPlainText().strip()) for k, v in self._parameters_items]
+        parameters = []
+        for name, box in self._parameters_items:
+            if isinstance(box, QCheckBox):
+                value = "true" if box.isChecked() else "false"
+            else:
+                value = box.toPlainText().strip()
+            parameters.append(rocon_std_msgs.KeyValue(name, value))
         remappings = [(k, v.toPlainText().strip()) for k, v in self._remappings_items if k != v.toPlainText().strip()]
         impl = self.rapp_impls.currentText()
 
