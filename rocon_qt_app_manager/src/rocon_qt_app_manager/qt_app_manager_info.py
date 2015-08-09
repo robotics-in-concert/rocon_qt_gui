@@ -141,13 +141,15 @@ class QtRappManagerInfo(object):
         return call_result
 
     def get_running_rapps(self):
+        if self._running_rapp is None:
+            return {}
         running_rapps = {}
         try:
             if self._running_rapp in self._available_rapps.keys():
                 running_rapps[self._running_rapp] = self._available_rapps[self._running_rapp]
             else:
                 for rapp in self._available_rapps.values():
-                    if self._running_rapp in rapp['implementations']:
+                    if self._running_rapp['name'] in rapp['implementations']:
                         running_rapps[rapp['name']] = rapp
                         break
         except KeyError:
