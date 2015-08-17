@@ -62,7 +62,7 @@ class MasterInfo(Plugin):
         self._widget.icon_label.resize(pixmap.width(), pixmap.height())
 
         self._widget.info_label.resize(200, pixmap.height())
-        self._widget.info_label.setText("<b>Name:</b> %s<br/><b>Rocon Version:</b> %s<br/><b>Description:</b> %s" % (self._master_info.name, self._master_info.version, self._master_info.description))
+        self._widget.info_label.setText("<b>Name:</b> %s<br/><b>Rocon Uri:</b> %s<br/><b>Rocon Version:</b> %s<br/><b>Description:</b> %s" % (self._master_info.name, self._master_info.rocon_uri, self._master_info.version, self._master_info.description))
         self._widget.adjustSize()
 
         context.add_widget(self._widget)
