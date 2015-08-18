@@ -35,7 +35,7 @@ from qt_dotgraph.pydotfactory import PydotFactory
 # TODO: use pygraphviz instead, but non-deterministic layout will first be resolved in graphviz 2.30
 # from qtgui_plugin.pygraphvizfactory import PygraphvizFactory
 
-from concert_utilities.conductor_graph import ConductorGraphDotcodeGenerator
+from concert_utilities.conductor_graph import GraphDotcodeGenerator
 from concert_utilities.conductor_graph import ConductorGraphInfo
 
 ##############################################################################
@@ -95,7 +95,7 @@ class DynamicArgumentLayer():
 
         name_widget = QLabel(self.name + ": ")
         name_hor_layout.addWidget(name_widget)
-        if self.add == True:
+        if self.add:
             btn_add = QPushButton("+", name_hor_sub_widget)
 
             btn_add.clicked.connect(self._push_param)
@@ -202,7 +202,7 @@ class ConductorGraph(Plugin):
         # factory builds generic dotcode items
         self.dotcode_factory = PydotFactory()
         # self.dotcode_factory=PygraphvizFactory()
-        self.dotcode_generator = ConductorGraphDotcodeGenerator()
+        self.dotcode_generator = GraphDotcodeGenerator()
         self.dot_to_qt = DotToQtGenerator()
 
         self._graph = ConductorGraphInfo(self._update_conductor_graph_relay, self._set_network_statisics)
@@ -258,7 +258,7 @@ class ConductorGraph(Plugin):
 
         for k in self._graph.concert_clients.values():
             # Only pull in information from connected or connectable clients
-            if k.state not in [concert_msgs.ConcertClientState.AVAILABLE, concert_msgs.ConcertClientState.MISSING, concert_msgs.ConcertClientState.UNINVITED]:
+            if k.state not in [concert_msgs.ConcertClientState.AVAILABLE, concert_msgs.ConcertClientState.MISSING, concert_msgs.ConcertClientState.PENDING]:
                 continue
 
             main_widget = QWidget()
@@ -369,12 +369,16 @@ class ConductorGraph(Plugin):
 
                 # set the color of node as connection strength one of red, yellow, green
                 edge_dst_name = edge_item.to_node._label.text()
-                if edge_dst_name in self._graph.concert_clients.keys():
+                try:
                     link_strength_colour = ConductorGraph.link_strength_colours[self._graph.concert_clients[edge_dst_name].get_connection_strength()]
                     edge_item._default_color = link_strength_colour
                     edge_item.set_node_color(link_strength_colour)
-                # set the tooltip about network information
-                edge_item.setToolTip(str(self._graph.concert_clients[edge_dst_name].msg.conn_stats))
+                    # set the tooltip about network information
+                    edge_item.setToolTip(str(self._graph.concert_clients[edge_dst_name].msg.conn_stats))
+                except KeyError:
+                    # edge disappeared due to recent updates, (we could use better placement of mutexes around this data here and in callbacks)
+                    # for now, skip rendering it
+                    continue
 
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
 
