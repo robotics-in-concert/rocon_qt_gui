@@ -11,7 +11,7 @@ import os
 import rospkg
 #from PyQt4 import uic
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import Signal, Qt, QSize, QEvent
+from python_qt_binding.QtCore import pyqtSlot, Qt, QSize, QEvent
 from python_qt_binding.QtGui import QIcon, QWidget, QColor, QMainWindow, QMessageBox
 
 from rocon_console import console
@@ -32,6 +32,7 @@ class QInteractionsChooser(QMainWindow):
         self.cur_selected_interaction = None
         self.interactions = {}
         self.interactive_client_interface = interactive_client_interface
+        self.interactive_client_interface.connect_signals_with_slots(self.update_interactions_list)
         self.interactions_widget = QWidget()
         # load ui
         rospack = rospkg.RosPack()
@@ -189,6 +190,10 @@ class QInteractionsChooser(QMainWindow):
         """
         self.cur_selected_role = role
         self.interactive_client_interface.select_role(self.cur_selected_role)
+        self.refresh_interactions_list()
+
+    @pyqtSlot()
+    def update_interactions_list(self):
         self.refresh_interactions_list()
 
     def refresh_interactions_list(self):

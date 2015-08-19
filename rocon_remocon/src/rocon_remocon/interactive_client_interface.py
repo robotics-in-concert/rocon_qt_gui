@@ -16,6 +16,8 @@ from urlparse import urlparse
 import uuid
 import yaml
 
+from python_qt_binding.QtCore import QObject, pyqtSignal
+
 from rocon_app_manager_msgs.msg import ErrorCodes
 from rocon_console import console
 import rocon_interactions
@@ -28,8 +30,8 @@ import rocon_python_utils
 import rocon_std_msgs.msg as rocon_std_msgs
 import rocon_uri
 import rospkg
-from rospkg.os_detect import OsDetect
 import rospy
+import std_msgs.msg as std_msgs
 
 from . import utils
 from .launch import LaunchInfo, RosLaunchInfo
@@ -41,9 +43,11 @@ from .interactions_table import InteractionsTable
 ##############################################################################
 
 
-class InteractiveClientInterface():
+class InteractiveClientInterface(QObject):
 
     shutdown_timeout = 0.5
+    # pyqt signals can't be instance variables...
+    signal_interactions_update = pyqtSignal()
 
     """
     Time to wait before shutting down so remocon status updates can be received and processed
@@ -55,6 +59,7 @@ class InteractiveClientInterface():
           @param stop_app_postexec_fn : callback to fire when a listener detects an app getting stopped.
           @type method with no args
         '''
+        QObject.__init__(self)
         self._interactions_table = InteractionsTable()
         self._stop_interaction_postexec_fn = stop_interaction_postexec_fn
         self.is_connect = False
@@ -83,6 +88,9 @@ class InteractiveClientInterface():
         # expose underlying functionality higher up
         self.interactions = self._interactions_table.generate_role_view
         """Get a dictionary of interactions belonging to the specified role."""
+
+    def connect_signals_with_slots(self, slot_update_interactions_list):
+        self.signal_interactions_update.connect(slot_update_interactions_list)
 
     def _connect_with_ros_init_node(self, ros_master_uri="http://localhost:11311", host_name='localhost'):
         # uri is obtained from the user, stored in ros_master_uri
@@ -124,7 +132,12 @@ class InteractiveClientInterface():
         try:
             # if its available, should be quick to find this one since we found the others...
             pairing_topic_name = rocon_python_comms.find_topic('rocon_interaction_msgs/Pair', timeout=rospy.rostime.Duration(0.5), unique=True)
-            self.pairing_status_subscriber = rospy.Subscriber(pairing_topic_name, rocon_interaction_msgs.Pair, self._subscribe_pairing_status_callback)
+            self.pairing_subscribers = rocon_python_comms.utils.Subscribers(
+                [
+                    (pairing_topic_name, rocon_interaction_msgs.Pair, self._subscribe_pairing_status_callback),
+                    (interactions_namespace + "/interactions_update", std_msgs.Empty, self._subscribe_interactions_update_callback)
+                ]
+            )
         except rocon_python_comms.NotFoundException as e:
             console.logdebug("Interactive Client : support for paired interactions disabled [not found]")
 
@@ -133,7 +146,7 @@ class InteractiveClientInterface():
         return (True, "success")
 
     def shutdown(self):
-        if(self.is_connect != True):
+        if(not self.is_connect):
             return
         else:
             console.logdebug("Interactive Client : shutting down all interactions")
@@ -274,8 +287,8 @@ class InteractiveClientInterface():
     def _start_dummy_interaction(self, interaction, unused_filename):
         console.loginfo("InteractiveClientInterface : starting paired dummy interaction")
         anonymous_name = interaction.name + "_" + uuid.uuid4().hex
-        #process_listener = partial(self._process_listeners, anonymous_name, 1)
-        #process = rocon_python_utils.system.Popen([rosrunnable_filename], postexec_fn=process_listener)
+        # process_listener = partial(self._process_listeners, anonymous_name, 1)
+        # process = rocon_python_utils.system.Popen([rosrunnable_filename], postexec_fn=process_listener)
         interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, None)  # empty shutdown function
         return True
 
@@ -374,6 +387,7 @@ class InteractiveClientInterface():
         """
         This is the big showstopper - stop them all!
         """
+        console.logdebug("Interactive client : stopping all interactions")
         running_interactions = []
         for interaction in self._interactions_table.interactions:
             for unused_process_name in interaction.launch_list.keys():
@@ -387,8 +401,11 @@ class InteractiveClientInterface():
         """
         interaction = self._interactions_table.find(interaction_hash)
         if interaction is None:
-            console.logwarn("Interactive Client : interaction key %s not found in interactions table" % interaction_hash)
-            return (False, "interaction key %s not found in interactions table" % interaction_hash)
+            error_message = "interaction key %s not found in interactions table" % interaction_hash
+            console.logwarn("Interactive Client : could not stop interactions of this kind [%s]" % error_message)
+            return (False, "%s" % error_message)
+        else:
+            console.logdebug("Interactive Client : stopping all '%s' interactions" % interaction.display_name)
         try:
             for launch_info in interaction.launch_list.values():
                 if launch_info.running:
@@ -414,15 +431,21 @@ class InteractiveClientInterface():
 
     def _process_listeners(self, name, exit_code):
         '''
-          Callback function used to catch terminating applications and cleanup appropriately.
+          This is usually run as a post-executing function to the interaction and so will do the
+          cleanup when the user's side of the interaction has terminated.
 
-          @param name : name of the launched process stored in the interactions index.
-          @type str
+          Note that there are other means of stopping & cleanup for interactions:
 
-          @param exit_code : could be utilised from roslaunched processes but not currently used.
-          @type int
+          - via the remocon stop buttons (self.stop_interaction, self.stop_all_interactions)
+          - via a rapp manager status callback when it is a pairing interaction
+
+          There is some common code (namely del launch_list element, check pairing, publish remocon) so
+          if changing that flow, be sure to check the code in self.stop_interaction()
+
+          @param str name : name of the launched process stored in the interactions launch_list dict.
+          @param int exit_code : could be utilised from roslaunched processes but not currently used.
         '''
-        console.logdebug("Interactive Client : process_listener detected terminating interaction [%s]" % name)
+        terminated = False
         for interaction in self._interactions_table.interactions:
             if name in interaction.launch_list:
                 del interaction.launch_list[name]
@@ -434,8 +457,12 @@ class InteractiveClientInterface():
                     self._stop_interaction_postexec_fn()
                 # update the rocon interactions handler
                 self._publish_remocon_status()
-            else:
-                console.logwarn("Interactive Client : process_listener detected unknown terminating interaction [%s]" % name)
+                terminated = True
+                break
+        if not terminated:
+            console.logwarn("Interactive Client : detected a terminating interaction, but nothing to do [either mopped up via the gui or via rapp manager callback][%s]" % name)
+        else:
+            console.logdebug("Interactive Client : detected terminating interaction and mopped up appropriately [%s]" % name)
 
     ######################################
     # Ros Comms
@@ -459,10 +486,17 @@ class InteractiveClientInterface():
         if self.pairing:
             if not msg.rapp and msg.remocon == self.name:
                 console.logdebug("Interactive Client : the rapp in this paired interaction terminated")
-                # there will only ever be one allowed instance of a paired interaction, so ok to call a stop to all instances of this interaction type
+                # there will only ever be one allowed instance of a paired interaction
+                #    - so ok to call a stop to all instances of this interaction type
+                # this will also try to stop the rapp (even though here the rapp manager is reporting it is stopped
+                #    - but this will just try and return gracefully so not worth worrying about
                 self.stop_interaction(self.pairing)
-                # updat the gui
+                # update the gui
                 self._stop_interaction_postexec_fn()
+
+    def _subscribe_interactions_update_callback(self, unused_msg):
+        console.logdebug("Interactive Client : interactions update callback")
+        self.signal_interactions_update.emit()
 
     ######################################
     # Utilities
