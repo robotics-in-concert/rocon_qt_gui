@@ -17,7 +17,6 @@ from python_qt_binding.QtGui import QSizePolicy, QTextEdit, QPushButton, QDialog
 from python_qt_binding.QtGui import QMainWindow, QCheckBox
 
 from python_qt_binding.QtGui import QGridLayout, QVBoxLayout, QHBoxLayout, QMessageBox  # QTabWidget, QPlainTextEdit
-#from PyQt4.QtSvg import QSvgGenerator
 
 import rospkg
 from rocon_console import console

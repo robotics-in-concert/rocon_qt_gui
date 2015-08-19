@@ -10,7 +10,6 @@
 from functools import partial
 import json
 import os
-import tempfile
 import types
 import urllib
 from urlparse import urlparse
@@ -67,19 +66,17 @@ class InteractiveClientInterface():
             console.warning("Cannot find a suitable terminal, falling back to the current terminal [%s]" % str(e))
             self._roslaunch_terminal = rocon_launch.create_terminal(rocon_launch.terminals.active)
 
-        # this might be naive and only work well on ubuntu...
-        os_codename = OsDetect().get_codename()
-        webbrowser_codename = utils.get_web_browser_codename()
         # this would be good as a persistant variable so the user can set something like 'Bob'
         self.name = "rqt_remocon_" + self.key.hex
         self.rocon_uri = rocon_uri.parse(
-            "rocon:/pc/" + self.name + "/" + rocon_std_msgs.Strings.URI_WILDCARD + "/" + os_codename + "|" + webbrowser_codename
+            rocon_uri.generate_platform_rocon_uri('pc', self.name) + "|" + utils.get_web_browser_codename()
         )
         # be also great to have a configurable icon...with a default
-        self.platform_info = rocon_std_msgs.PlatformInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
-                                                         uri=str(self.rocon_uri),
-                                                         icon=rocon_std_msgs.Icon()
-                                                         )
+        self.platform_info = rocon_std_msgs.MasterInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
+                                                       rocon_uri=str(self.rocon_uri),
+                                                       icon=rocon_std_msgs.Icon(),
+                                                       description=""
+                                                       )
         console.logdebug("Interactive Client : initialised")
         self.pairing = None  # if an interaction is currently pairing, this will store its hash
 
@@ -156,7 +153,7 @@ class InteractiveClientInterface():
             rospy.logwarn("InteractiveClientInterface : aborting a request to 'get_roles' as we are not connected to a rocon interactions manager.")
             return []
         try:
-            response = self.get_roles_service_proxy(self.platform_info.uri)
+            response = self.get_roles_service_proxy(self.platform_info.rocon_uri)
         except (rospy.ROSInterruptException, rospy.ServiceException):
             return []
         return response.roles
@@ -168,7 +165,7 @@ class InteractiveClientInterface():
 
         :param str role_name: role to request list of interactions for.
         """
-        call_result = self.get_interactions_service_proxy([role_name], self.platform_info.uri)
+        call_result = self.get_interactions_service_proxy([role_name], self.platform_info.rocon_uri)
         for msg in call_result.interactions:
             self._interactions_table.append(Interaction(msg))
         # could use a whole bunch of exception checking here, removing
@@ -398,7 +395,7 @@ class InteractiveClientInterface():
                     launch_info.shutdown()
                     console.loginfo("Interactive Client : interaction stopped [%s]" % (launch_info.name))
                     del interaction.launch_list[launch_info.name]
-                elif launch_info.process == None:
+                elif launch_info.process is None:
                     launch_info.running = False
                     console.loginfo("Interactive Client : no attached interaction process to stop [%s]" % (launch_info.name))
                     del interaction.launch_list.launch_list[launch_info.name]
@@ -409,7 +406,7 @@ class InteractiveClientInterface():
             console.logerror("Interactive Client : error trying to stop an interaction [%s][%s]" % (type(e), str(e)))
             # this is bad...should not create bottomless exception buckets.
             return (False, "unknown failure - (%s)(%s)" % (type(e), str(e)))
-        #console.logdebug("Interactive Client : interaction's updated launch list- %s" % str(interaction.launch_list))
+        # console.logdebug("Interactive Client : interaction's updated launch list- %s" % str(interaction.launch_list))
         if interaction.is_paired_type():
             self.pairing = None
         self._publish_remocon_status()

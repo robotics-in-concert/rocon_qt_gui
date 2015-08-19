@@ -15,7 +15,6 @@ from python_qt_binding.QtCore import Signal, Qt, QSize, QEvent
 from python_qt_binding.QtGui import QIcon, QWidget, QMainWindow, QVBoxLayout, QMessageBox
 
 from rocon_console import console
-import rocon_interactions.web_interactions as web_interactions
 
 from . import utils
 from .interactive_client_interface import InteractiveClientInterface

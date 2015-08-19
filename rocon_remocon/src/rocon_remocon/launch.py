@@ -70,7 +70,7 @@ class RosLaunchInfo(LaunchInfo):
         super(RosLaunchInfo, self).__init__(name, running, process)
         self.temporary_files = temporary_files
         self._terminal_shutdown_hook = terminal_shutdown_hook
-        #self._shutdown = partial(roslaunch_terminal.shutdown_roslaunch_windows, [self.process], False)  # hold = False
+        # self._shutdown = partial(roslaunch_terminal.shutdown_roslaunch_windows, [self.process], False)  # hold = False
 
     def shutdown(self):
         self._terminal_shutdown_hook(processes=[self.process], hold=False)

@@ -24,7 +24,6 @@ an interaction is for a remocon.
 
 import os
 import rocon_console.console as console
-#import rocon_interaction_msgs.msg as rocon_interaction_msgs
 import rocon_interactions
 from . import utils
 
