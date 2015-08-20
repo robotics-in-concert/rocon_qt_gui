@@ -8,15 +8,13 @@
 ##############################################################################
 
 import os
+from rocon_console import console
 import rospkg
-#from PyQt4 import uic
+
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Signal, QSize
 from python_qt_binding.QtGui import QWidget
 
-from rocon_console import console
-from rocon_remocon.interactive_client_interface import InteractiveClientInterface
-from . import utils
 
 ##############################################################################
 # Remocon
@@ -51,7 +49,7 @@ class QRoleChooser():
 
     def _init(self):
         """
-        Initialization of role chooser. It it launced with rqt, the back button is disabled.
+        Initialization of role chooser. If it is launched with rqt, the back button is disabled.
         Viewer of interactions chooser is launched at once when the role list has one role.
         """
         if self.with_rqt:
@@ -59,7 +57,7 @@ class QRoleChooser():
         self.refresh_role_list()
         if len(self.role_list) == 1:
             self.cur_selected_role = self.role_list[0]
-            self.interactive_client_interface.select_role(self.cur_selected_role)
+            self.interactive_client_interface.get_runnable_interactions_list(self.cur_selected_role)
 
     def _back(self):
         """

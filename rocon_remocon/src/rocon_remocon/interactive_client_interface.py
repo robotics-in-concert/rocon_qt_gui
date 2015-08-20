@@ -16,8 +16,6 @@ from urlparse import urlparse
 import uuid
 import yaml
 
-from python_qt_binding.QtCore import QObject, pyqtSignal
-
 from rocon_app_manager_msgs.msg import ErrorCodes
 from rocon_console import console
 import rocon_interactions
@@ -43,11 +41,9 @@ from .interactions_table import InteractionsTable
 ##############################################################################
 
 
-class InteractiveClientInterface(QObject):
+class InteractiveClientInterface(object):
 
     shutdown_timeout = 0.5
-    # pyqt signals can't be instance variables...
-    signal_interactions_update = pyqtSignal()
 
     """
     Time to wait before shutting down so remocon status updates can be received and processed
@@ -59,7 +55,6 @@ class InteractiveClientInterface(QObject):
           @param stop_app_postexec_fn : callback to fire when a listener detects an app getting stopped.
           @type method with no args
         '''
-        QObject.__init__(self)
         self._interactions_table = InteractionsTable()
         self._stop_interaction_postexec_fn = stop_interaction_postexec_fn
         self.is_connect = False
@@ -83,14 +78,11 @@ class InteractiveClientInterface(QObject):
                                                        description=""
                                                        )
         console.logdebug("Interactive Client : initialised")
-        self.pairing = None  # if an interaction is currently pairing, this will store its hash
+        self.currently_pairing_interactions = []
 
         # expose underlying functionality higher up
         self.interactions = self._interactions_table.generate_role_view
         """Get a dictionary of interactions belonging to the specified role."""
-
-    def connect_signals_with_slots(self, slot_update_interactions_list):
-        self.signal_interactions_update.connect(slot_update_interactions_list)
 
     def _connect_with_ros_init_node(self, ros_master_uri="http://localhost:11311", host_name='localhost'):
         # uri is obtained from the user, stored in ros_master_uri
@@ -129,17 +121,11 @@ class InteractiveClientInterface(QObject):
         self.request_interaction_service_proxy = rospy.ServiceProxy(remocon_services['request_interaction'], rocon_interaction_srvs.RequestInteraction)
         self.remocon_status_pub = rospy.Publisher("remocons/" + self.name, rocon_interaction_msgs.RemoconStatus, latch=True, queue_size=10)
 
-        try:
-            # if its available, should be quick to find this one since we found the others...
-            pairing_topic_name = rocon_python_comms.find_topic('rocon_interaction_msgs/Pair', timeout=rospy.rostime.Duration(0.5), unique=True)
-            self.pairing_subscribers = rocon_python_comms.utils.Subscribers(
-                [
-                    (pairing_topic_name, rocon_interaction_msgs.Pair, self._subscribe_pairing_status_callback),
-                    (interactions_namespace + "/interactions_update", std_msgs.Empty, self._subscribe_interactions_update_callback)
-                ]
-            )
-        except rocon_python_comms.NotFoundException as e:
-            console.logdebug("Interactive Client : support for paired interactions disabled [not found]")
+        self.subscribers = rocon_python_comms.utils.Subscribers(
+            [
+                (interactions_namespace + "/pairing_events", std_msgs.Bool, self._subscribe_pairing_events_callback)
+            ]
+        )
 
         self._publish_remocon_status()
         self.is_connect = True
@@ -171,14 +157,15 @@ class InteractiveClientInterface(QObject):
             return []
         return response.roles
 
-    def select_role(self, role_name):
+    def get_runnable_interactions_list(self, role_name):
         """
         Contact the interactions manager and retrieve all the interactions
         associated to a particular role.
 
         :param str role_name: role to request list of interactions for.
         """
-        call_result = self.get_interactions_service_proxy([role_name], self.platform_info.rocon_uri)
+        filter_by_runtime_pairing_requirements = False
+        call_result = self.get_interactions_service_proxy([role_name], self.platform_info.rocon_uri, filter_by_runtime_pairing_requirements)
         for msg in call_result.interactions:
             self._interactions_table.append(Interaction(msg))
         # could use a whole bunch of exception checking here, removing
@@ -207,8 +194,6 @@ class InteractiveClientInterface(QObject):
             return (False, "interaction key %s not found in interactions table" % interaction_hash)
         if interaction.role != role_name:
             return (False, "interaction key %s is in the interactions table, but under another role" % interaction_hash)
-        if self.pairing and interaction.is_paired_type():
-            return (False, "remocon already pairing (%s,%s) and additional pairing is not permitted " % (interaction.pairing.rapp, interaction.display_name))
 
         # get the permission
         call_result = self.request_interaction_service_proxy(remocon=self.name, hash=interaction.hash)
@@ -223,7 +208,7 @@ class InteractiveClientInterface(QObject):
             if result:
                 self._publish_remocon_status()
                 if interaction.is_paired_type():
-                    self.pairing = interaction.hash
+                    self.currently_pairing_interactions.append(interaction)
                 return (result, "success")
             else:
                 return (result, "unknown")
@@ -425,7 +410,7 @@ class InteractiveClientInterface(QObject):
             return (False, "unknown failure - (%s)(%s)" % (type(e), str(e)))
         # console.logdebug("Interactive Client : interaction's updated launch list- %s" % str(interaction.launch_list))
         if interaction.is_paired_type():
-            self.pairing = None
+            self.currently_pairing_interactions = [i for i in self.currently_pairing_interactions if i.hash != interaction_hash]
         self._publish_remocon_status()
         return (True, "success")
 
@@ -450,8 +435,8 @@ class InteractiveClientInterface(QObject):
             if name in interaction.launch_list:
                 del interaction.launch_list[name]
                 # toggle the pairing indicator if it was a pairing interaction
-                if interaction.is_paired_type():
-                    self.pairing = None
+                if interaction.is_paired_type() and interaction in self.currently_pairing_interactions:
+                    self.currently_pairing_interactions = [i for i in self.currently_pairing_interactions if i.hash != interaction.hash]
                 if not interaction.launch_list:
                     # inform the gui to update
                     self._stop_interaction_postexec_fn()
@@ -481,22 +466,16 @@ class InteractiveClientInterface(QObject):
         console.logdebug("Interactive Client : publishing remocon status")
         self.remocon_status_pub.publish(remocon_status)
 
-    def _subscribe_pairing_status_callback(self, msg):
-        console.logdebug("Interactive Client : pairing status callback [%s][%s]" % (msg.rapp, msg.remocon))
-        if self.pairing:
-            if not msg.rapp and msg.remocon == self.name:
-                console.logdebug("Interactive Client : the rapp in this paired interaction terminated")
-                # there will only ever be one allowed instance of a paired interaction
-                #    - so ok to call a stop to all instances of this interaction type
-                # this will also try to stop the rapp (even though here the rapp manager is reporting it is stopped
-                #    - but this will just try and return gracefully so not worth worrying about
-                self.stop_interaction(self.pairing)
-                # update the gui
-                self._stop_interaction_postexec_fn()
-
-    def _subscribe_interactions_update_callback(self, unused_msg):
-        console.logdebug("Interactive Client : interactions update callback")
-        self.signal_interactions_update.emit()
+    def _subscribe_pairing_events_callback(self, msg):
+        console.logdebug("Interactive Client : pairing events callback [%s]" % msg.data)
+        rapp_stopped = not msg.data
+        if rapp_stopped:
+            for interaction in self.currently_pairing_interactions:
+                console.logdebug("Interactive Client : the rapp in this paired interaction terminated [%s]" % interaction.display_name)
+                self.stop_interaction(interaction.hash)
+            # update the gui -> DJS: update the gui if it started OR stopped with the new filtered interactions list
+            self.currently_pairing_interactions = []
+            self._stop_interaction_postexec_fn()
 
     ######################################
     # Utilities
