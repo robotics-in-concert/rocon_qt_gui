@@ -11,6 +11,7 @@ import os
 import sys
 
 import rospy
+import rostopic
 import rocon_remocon
 import rocon_python_comms
 import rocon_std_msgs.msg as rocon_std_msgs
@@ -54,7 +55,10 @@ if __name__ == "__main__":
 
     try:
         rospy.init_node("rocon_remocon_checker", anonymous=True)
-        topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
+        (topic_type, topic_name, unused) = rostopic.get_topic_type("/rocon/master/info", blocking=False)
+        if topic_type is None:
+            topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
+        print("topic name: %s" % topic_name)
         master_info = rocon_python_comms.SubscriberProxy(topic_name, rocon_std_msgs.MasterInfo)()
         if master_info is None:
             generate_uncommunicable_response()

@@ -10,7 +10,6 @@
 from functools import partial
 import json
 import os
-import tempfile
 import types
 import urllib
 from urlparse import urlparse
@@ -29,8 +28,8 @@ import rocon_python_utils
 import rocon_std_msgs.msg as rocon_std_msgs
 import rocon_uri
 import rospkg
-from rospkg.os_detect import OsDetect
 import rospy
+import std_msgs.msg as std_msgs
 
 from . import utils
 from .launch import LaunchInfo, RosLaunchInfo
@@ -42,7 +41,7 @@ from .interactions_table import InteractionsTable
 ##############################################################################
 
 
-class InteractiveClientInterface():
+class InteractiveClientInterface(object):
 
     shutdown_timeout = 0.5
 
@@ -67,21 +66,19 @@ class InteractiveClientInterface():
             console.warning("Cannot find a suitable terminal, falling back to the current terminal [%s]" % str(e))
             self._roslaunch_terminal = rocon_launch.create_terminal(rocon_launch.terminals.active)
 
-        # this might be naive and only work well on ubuntu...
-        os_codename = OsDetect().get_codename()
-        webbrowser_codename = utils.get_web_browser_codename()
         # this would be good as a persistant variable so the user can set something like 'Bob'
         self.name = "rqt_remocon_" + self.key.hex
         self.rocon_uri = rocon_uri.parse(
-            "rocon:/pc/" + self.name + "/" + rocon_std_msgs.Strings.URI_WILDCARD + "/" + os_codename + "|" + webbrowser_codename
+            rocon_uri.generate_platform_rocon_uri('pc', self.name) + "|" + utils.get_web_browser_codename()
         )
         # be also great to have a configurable icon...with a default
-        self.platform_info = rocon_std_msgs.PlatformInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
-                                                         uri=str(self.rocon_uri),
-                                                         icon=rocon_std_msgs.Icon()
-                                                         )
+        self.platform_info = rocon_std_msgs.MasterInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
+                                                       rocon_uri=str(self.rocon_uri),
+                                                       icon=rocon_std_msgs.Icon(),
+                                                       description=""
+                                                       )
         console.logdebug("Interactive Client : initialised")
-        self.pairing = None  # if an interaction is currently pairing, this will store its hash
+        self.currently_pairing_interactions = []
 
         # expose underlying functionality higher up
         self.interactions = self._interactions_table.generate_role_view
@@ -124,19 +121,18 @@ class InteractiveClientInterface():
         self.request_interaction_service_proxy = rospy.ServiceProxy(remocon_services['request_interaction'], rocon_interaction_srvs.RequestInteraction)
         self.remocon_status_pub = rospy.Publisher("remocons/" + self.name, rocon_interaction_msgs.RemoconStatus, latch=True, queue_size=10)
 
-        try:
-            # if its available, should be quick to find this one since we found the others...
-            pairing_topic_name = rocon_python_comms.find_topic('rocon_interaction_msgs/Pair', timeout=rospy.rostime.Duration(0.5), unique=True)
-            self.pairing_status_subscriber = rospy.Subscriber(pairing_topic_name, rocon_interaction_msgs.Pair, self._subscribe_pairing_status_callback)
-        except rocon_python_comms.NotFoundException as e:
-            console.logdebug("Interactive Client : support for paired interactions disabled [not found]")
+        self.subscribers = rocon_python_comms.utils.Subscribers(
+            [
+                (interactions_namespace + "/pairing_events", std_msgs.Bool, self._subscribe_pairing_events_callback)
+            ]
+        )
 
         self._publish_remocon_status()
         self.is_connect = True
         return (True, "success")
 
     def shutdown(self):
-        if(self.is_connect != True):
+        if(not self.is_connect):
             return
         else:
             console.logdebug("Interactive Client : shutting down all interactions")
@@ -156,19 +152,20 @@ class InteractiveClientInterface():
             rospy.logwarn("InteractiveClientInterface : aborting a request to 'get_roles' as we are not connected to a rocon interactions manager.")
             return []
         try:
-            response = self.get_roles_service_proxy(self.platform_info.uri)
+            response = self.get_roles_service_proxy(self.platform_info.rocon_uri)
         except (rospy.ROSInterruptException, rospy.ServiceException):
             return []
         return response.roles
 
-    def select_role(self, role_name):
+    def get_runnable_interactions_list(self, role_name):
         """
         Contact the interactions manager and retrieve all the interactions
         associated to a particular role.
 
         :param str role_name: role to request list of interactions for.
         """
-        call_result = self.get_interactions_service_proxy([role_name], self.platform_info.uri)
+        filter_by_runtime_pairing_requirements = False
+        call_result = self.get_interactions_service_proxy([role_name], self.platform_info.rocon_uri, filter_by_runtime_pairing_requirements)
         for msg in call_result.interactions:
             self._interactions_table.append(Interaction(msg))
         # could use a whole bunch of exception checking here, removing
@@ -197,8 +194,6 @@ class InteractiveClientInterface():
             return (False, "interaction key %s not found in interactions table" % interaction_hash)
         if interaction.role != role_name:
             return (False, "interaction key %s is in the interactions table, but under another role" % interaction_hash)
-        if self.pairing and interaction.is_paired_type():
-            return (False, "remocon already pairing (%s,%s) and additional pairing is not permitted " % (interaction.pairing.rapp, interaction.display_name))
 
         # get the permission
         call_result = self.request_interaction_service_proxy(remocon=self.name, hash=interaction.hash)
@@ -213,7 +208,7 @@ class InteractiveClientInterface():
             if result:
                 self._publish_remocon_status()
                 if interaction.is_paired_type():
-                    self.pairing = interaction.hash
+                    self.currently_pairing_interactions.append(interaction)
                 return (result, "success")
             else:
                 return (result, "unknown")
@@ -277,8 +272,8 @@ class InteractiveClientInterface():
     def _start_dummy_interaction(self, interaction, unused_filename):
         console.loginfo("InteractiveClientInterface : starting paired dummy interaction")
         anonymous_name = interaction.name + "_" + uuid.uuid4().hex
-        #process_listener = partial(self._process_listeners, anonymous_name, 1)
-        #process = rocon_python_utils.system.Popen([rosrunnable_filename], postexec_fn=process_listener)
+        # process_listener = partial(self._process_listeners, anonymous_name, 1)
+        # process = rocon_python_utils.system.Popen([rosrunnable_filename], postexec_fn=process_listener)
         interaction.launch_list[anonymous_name] = LaunchInfo(anonymous_name, True, None)  # empty shutdown function
         return True
 
@@ -377,6 +372,7 @@ class InteractiveClientInterface():
         """
         This is the big showstopper - stop them all!
         """
+        console.logdebug("Interactive client : stopping all interactions")
         running_interactions = []
         for interaction in self._interactions_table.interactions:
             for unused_process_name in interaction.launch_list.keys():
@@ -390,15 +386,18 @@ class InteractiveClientInterface():
         """
         interaction = self._interactions_table.find(interaction_hash)
         if interaction is None:
-            console.logwarn("Interactive Client : interaction key %s not found in interactions table" % interaction_hash)
-            return (False, "interaction key %s not found in interactions table" % interaction_hash)
+            error_message = "interaction key %s not found in interactions table" % interaction_hash
+            console.logwarn("Interactive Client : could not stop interactions of this kind [%s]" % error_message)
+            return (False, "%s" % error_message)
+        else:
+            console.logdebug("Interactive Client : stopping all '%s' interactions" % interaction.display_name)
         try:
             for launch_info in interaction.launch_list.values():
                 if launch_info.running:
                     launch_info.shutdown()
                     console.loginfo("Interactive Client : interaction stopped [%s]" % (launch_info.name))
                     del interaction.launch_list[launch_info.name]
-                elif launch_info.process == None:
+                elif launch_info.process is None:
                     launch_info.running = False
                     console.loginfo("Interactive Client : no attached interaction process to stop [%s]" % (launch_info.name))
                     del interaction.launch_list.launch_list[launch_info.name]
@@ -409,36 +408,46 @@ class InteractiveClientInterface():
             console.logerror("Interactive Client : error trying to stop an interaction [%s][%s]" % (type(e), str(e)))
             # this is bad...should not create bottomless exception buckets.
             return (False, "unknown failure - (%s)(%s)" % (type(e), str(e)))
-        #console.logdebug("Interactive Client : interaction's updated launch list- %s" % str(interaction.launch_list))
+        # console.logdebug("Interactive Client : interaction's updated launch list- %s" % str(interaction.launch_list))
         if interaction.is_paired_type():
-            self.pairing = None
+            self.currently_pairing_interactions = [i for i in self.currently_pairing_interactions if i.hash != interaction_hash]
         self._publish_remocon_status()
         return (True, "success")
 
     def _process_listeners(self, name, exit_code):
         '''
-          Callback function used to catch terminating applications and cleanup appropriately.
+          This is usually run as a post-executing function to the interaction and so will do the
+          cleanup when the user's side of the interaction has terminated.
 
-          @param name : name of the launched process stored in the interactions index.
-          @type str
+          Note that there are other means of stopping & cleanup for interactions:
 
-          @param exit_code : could be utilised from roslaunched processes but not currently used.
-          @type int
+          - via the remocon stop buttons (self.stop_interaction, self.stop_all_interactions)
+          - via a rapp manager status callback when it is a pairing interaction
+
+          There is some common code (namely del launch_list element, check pairing, publish remocon) so
+          if changing that flow, be sure to check the code in self.stop_interaction()
+
+          @param str name : name of the launched process stored in the interactions launch_list dict.
+          @param int exit_code : could be utilised from roslaunched processes but not currently used.
         '''
-        console.logdebug("Interactive Client : process_listener detected terminating interaction [%s]" % name)
+        terminated = False
         for interaction in self._interactions_table.interactions:
             if name in interaction.launch_list:
                 del interaction.launch_list[name]
                 # toggle the pairing indicator if it was a pairing interaction
-                if interaction.is_paired_type():
-                    self.pairing = None
+                if interaction.is_paired_type() and interaction in self.currently_pairing_interactions:
+                    self.currently_pairing_interactions = [i for i in self.currently_pairing_interactions if i.hash != interaction.hash]
                 if not interaction.launch_list:
                     # inform the gui to update
                     self._stop_interaction_postexec_fn()
                 # update the rocon interactions handler
                 self._publish_remocon_status()
-            else:
-                console.logwarn("Interactive Client : process_listener detected unknown terminating interaction [%s]" % name)
+                terminated = True
+                break
+        if not terminated:
+            console.logwarn("Interactive Client : detected a terminating interaction, but nothing to do [either mopped up via the gui or via rapp manager callback][%s]" % name)
+        else:
+            console.logdebug("Interactive Client : detected terminating interaction and mopped up appropriately [%s]" % name)
 
     ######################################
     # Ros Comms
@@ -457,15 +466,16 @@ class InteractiveClientInterface():
         console.logdebug("Interactive Client : publishing remocon status")
         self.remocon_status_pub.publish(remocon_status)
 
-    def _subscribe_pairing_status_callback(self, msg):
-        console.logdebug("Interactive Client : pairing status callback [%s][%s]" % (msg.rapp, msg.remocon))
-        if self.pairing:
-            if not msg.rapp and msg.remocon == self.name:
-                console.logdebug("Interactive Client : the rapp in this paired interaction terminated")
-                # there will only ever be one allowed instance of a paired interaction, so ok to call a stop to all instances of this interaction type
-                self.stop_interaction(self.pairing)
-                # updat the gui
-                self._stop_interaction_postexec_fn()
+    def _subscribe_pairing_events_callback(self, msg):
+        console.logdebug("Interactive Client : pairing events callback [%s]" % msg.data)
+        rapp_stopped = not msg.data
+        if rapp_stopped:
+            for interaction in self.currently_pairing_interactions:
+                console.logdebug("Interactive Client : the rapp in this paired interaction terminated [%s]" % interaction.display_name)
+                self.stop_interaction(interaction.hash)
+            # update the gui -> DJS: update the gui if it started OR stopped with the new filtered interactions list
+            self.currently_pairing_interactions = []
+            self._stop_interaction_postexec_fn()
 
     ######################################
     # Utilities

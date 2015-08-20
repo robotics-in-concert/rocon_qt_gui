@@ -8,17 +8,16 @@
 ##############################################################################
 
 import os
-import rospkg
-#from PyQt4 import uic
-from python_qt_binding import loadUi
-from python_qt_binding.QtCore import Signal, Qt, QSize, QEvent
-from python_qt_binding.QtGui import QIcon, QWidget, QColor, QMainWindow, QMessageBox
-
 from rocon_console import console
 import rocon_interactions.web_interactions as web_interactions
+import rospkg
 
-from rocon_remocon.interactive_client_interface import InteractiveClientInterface
+from python_qt_binding import loadUi
+from python_qt_binding.QtCore import pyqtSlot, Qt, QSize, QEvent
+from python_qt_binding.QtGui import QIcon, QWidget, QColor, QMainWindow, QMessageBox
+
 from . import utils
+
 ##############################################################################
 # Remocon
 ##############################################################################
@@ -180,6 +179,9 @@ class QInteractionsChooser(QMainWindow):
         """
         self.interactions_widget.hide()
 
+    def is_hidden(self):
+        return self.interactions_widget.is_hidden()
+
     def select_role(self, role):
         """
         Take the selected role to get a list of interaction.
@@ -188,7 +190,6 @@ class QInteractionsChooser(QMainWindow):
         :type role: string
         """
         self.cur_selected_role = role
-        self.interactive_client_interface.select_role(self.cur_selected_role)
         self.refresh_interactions_list()
 
     def refresh_interactions_list(self):
@@ -208,8 +209,10 @@ class QInteractionsChooser(QMainWindow):
             self.interactions_widget.interactions_list_widget.insertItem(0, interaction.display_name)
 
             # is it a currently running pairing
-            if self.interactive_client_interface.pairing == interaction.hash:
-                self.interactions_widget.interactions_list_widget.item(0).setBackground(QColor(100, 100, 150))
+            for i in self.interactive_client_interface.currently_pairing_interactions:
+                if i.hash == interaction.hash:
+                    self.interactions_widget.interactions_list_widget.item(0).setBackground(QColor(100, 100, 150))
+                    break
 
             # setting the list font
             font = self.interactions_widget.interactions_list_widget.item(0).font()

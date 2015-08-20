@@ -6,15 +6,12 @@
 ##############################################################################
 # Imports
 ##############################################################################
-# system
+
 from __future__ import division
 import os
 
-# rqt
 from qt_gui.plugin import Plugin
-import rocon_qt_library.utils as utils
 
-# rocon
 from rocon_console import console
 from rocon_remocon.interactive_client_ui import InteractiveClientUI
 
