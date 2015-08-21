@@ -123,7 +123,7 @@ class InteractiveClientInterface(object):
 
         self.subscribers = rocon_python_comms.utils.Subscribers(
             [
-                (interactions_namespace + "/pairing_events", std_msgs.Bool, self._subscribe_pairing_events_callback)
+                (interactions_namespace + "/pairing_status", rocon_interaction_msgs.PairingStatus, self._subscribe_pairing_status_callback)
             ]
         )
 
@@ -466,9 +466,9 @@ class InteractiveClientInterface(object):
         console.logdebug("Interactive Client : publishing remocon status")
         self.remocon_status_pub.publish(remocon_status)
 
-    def _subscribe_pairing_events_callback(self, msg):
-        console.logdebug("Interactive Client : pairing events callback [%s]" % msg.data)
-        rapp_stopped = not msg.data
+    def _subscribe_pairing_status_callback(self, msg):
+        console.logdebug("Interactive Client : pairing events callback")
+        rapp_stopped = not msg.is_managing_paired_interactions
         if rapp_stopped:
             for interaction in self.currently_pairing_interactions:
                 console.logdebug("Interactive Client : the rapp in this paired interaction terminated [%s]" % interaction.display_name)
@@ -476,6 +476,8 @@ class InteractiveClientInterface(object):
             # update the gui -> DJS: update the gui if it started OR stopped with the new filtered interactions list
             self.currently_pairing_interactions = []
             self._stop_interaction_postexec_fn()
+        if msg.is_managing_one_sided_interaction:
+            rospy.logdebug("Interactive Client : is managing a core one sided interaction [%s]" % msg.active_one_sided_interaction)
 
     ######################################
     # Utilities
