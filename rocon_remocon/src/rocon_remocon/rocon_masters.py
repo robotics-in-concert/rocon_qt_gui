@@ -60,9 +60,11 @@ class RoconMaster(object):
         Given the uri and hostname, this proceeds to try and ping the rocon master to detect if it is available and
         if available, find the information on the other fields that fully describe a rocon master.
         '''
+        print("Checking")
         if not (self.uri and self.host_name):
             console.logerror("Rocon Master : both uri and host_name should be configured before calling RoconMaster.check()")
             return
+        print("POpen: %s" % [RoconMaster.rocon_remocon_check_up_script, self.uri, self.host_name])
         # should check that uri and host name have been set
         output = subprocess.Popen([RoconMaster.rocon_remocon_check_up_script, self.uri, self.host_name], stdout=subprocess.PIPE)
         time_out_cnt = 0
@@ -78,6 +80,7 @@ class RoconMaster(object):
                 break
             elif result == 0:
                 args = output.communicate()[0]
+                print("Got args: %s" % args)
                 self.name = args.split('\n')[0]
                 self.description = args.split('\n')[1]
                 self.icon = args.split('\n')[2]

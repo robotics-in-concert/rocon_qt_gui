@@ -58,11 +58,11 @@ if __name__ == "__main__":
         (topic_type, topic_name, unused) = rostopic.get_topic_type("/rocon/master/info", blocking=False)
         if topic_type is None:
             topic_name = rocon_python_comms.find_topic('rocon_std_msgs/MasterInfo', timeout=rospy.rostime.Duration(5.0), unique=True)
-        print("topic name: %s" % topic_name)
         master_info = rocon_python_comms.SubscriberProxy(topic_name, rocon_std_msgs.MasterInfo)()
         if master_info is None:
             generate_uncommunicable_response()
         else:
+            # These prints are not for debugging! They are used as a return value for the remocon!
             print master_info.name
             print master_info.description
             icon_name = master_info.icon.resource_name.split('/').pop()
