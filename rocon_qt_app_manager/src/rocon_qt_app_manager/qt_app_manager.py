@@ -100,6 +100,7 @@ class QtRappManager(Plugin):
 ###################################################################
 # Events
 ###################################################################
+
     def _change_namespace(self, event):
         self._qt_rapp_manager_info.select_rapp_manager(self._widget.namespace_cbox.currentText())
 

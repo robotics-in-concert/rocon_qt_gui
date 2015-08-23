@@ -7,14 +7,12 @@
 # Imports
 ##############################################################################
 
-from .converts import *
-from .world_canvas_utils import *
-from python_qt_binding.QtGui import QMessageBox
+import sys
+from rqt_gui.main import Main
 
 ##############################################################################
-# Methods
+# Main
 ##############################################################################
 
-
-def show_message(parent, title, message):
-    QMessageBox.warning(parent, str(title), str(message), QMessageBox.Ok | QMessageBox.Ok)
+main = Main()
+sys.exit(main.main(sys.argv, standalone='rocon_remocon'))

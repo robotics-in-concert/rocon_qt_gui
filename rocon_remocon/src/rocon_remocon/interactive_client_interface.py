@@ -29,7 +29,6 @@ import rocon_std_msgs.msg as rocon_std_msgs
 import rocon_uri
 import rospkg
 import rospy
-import std_msgs.msg as std_msgs
 
 from . import utils
 from .launch import LaunchInfo, RosLaunchInfo
@@ -77,8 +76,8 @@ class InteractiveClientInterface(object):
                                                        icon=rocon_std_msgs.Icon(),
                                                        description=""
                                                        )
-        console.logdebug("Interactive Client : initialised")
-        self.currently_pairing_interactions = []
+        self.currently_pairing_interaction_hashes = []
+        self.active_one_sided_interaction = None
 
         # expose underlying functionality higher up
         self.interactions = self._interactions_table.generate_role_view
@@ -208,7 +207,7 @@ class InteractiveClientInterface(object):
             if result:
                 self._publish_remocon_status()
                 if interaction.is_paired_type():
-                    self.currently_pairing_interactions.append(interaction)
+                    self.currently_pairing_interaction_hashes.append(interaction_hash)
                 return (result, "success")
             else:
                 return (result, "unknown")
@@ -410,7 +409,7 @@ class InteractiveClientInterface(object):
             return (False, "unknown failure - (%s)(%s)" % (type(e), str(e)))
         # console.logdebug("Interactive Client : interaction's updated launch list- %s" % str(interaction.launch_list))
         if interaction.is_paired_type():
-            self.currently_pairing_interactions = [i for i in self.currently_pairing_interactions if i.hash != interaction_hash]
+            self.currently_pairing_interaction_hashes = [h for h in self.currently_pairing_interaction_hashes if h != interaction_hash]
         self._publish_remocon_status()
         return (True, "success")
 
@@ -435,8 +434,8 @@ class InteractiveClientInterface(object):
             if name in interaction.launch_list:
                 del interaction.launch_list[name]
                 # toggle the pairing indicator if it was a pairing interaction
-                if interaction.is_paired_type() and interaction in self.currently_pairing_interactions:
-                    self.currently_pairing_interactions = [i for i in self.currently_pairing_interactions if i.hash != interaction.hash]
+                if interaction.is_paired_type() and interaction.hash in self.currently_pairing_interaction_hashes:
+                    self.currently_pairing_interaction_hashes = [interaction_hash for interaction_hash in self.currently_pairing_interaction_hashes if interaction_hash != interaction.hash]
                 if not interaction.launch_list:
                     # inform the gui to update
                     self._stop_interaction_postexec_fn()
@@ -470,14 +469,17 @@ class InteractiveClientInterface(object):
         console.logdebug("Interactive Client : pairing events callback")
         rapp_stopped = not msg.is_managing_paired_interactions
         if rapp_stopped:
-            for interaction in self.currently_pairing_interactions:
-                console.logdebug("Interactive Client : the rapp in this paired interaction terminated [%s]" % interaction.display_name)
-                self.stop_interaction(interaction.hash)
+            for interaction_hash in self.currently_pairing_interaction_hashes:
+                console.logdebug("Interactive Client : the rapp in this paired interaction terminated [%s]" % interaction_hash)
+                self.stop_interaction(interaction_hash)
             # update the gui -> DJS: update the gui if it started OR stopped with the new filtered interactions list
-            self.currently_pairing_interactions = []
+            self.currently_pairing_interaction_hashes = []
             self._stop_interaction_postexec_fn()
         if msg.is_managing_one_sided_interaction:
+            self.active_one_sided_interaction = msg.active_one_sided_interaction
             rospy.logdebug("Interactive Client : is managing a core one sided interaction [%s]" % msg.active_one_sided_interaction)
+        else:
+            self.active_one_sided_interaction = None
 
     ######################################
     # Utilities

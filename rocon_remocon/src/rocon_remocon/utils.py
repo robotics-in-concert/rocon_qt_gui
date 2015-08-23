@@ -12,6 +12,8 @@ import rocon_python_utils
 import rospkg
 import rocon_std_msgs.msg as rocon_std_msgs
 
+from python_qt_binding.QtGui import QLabel, QTextEdit, QSizePolicy, QFont, QCheckBox
+
 ##############################################################################
 # Methods
 ##############################################################################
@@ -88,6 +90,7 @@ def get_web_browser():
         return 'firefox'
     return None
 
+
 def get_web_browser_codename():
     """
     returns available browsers codename
@@ -97,3 +100,43 @@ def get_web_browser_codename():
     """
     # Currently it only supports chrome
     return rocon_std_msgs.Strings.OS_CHROME
+
+
+def create_label_textedit_pair(key, value):
+    '''
+        Probabaly there should be better way to lay out param and remappings
+    '''
+    name = QLabel(key)
+    name.setToolTip(key)
+    name.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+    name.setMinimumWidth(400)
+    name.setMaximumHeight(30)
+    name.setWordWrap(True)
+
+    textedit = QTextEdit()
+    textedit.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+    textedit.setMinimumWidth(320)
+    textedit.setMaximumHeight(30)
+    textedit.append(str(value))
+    return name, textedit
+
+
+def create_label_checkbox_pair(key, value):
+    label = QLabel(key)
+    label.setToolTip(key)
+    label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+    label.setMinimumWidth(400)
+    label.setMaximumHeight(30)
+    label.setWordWrap(True)
+
+    checkbox = QCheckBox()
+    checkbox.setChecked(value)
+    return label, checkbox
+
+
+def create_label(name, is_bold=False):
+    qname = QLabel(name)
+    f = QFont()
+    f.setBold(is_bold)
+    qname.setFont(f)
+    return qname 
