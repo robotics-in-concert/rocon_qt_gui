@@ -9,13 +9,17 @@
 
 import os
 from rocon_console import console
-import rocon_interactions.web_interactions as web_interactions
 import rospkg
 import rospy
 
-from python_qt_binding import loadUi
-from python_qt_binding.QtCore import pyqtSlot, Qt, QSize, QEvent
+# PySide is LGPL, pyqt is GPL, python_qt_bindings are ROS bindings around both
+# We prefer LGPL, so convert over later so we can get proper indexing
+from python_qt_binding import loadUi  # what is PySide's equivalent?
+from python_qt_binding.QtCore import Qt, QSize, QEvent, Slot
 from python_qt_binding.QtGui import QListView, QWidget, QStandardItemModel  # QIcon, QColor, QMainWindow, QMessageBox
+# from PySide.QtUiTools import QUiLoader
+# from PySide.QtCore import QSize, Slot, QFile
+# from PySide.QtGui import QListView, QWidget, QStandardItemModel  # QIcon, QColor, QMainWindow, QMessageBox
 
 from . import utils
 from . import icon
@@ -38,6 +42,7 @@ class InteractionsChooserUI():
         self.pairings_view_model = QStandardItemModel()
         self.interactions_view_model = QStandardItemModel()
         self.interactions_remocon = InteractionsRemocon()
+        self.interactions_remocon.connect(self.refresh_grids)
 
         rospack = rospkg.RosPack()
         ui_file = os.path.join(rospack.get_path('rocon_remocon'), 'ui', 'interactions_chooser.ui')
@@ -82,7 +87,10 @@ class InteractionsChooserUI():
 
     def create_pairing_dialog(self, pairing):
         # is_running = self._qt_rapp_manager_info.is_running_rapp(rapp)
-        is_running = False
+        try:
+            is_running = (self.interactions_remocon.active_pairing.name == pairing.name)
+        except AttributeError:  # when active_pairing is None
+            is_running = False
         self.selected_pairing = pairing
         self.dialog = PairingDialog(self.widget, pairing, self.interactions_remocon.start_pairing, self.interactions_remocon.stop_pairing, is_running)
         self.dialog.show()
@@ -99,6 +107,7 @@ class InteractionsChooserUI():
         self.dialog = InteractionDialog(self.widget, interaction, self.interactions_remocon.start_interaction, self.interactions_remocon.stop_interaction, is_running)
         self.dialog.show()
 
+    @Slot()
     def refresh_grids(self):
         """
         This just does a complete redraw of the interactions with the
@@ -113,13 +122,16 @@ class InteractionsChooserUI():
         self.pairings_view_model.clear()
         self.interactions_view_model.clear()
 
-        for i in self.interactions_remocon.interactions_table.interactions:
-            item = icon.QModelIconItem(i, running=False)
-            self.interactions_view_model.appendRow(item)
-
         for p in self.interactions_remocon.pairings_table.pairings:
-            item = icon.QModelIconItem(p, running=False)
+            is_running = False
+            if self.interactions_remocon.active_pairing is not None and p.name == self.interactions_remocon.active_pairing.name:
+                is_running = True
+            item = icon.QModelIconItem(p, enabled=True, running=is_running)
             self.pairings_view_model.appendRow(item)
+
+        for i in self.interactions_remocon.interactions_table.interactions:
+            item = icon.QModelIconItem(i, enabled=True, running=False)
+            self.interactions_view_model.appendRow(item)
 
             # setting the list font
             # font = self.interactions_widget.interactions_list_widget.item(0).font()

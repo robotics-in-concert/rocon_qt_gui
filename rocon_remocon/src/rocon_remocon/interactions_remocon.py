@@ -18,6 +18,8 @@ import rosgraph
 import rospy
 import uuid
 
+from python_qt_binding.QtCore import QObject, Signal
+
 from . import utils
 
 ##############################################################################
@@ -69,8 +71,13 @@ def get_interactions(interactions_namespace, platform_rocon_uri):
 ##############################################################################
 
 
-class InteractionsRemocon():
+class InteractionsRemocon(QObject):
+
+    # PySide signals are always defined as class attributes (GPL Pyqt4 Signals use pyqtSignal)
+    signal_pairing_updated = Signal()
+
     def __init__(self):
+        super(InteractionsRemocon, self).__init__()
         self.key = uuid.uuid4()
         self.name = "rqt_remocon_" + self.key.hex
         self.namespaces = get_namespaces()
@@ -78,7 +85,9 @@ class InteractionsRemocon():
         self.rocon_uri = rocon_uri.parse(
             rocon_uri.generate_platform_rocon_uri('pc', self.name) + "|" + utils.get_web_browser_codename()
         )
+        self.active_pairing = None
         self.launched_interactions = {}  # dict of interaction hash : launch_list
+
         # be also great to have a configurable icon...with a default
         self.platform_info = rocon_std_msgs.MasterInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
                                                        rocon_uri=str(self.rocon_uri),
@@ -105,29 +114,33 @@ class InteractionsRemocon():
         )
         self._publish_remocon_status()
 
+    def connect(self, refresh_slot):
+        self.signal_pairing_updated.connect(refresh_slot)
+
     def start_pairing(self, name):
-        print("Start pairing [%s]" % name)
         request = interaction_srvs.StartPairingRequest(name)
         response = self.service_proxies.start_pairing(request)
         return response
 
     def stop_pairing(self, name):
-        print("Stop pairing [%s]" % name)
         request = interaction_srvs.StopPairingRequest(name)
         response = self.service_proxies.stop_pairing(request)
-        if response.result == interaction_msgs.ErrorCodes.SUCCESS:
-            return (True, "")
-        else:
-            return (False, response.message)
+        return response
 
     def start_interaction(self):
-        print("Starting pairing")
+        print("Starting interaction")
 
     def stop_interaction(self):
-        print("Stop pairing")
+        print("Stop interaction")
 
     def _subscribe_pairing_status_callback(self, msg):
-        print("Pairing status callback")
+        if msg.active_pairing:
+            self.active_pairing = self.pairings_table.find(msg.active_pairing)
+            print("Pairing status: %s" % self.active_pairing.name)
+        else:
+            print("Pairing status: none")
+            self.active_pairing = None
+        self.signal_pairing_updated.emit()
 
     def _publish_remocon_status(self):
         remocon_status = interaction_msgs.RemoconStatus()

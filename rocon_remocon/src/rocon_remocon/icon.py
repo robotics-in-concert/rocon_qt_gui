@@ -9,7 +9,7 @@
 
 import rocon_interactions
 from python_qt_binding.QtCore import QSize
-from python_qt_binding.QtGui import QIcon, QPixmap, QStandardItem, QFont
+from python_qt_binding.QtGui import QIcon, QPixmap, QStandardItem, QFont, QColor
 
 ##############################################################################
 # Classes
@@ -35,7 +35,7 @@ def rocon_icon_to_qicon(icon):
 
 
 class QModelIconItem(QStandardItem):
-    def __init__(self, implementation, running):
+    def __init__(self, implementation, enabled, running):
         """
         :param implementation: one of either rocon_interactions.Pairing or rocon_interactions.Interaction
         :param bool running:
@@ -48,5 +48,7 @@ class QModelIconItem(QStandardItem):
         self.setFont(f)
         self.setToolTip(implementation.description)
         self.setEditable(False)
-        self.setEnabled(running)
+        self.setEnabled(enabled)
+        if running:
+            self.setBackground(QColor(100, 100, 150))
         self.implementation = implementation
