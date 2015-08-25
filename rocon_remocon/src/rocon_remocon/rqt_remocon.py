@@ -69,7 +69,7 @@ class RqtRemocon(Plugin):
         @param instance_settings: The instance-specific settings
         @type instance_settings: qt_gui.settings.Settings
         """
-        pass
+        instance_settings.set_value('group_filter', self.rqt_remocon.widget.interactions_group_combobox.currentText())
 
     def restore_settings(self, plugin_settings, instance_settings):
         """
@@ -79,4 +79,7 @@ class RqtRemocon(Plugin):
         @param instance_settings: The instance-specific settings
         @type instance_settings: qt_gui.settings.Settings
         """
-        pass
+        group = instance_settings.value('group_filter', "All")
+        index = self.rqt_remocon.widget.interactions_group_combobox.findText(group)
+        if index != -1:
+            self.rqt_remocon.widget.interactions_group_combobox.setCurrentIndex(index)

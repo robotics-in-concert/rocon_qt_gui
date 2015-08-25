@@ -65,8 +65,6 @@ class InteractionsChooserUI():
         currently selected role. It's a bit brute force doing this
         every time the interactions' 'state' changes, but this suffices for now.
         """
-        console.logdebug("Remocon : refreshing the interactions grid")
-
         self.pairings_view_model.clear()
         self.interactions_view_model.clear()
 
@@ -82,8 +80,10 @@ class InteractionsChooserUI():
             item = icon.QModelIconItem(p, enabled=enabled, running=is_running)
             self.pairings_view_model.appendRow(item)
 
-        # Check against the active pairing to filter the current table as enabled/disabled
+        group = self.widget.interactions_group_combobox.currentText()
         for i in self.interactions_remocon.interactions_table.sorted():
+            if group != "All" and i.group != group:
+                continue
             extra_tooltip_info = ""
             if i.required_pairings:
                 extra_tooltip_info += " Requires "
@@ -114,6 +114,7 @@ class InteractionsChooserUI():
         for ns in self.interactions_remocon.namespaces:
             self.widget.namespace_checkbox.addItem(ns)
         self.refresh_grids()
+        self.widget.interactions_group_combobox.addItems(['All'] + self.interactions_remocon.interactions_table.groups())
         # TODO namespace checkbox to self.interactions_remocon.active_namespace
 
     ##############################################################################
@@ -125,6 +126,7 @@ class InteractionsChooserUI():
         self.widget.pairings_grid.clicked.connect(self._pairing_single_click)
         self.widget.interactions_grid.clicked.connect(self._interaction_single_click)
         self.widget.button_stop_all_interactions.clicked.connect(self.interactions_remocon.stop_all_interactions)
+        self.widget.interactions_group_combobox.currentIndexChanged.connect(self.refresh_grids)
 
     def _event_change_namespace(self):
         rospy.logwarn("Remocon : changing interaction managers is currently not supported.")
