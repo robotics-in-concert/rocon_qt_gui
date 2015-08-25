@@ -446,7 +446,7 @@ class InteractiveClientInterface(object):
         if not terminated:
             console.logwarn("Interactive Client : detected a terminating interaction, but nothing to do [either mopped up via the gui or via rapp manager callback][%s]" % name)
         else:
-            console.logdebug("Interactive Client : detected terminating interaction and mopped up appropriately [%s]" % name)
+            console.logdebug("Interactive Client : detected terminating interaction and moppedddd up appropriately [%s]" % name)
 
     ######################################
     # Ros Comms

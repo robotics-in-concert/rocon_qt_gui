@@ -71,9 +71,15 @@ class InteractionsTable(object):
             s += "\n".join("  " + i for i in str(interaction).splitlines()) + '\n'
         return s
 
-    def generate_role_view(self, role_name):
+    def sorted(self):
+        """
+        Return the pairing list sorted by name.
+        """
+        return sorted(self.interactions, key=lambda interaction: interaction.name)
+
+    def generate_group_view(self, group_name):
         '''
-        Creates a temporary copy of interactions filtered by the specified role
+        Creates a temporary copy of interactions filtered by the specified group
         and sorts them into a dictionary view keyed by hash. This is a convenient
         object for use by the interactions chooser.
 
@@ -83,11 +89,11 @@ class InteractionsTable(object):
         :rtype: dict { hash : :class:`.interactions.Interaction` }
         '''
         # there's got to be a faster way of doing this.
-        role_view = {}
+        group_view = {}
         for interaction in self.interactions:
-            if interaction.role == role_name:
-                role_view[interaction.hash] = interaction
-        return role_view
+            if interaction.group == group_name:
+                group_view[interaction.hash] = interaction
+        return group_view
 
     def clear(self, role_name):
         """

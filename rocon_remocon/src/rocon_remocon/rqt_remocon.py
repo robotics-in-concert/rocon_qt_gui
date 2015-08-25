@@ -59,8 +59,7 @@ class RqtRemocon(Plugin):
 
     def shutdown_plugin(self):
         """Shutdown and clean up the plugin before unloading."""
-        pass
-        # self.rqt_remocon.shutdown()
+        self.rqt_remocon.shutdown()
 
     def save_settings(self, plugin_settings, instance_settings):
         """

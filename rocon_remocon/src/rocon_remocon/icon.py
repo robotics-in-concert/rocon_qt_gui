@@ -7,7 +7,6 @@
 # Imports
 ##############################################################################
 
-import rocon_interactions
 from python_qt_binding.QtCore import QSize
 from python_qt_binding.QtGui import QIcon, QPixmap, QStandardItem, QFont, QColor
 
@@ -35,7 +34,7 @@ def rocon_icon_to_qicon(icon):
 
 
 class QModelIconItem(QStandardItem):
-    def __init__(self, implementation, enabled, running):
+    def __init__(self, implementation, enabled, running, extended_tooltip_info=""):
         """
         :param implementation: one of either rocon_interactions.Pairing or rocon_interactions.Interaction
         :param bool running:
@@ -46,7 +45,7 @@ class QModelIconItem(QStandardItem):
         f = QFont()
         f.setPointSize(10)
         self.setFont(f)
-        self.setToolTip(implementation.description)
+        self.setToolTip(implementation.description + extended_tooltip_info)
         self.setEditable(False)
         self.setEnabled(enabled)
         if running:
