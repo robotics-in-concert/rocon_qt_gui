@@ -24,9 +24,9 @@ install(
 
 install(
     PROGRAMS 
-        scripts/rocon_remocon_check_up
-        scripts/rocon_remocon_sub
-        scripts/rocon_remocon
+#        scripts/rocon_remocon_check_up
+#        scripts/rocon_remocon_sub
+#        scripts/rocon_remocon
         scripts/rqt_remocon
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
