@@ -23,6 +23,7 @@ import rospkg
 import rospy
 import sys
 import urllib
+from urlparse import urlparse
 import uuid
 import yaml
 
@@ -86,10 +87,17 @@ class InteractionsRemocon(QObject):
     # PySide signals are always defined as class attributes (GPL Pyqt4 Signals use pyqtSignal)
     signal_updated = Signal()
 
-    def __init__(self):
+    def __init__(self, ros_master_uri, host_name):
         super(InteractionsRemocon, self).__init__()
         self.key = uuid.uuid4()
+        self.ros_master_uri = ros_master_uri
+        self.ros_master_port = urlparse(self.ros_master_uri).port
+        self.host_name = host_name
         self.name = "rqt_remocon_" + self.key.hex
+        console.loginfo("Connection Details")
+        console.loginfo("   Node Name: " + self.name)
+        console.loginfo("   ROS_MASTER_URI: " + self.ros_master_uri)
+        console.loginfo("   ROS_HOSTNAME: " + self.host_name)
         self.namespaces = get_namespaces()
         self.active_namespace = None if not self.namespaces else self.namespaces[0]
         self.rocon_uri = rocon_uri.parse(
@@ -98,6 +106,13 @@ class InteractionsRemocon(QObject):
         self.active_pairing = None
         self.active_paired_interaction_hashes = []
         self.launched_interactions = LaunchedInteractions()
+
+        # terminal for roslaunchers and other shell executables
+        try:
+            self.roslaunch_terminal = rocon_launch.create_terminal()
+        except (rocon_launch.UnsupportedTerminal, rocon_python_comms.NotFoundException) as e:
+            console.warning("Cannot find a suitable terminal, falling back to the current terminal [%s]" % str(e))
+            self.roslaunch_terminal = rocon_launch.create_terminal(rocon_launch.terminals.active)
 
         # be also great to have a configurable icon...with a default
         self.platform_info = rocon_std_msgs.MasterInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
@@ -221,6 +236,9 @@ class InteractionsRemocon(QObject):
         if not interaction.command:
             console.logdebug("Interactive Client : start a dummy interaction for triggering a pair")
             return ('', self._start_dummy_interaction)
+        # command line execution in a terminal
+        if interaction.command.startswith('terminal'):
+            return (interaction.command.split('/', 1)[-1], self._start_command_line_interaction)
         # roslaunch
         try:
             launcher_filename = rocon_python_utils.ros.find_resource_from_string(interaction.command, extension='launch')
@@ -278,20 +296,20 @@ class InteractionsRemocon(QObject):
         launch_configuration = rocon_launch.RosLaunchConfiguration(
             name=roslaunch_filename,
             package=None,
-            port=self._ros_master_port,
+            port=self.ros_master_port,
             title=interaction.name,
             namespace=interaction.namespace,
             args=self._prepare_roslaunch_args(interaction.parameters),
             options="--screen"
         )
         process_listener = functools.partial(self._process_listeners, anonymous_name, 1)
-        (process, meta_roslauncher) = self._roslaunch_terminal.spawn_roslaunch_window(launch_configuration, postexec_fn=process_listener)
+        (process, meta_roslauncher) = self.roslaunch_terminal.spawn_roslaunch_window(launch_configuration, postexec_fn=process_listener)
         self.launched_interactions.add(
             interaction.hash,
             anonymous_name,
             launch.RosLaunchInfo(anonymous_name, True,
                                  process,
-                                 self._roslaunch_terminal.shutdown_roslaunch_windows,
+                                 self.roslaunch_terminal.shutdown_roslaunch_windows,
                                  [meta_roslauncher]
                                  )
         )
@@ -299,8 +317,7 @@ class InteractionsRemocon(QObject):
 
     def _start_rosrunnable_interaction(self, interaction, rosrunnable_filename):
         '''
-          Launch a rosrunnable application. This does not apply any parameters
-          or remappings (yet).
+          Launch a rosrunnable application. This does not apply any parameters yet.
         '''
         # the following is guaranteed since we came back from find_resource calls earlier
         # note we're overriding the rosrunnable filename here - rosrun doesn't actually take the full path.
@@ -314,7 +331,7 @@ class InteractionsRemocon(QObject):
             remapping_args.append(remap.remap_from + ":=" + remap.remap_to)
         cmd.extend(remapping_args)
         cmd.extend(self._prepare_command_line_parameters(interaction.parameters))
-        console.logdebug("  rosrunnable command %s" % cmd)
+        console.logdebug("Rosrunnable command: '%s'" % cmd)
         process = rocon_python_utils.system.Popen(cmd, postexec_fn=process_listener)
         self.launched_interactions.add(
             interaction.hash,
@@ -334,8 +351,26 @@ class InteractionsRemocon(QObject):
             remapping_args.append(remap.remap_from + ":=" + remap.remap_to)
         cmd.extend(remapping_args)
         cmd.extend(self._prepare_command_line_parameters(interaction.parameters))
-        console.logdebug("Interactive Client : global executable command %s" % cmd)
+        console.logdebug("Global executable command: '%s'" % cmd)
         process = rocon_python_utils.system.Popen(cmd, postexec_fn=process_listener)
+        self.launched_interactions.add(
+            interaction.hash,
+            anonymous_name,
+            launch.LaunchInfo(anonymous_name, True, process)
+        )
+        return True
+
+    def _start_command_line_interaction(self, interaction, command):
+        '''
+          Start a command line executable inside a shell window.
+        '''
+        console.logwarn("Starting command line executable [%s]" % interaction.command)
+        cmd = command.split(' ')
+        name = os.path.basename(cmd[0]).replace('.', '_')
+        anonymous_name = name + "_" + uuid.uuid4().hex
+        process_listener = functools.partial(self._process_listeners, anonymous_name, 1)
+        console.logdebug("Command line executable: '%s'" % cmd)
+        process = self.roslaunch_terminal.spawn_executable_window(interaction.name, cmd, postexec_fn=process_listener)
         self.launched_interactions.add(
             interaction.hash,
             anonymous_name,

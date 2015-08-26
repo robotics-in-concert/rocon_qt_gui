@@ -36,13 +36,11 @@ from .interaction_dialog import InteractionDialog
 class InteractionsChooserUI():
 
     def __init__(self, rocon_master_uri='localhost', host_name='localhost', with_rqt=False):
-        self.rocon_master_uri = rocon_master_uri
-        self.host_name = host_name
         self.with_rqt = with_rqt
         self.widget = QWidget()
         self.pairings_view_model = QStandardItemModel()
         self.interactions_view_model = QStandardItemModel()
-        self.interactions_remocon = InteractionsRemocon()
+        self.interactions_remocon = InteractionsRemocon(rocon_master_uri, host_name)
         self.interactions_remocon.connect(self.refresh_grids)
 
         rospack = rospkg.RosPack()
