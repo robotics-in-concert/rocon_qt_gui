@@ -19,6 +19,7 @@ import rocon_python_utils
 import rocon_std_msgs.msg as rocon_std_msgs
 import rocon_uri
 import rosgraph
+import roslaunch
 import rospkg
 import rospy
 import sys
@@ -254,7 +255,8 @@ class InteractionsRemocon(QObject):
                 pass
         # rosrun
         try:
-            rosrunnable_filename = rocon_python_utils.ros.find_resource_from_string(interaction.command)
+            package_resource_name = interaction.command.split(' ', 1)[0]
+            rosrunnable_filename = rocon_python_utils.ros.find_resource_from_string(package_resource_name)
             console.logdebug("Starting a rosrunnable interaction [%s]" % interaction.command)
             return (rosrunnable_filename, self._start_rosrunnable_interaction)
         except rospkg.ResourceNotFound:
@@ -318,14 +320,24 @@ class InteractionsRemocon(QObject):
     def _start_rosrunnable_interaction(self, interaction, rosrunnable_filename):
         '''
           Launch a rosrunnable application. This does not apply any parameters yet.
+          :param str rosrunnable_filename: full path to the rosrunnable filename
         '''
         # the following is guaranteed since we came back from find_resource calls earlier
         # note we're overriding the rosrunnable filename here - rosrun doesn't actually take the full path.
-        package_name, rosrunnable_filename = interaction.command.split('/')
-        name = os.path.basename(rosrunnable_filename).replace('.', '_')
+        console.logdebug("rosrunnable_filename : %s" % rosrunnable_filename)
+
+        unused_package_name, rosrunnable_command = interaction.command.split('/', 1)
+        rosrunnable_name = rosrunnable_command.split(' ', 1)[0]
+        rosrunnable_name_and_args = rosrunnable_command.split(' ', 1)
+        rosrunnable_args = rosrunnable_name_and_args[1] if len(rosrunnable_name_and_args) > 1 else []
+        if rosrunnable_args:
+            rosrunnable_args = roslaunch.substitution_args.resolve_args(rosrunnable_args)
+            rosrunnable_args = rosrunnable_args.split(' ')
+        name = os.path.basename(rosrunnable_name).replace('.', '_')
         anonymous_name = name + "_" + uuid.uuid4().hex
         process_listener = functools.partial(self._process_listeners, anonymous_name, 1)
-        cmd = ['rosrun', package_name, rosrunnable_filename, '__name:=%s' % anonymous_name]
+        cmd = [rosrunnable_filename, '__name:=%s' % anonymous_name]
+        cmd.extend(rosrunnable_args)
         remapping_args = []
         for remap in interaction.remappings:
             remapping_args.append(remap.remap_from + ":=" + remap.remap_to)
