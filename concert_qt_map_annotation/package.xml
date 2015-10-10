@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>concert_qt_map_annotation</name>
-  <version>0.7.11</version>
+  <version>0.8.0</version>
   <description>An rqt plugin for annotating semantic information on saved map</description>
 
   <maintainer email="dwlee@yujinrobot.com">Dongwook Lee</maintainer>

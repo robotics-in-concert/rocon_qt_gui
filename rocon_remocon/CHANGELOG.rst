@@ -1,6 +1,13 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package rocon_remocon
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=========
+Changelog
+=========
+
+0.8.0 (2015-10-10)
+------------------
+* major revamp to be similar to the nice qt app manager design
+* support for starting/stopping one sided interactions
+* support for interactions that depend on running rapps
+* regression: no longer supports multimaster connections, needs to be FIXED
 
 0.7.11 (2015-07-09)
 -------------------
