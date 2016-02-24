@@ -139,4 +139,4 @@ def create_label(name, is_bold=False):
     f = QFont()
     f.setBold(is_bold)
     qname.setFont(f)
-    return qname 
+    return qname
