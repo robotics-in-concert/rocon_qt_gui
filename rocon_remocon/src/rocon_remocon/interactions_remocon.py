@@ -28,10 +28,12 @@ from urlparse import urlparse
 import uuid
 import yaml
 
-from python_qt_binding.QtCore import QObject, Signal
+from python_qt_binding.QtCore import QObject, Signal, Slot, Qt, QThread
+from python_qt_binding.QtGui import QPixmap, QProgressDialog
 
 from . import launch
 from . import utils
+from . import images  # pyqt4 qrc resources
 from .launched_interactions import LaunchedInteractions
 
 ##############################################################################
@@ -39,21 +41,38 @@ from .launched_interactions import LaunchedInteractions
 ##############################################################################
 
 
-def get_namespaces():
+class NamespaceScanner(QThread):
     """
     Get the name space where an interactions manager is running.
-    @return name space
-    @rtype str
+
+    :ivar namespaces: list of namespaces for an interactions manager.
+    :ivar shutdown_requested: flag that can break us out of the thread
     """
-    try:
-        service_names = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions',
-                                                        timeout=rospy.rostime.Duration(5.0),
-                                                        unique=False
-                                                        )
-    except rocon_python_comms.NotFoundException:
-        rospy.logerr("Remocon : failed to find an interactions manager, aborting.")
-        sys.exit(1)
-    return [rosgraph.names.namespace(service_name) for service_name in service_names]
+    # PySide signals are always defined as class attributes (GPL Pyqt4 Signals use pyqtSignal)
+    signal_updated = Signal()
+
+    def __init__(self):
+        QThread.__init__(self)  # parent=app
+        self.namespaces = []
+        self.shutdown_requested = False
+        # self.busy_dialog = QProgressDialog()
+        # self.busy_dialog.setRange(0, 0)
+
+    def run(self):
+        while not rospy.is_shutdown() and not self.shutdown_requested:
+            try:
+                service_names = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions',
+                                                                timeout=rospy.rostime.Duration(0.5),
+                                                                unique=False
+                                                                )
+                # self.emit(NamespaceScanner.signal_updated)
+                self.namespaces = [rosgraph.names.namespace(service_name) for service_name in service_names]
+                self.signal_updated.emit()
+                break
+            except rocon_python_comms.NotFoundException:
+                rospy.loginfo("Remocon : scanning for an interactions manager.")
+                # sys.exit(1)
+                # return []
 
 
 def get_pairings(interactions_namespace):
@@ -99,13 +118,6 @@ class InteractionsRemocon(QObject):
         console.loginfo("   Node Name: " + self.name)
         console.loginfo("   ROS_MASTER_URI: " + self.ros_master_uri)
         console.loginfo("   ROS_HOSTNAME: " + self.host_name)
-        self.namespaces = get_namespaces()
-        self.active_namespace = None if not self.namespaces else self.namespaces[0]
-        self.rocon_uri = rocon_uri.parse(
-            rocon_uri.generate_platform_rocon_uri('pc', self.name) + "|" + utils.get_web_browser_codename()
-        )
-        self.active_pairing = None
-        self.active_paired_interaction_hashes = []
         self.launched_interactions = LaunchedInteractions()
 
         # terminal for roslaunchers and other shell executables
@@ -114,6 +126,46 @@ class InteractionsRemocon(QObject):
         except (rocon_launch.UnsupportedTerminal, rocon_python_comms.NotFoundException) as e:
             console.warning("Cannot find a suitable terminal, falling back to the current terminal [%s]" % str(e))
             self.roslaunch_terminal = rocon_launch.create_terminal(rocon_launch.terminals.active)
+
+        self.namespaces = []
+        self.active_namespace = None
+        self.rocon_uri = "rocon:/"
+        self.active_pairing = None
+        self.active_paired_interaction_hashes = []
+        # TODO a configurable icon...with a default
+        self.platform_info = rocon_std_msgs.MasterInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
+                                                       rocon_uri=str(self.rocon_uri),
+                                                       icon=rocon_std_msgs.Icon(),
+                                                       description=""
+                                                       )
+        self.service_proxies = None
+        self.subscribers = None
+        self.pairings_table = get_pairings(self.active_namespace)
+        self.interactions_table = get_interactions(self.active_namespace, "rocon:/")
+
+        self.namespace_scanner = NamespaceScanner()
+        self.namespace_scanner.signal_updated.connect(self.interactions_found)
+        # self.namespace_scanner.busy_dialog.show()
+        self.namespace_scanner.start()
+
+        self.remocon_status_publisher = rospy.Publisher("/remocons/" + self.name, interaction_msgs.RemoconStatus, latch=True, queue_size=5)
+        self._publish_remocon_status()
+
+    def shutdown(self):
+        self.namespace_scanner.shutdown_requested = True
+        self.namespace_scanner.wait()
+
+    @Slot()
+    def interactions_found(self):
+        # self.namespace_scanner.busy_dialog.cancel()
+        self.namespaces = self.namespace_scanner.namespaces
+        print("Namespaces %s" % self.namespaces)
+        self.active_namespace = None if not self.namespaces else self.namespaces[0]
+        self.rocon_uri = rocon_uri.parse(
+            rocon_uri.generate_platform_rocon_uri('pc', self.name) + "|" + utils.get_web_browser_codename()
+        )
+        self.active_pairing = None
+        self.active_paired_interaction_hashes = []
 
         # be also great to have a configurable icon...with a default
         self.platform_info = rocon_std_msgs.MasterInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
@@ -133,12 +185,12 @@ class InteractionsRemocon(QObject):
                 (self.active_namespace + "stop_pairing", interaction_srvs.StopPairing)
             ]
         )
-        self.remocon_status_publisher = rospy.Publisher("/remocons/" + self.name, interaction_msgs.RemoconStatus, latch=True, queue_size=5)
         self.subscribers = rocon_python_comms.utils.Subscribers(
             [
                 (self.active_namespace + "pairing_status", interaction_msgs.PairingStatus, self._subscribe_pairing_status_callback)
             ]
         )
+
         self._publish_remocon_status()
 
     def connect(self, refresh_slot):
