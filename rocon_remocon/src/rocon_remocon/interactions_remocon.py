@@ -74,7 +74,6 @@ class NamespaceScanner(QThread):
                 self.signal_updated.emit()
                 break
             except rocon_python_comms.NotFoundException:
-                console.logdebug("NamespaceScanner : interactions service not found yet...")
                 # unfortunately find_service doesn't distinguish between timed out
                 # and not found because ros master is not up yet
                 #
@@ -94,6 +93,7 @@ class NamespaceScanner(QThread):
                         # game over at this point, the rqt plugin will have to be restarted
                         # so as to catch a new master
                         break
+                # console.logdebug("NamespaceScanner : interactions service not found yet...")
 
 
 def get_pairings(interactions_namespace):
@@ -235,10 +235,11 @@ class InteractionsRemocon(QObject):
         if interaction is None:
             console.logerror("Couldn't find interaction with hash '%s'" % interaction_hash)
             return (False, "interaction key %s not found in interactions table" % interaction_hash)
-        console.logdebug("Requesting interaction '%s'" % interaction.name)
+        print("\nInteraction: %s" % interaction)
+        console.logdebug("  - requesting permission to start interaction")
         response = self.service_proxies.request_interaction(remocon=self.name, hash=interaction_hash)
         if response.result == interaction_msgs.ErrorCodes.SUCCESS:
-            console.logdebug("  request granted")
+            console.logdebug("  - request granted")
             try:
                 (app_executable, start_app_handler) = self._determine_interaction_type(interaction)
             except rocon_interactions.InvalidInteraction as e:
@@ -246,14 +247,16 @@ class InteractionsRemocon(QObject):
             result = start_app_handler(interaction, app_executable)
             if result:
                 if interaction.is_paired_type():
+                    console.logdebug("  - setting an active pairing with %s" % interaction_hash)
                     self.active_paired_interaction_hashes.append(interaction_hash)
                 self.signal_updated.emit()
                 self._publish_remocon_status()
                 return (result, "success")
             else:
+                console.logerror("Result unknown")
                 return (result, "unknown")
         else:
-            console.logwarn("  request rejected [%s]" % response.message)
+            console.logwarn("Request rejected [%s]" % response.message)
             return False, ("interaction request rejected [%s]" % response.message)
 
     def stop_interaction(self, interaction_hash):
