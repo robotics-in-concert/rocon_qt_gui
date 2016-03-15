@@ -157,7 +157,7 @@ class InteractionsRemocon(QObject):
         self.interactions_table = get_interactions(self.active_namespace, "rocon:/")
 
         self.namespace_scanner = NamespaceScanner()
-        self.namespace_scanner.signal_updated.connect(self.interactions_found)
+        self.namespace_scanner.signal_updated.connect(self.interactions_found, Qt.QueuedConnection)
         # self.namespace_scanner.busy_dialog.show()
         self.namespace_scanner.start()
 
@@ -204,11 +204,13 @@ class InteractionsRemocon(QObject):
                 (self.active_namespace + "pairing_status", interaction_msgs.PairingStatus, self._subscribe_pairing_status_callback)
             ]
         )
-
+        print("Updating from found interactions callback")
+        self.signal_updated.emit()
         self._publish_remocon_status()
 
-    def connect(self, refresh_slot):
-        self.signal_updated.connect(refresh_slot)
+    def connect(self, slot_list):
+        for callback in slot_list:
+            self.signal_updated.connect(callback, Qt.QueuedConnection)
 
     def start_pairing(self, name):
         request = interaction_srvs.StartPairingRequest(name)

@@ -41,7 +41,7 @@ class InteractionsChooserUI():
         self.pairings_view_model = QStandardItemModel()
         self.interactions_view_model = QStandardItemModel()
         self.interactions_remocon = InteractionsRemocon(rocon_master_uri, host_name)
-        self.interactions_remocon.connect(self.refresh_grids)
+        self.interactions_remocon.connect([self.update_group_combobox, self.refresh_grids])
 
         rospack = rospkg.RosPack()
         ui_file = os.path.join(rospack.get_path('rocon_remocon'), 'ui', 'interactions_chooser.ui')
@@ -49,12 +49,29 @@ class InteractionsChooserUI():
 
         # create a few directories for caching icons and ...
         utils.setup_home_dirs()
-
         self._init_ui()
         self._init_events()
 
     def shutdown(self):
         self.interactions_remocon.shutdown()
+
+    @Slot()
+    def update_group_combobox(self):
+        """
+        The underyling ros part of the remocon might get fresh data about the group list.
+        Connect to this slot to update the combobox in the ui.
+        """
+        new_groups = copy.copy(self.interactions_remocon.interactions_table.groups())
+
+        # did the underlying groups change - if so, update the combobox
+        current_group = self.widget.interactions_group_combobox.currentText()
+        current_group_list = [self.widget.interactions_group_combobox.itemText(i) for i in range(self.widget.interactions_group_combobox.count())]
+        if set(current_group_list) != set(['All'] + new_groups):
+            self.widget.interactions_group_combobox.clear()
+            self.widget.interactions_group_combobox.addItems(['All'] + new_groups)
+            index = self.widget.interactions_group_combobox.findData(current_group)
+            if index != -1:
+                self.widget.interactions_group_combobox.setCurrentIndex(index)
 
     @Slot()
     def refresh_grids(self):
