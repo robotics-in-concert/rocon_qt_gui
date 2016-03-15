@@ -62,6 +62,7 @@ class NamespaceScanner(QThread):
         while not self.shutdown_requested:
             start_time = None
             timeout = 0.5
+            timout_sequence_count = 0
             try:
                 start_time = rospy.get_time()
                 service_names = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions',
@@ -69,9 +70,11 @@ class NamespaceScanner(QThread):
                                                                 unique=False
                                                                 )
                 self.namespaces = [rosgraph.names.namespace(service_name) for service_name in service_names]
+                console.logdebug("NamespaceScanner : interactions service found -> signaling the remocon.")
                 self.signal_updated.emit()
                 break
             except rocon_python_comms.NotFoundException:
+                console.logdebug("NamespaceScanner : interactions service not found yet...")
                 # unfortunately find_service doesn't distinguish between timed out
                 # and not found because ros master is not up yet
                 #
@@ -83,9 +86,14 @@ class NamespaceScanner(QThread):
                 #
                 # So....poor man's way of checking rospy.is_shutdown() without having rospy.init_node around
                 if (rospy.get_time() - start_time) < timeout:
-                    # game over at this point, the rqt plugin will have to be restarted
-                    # so as to catch a new master
-                    break
+                    # can happen the first time it finds the service within the timeout
+                    # so check for multiple occurences
+                    timout_sequence_count += 1
+                    if timout_sequence_count > 3:
+                        rospy.logdebug("NamespaceScanner : ros master probably down, breaking out.")
+                        # game over at this point, the rqt plugin will have to be restarted
+                        # so as to catch a new master
+                        break
 
 
 def get_pairings(interactions_namespace):
@@ -204,7 +212,7 @@ class InteractionsRemocon(QObject):
                 (self.active_namespace + "pairing_status", interaction_msgs.PairingStatus, self._subscribe_pairing_status_callback)
             ]
         )
-        print("Updating from found interactions callback")
+        console.logdebug("Remocon : interactions namespace found -> signalling the ui.")
         self.signal_updated.emit()
         self._publish_remocon_status()
 
