@@ -22,7 +22,6 @@ import rosgraph
 import roslaunch
 import rospkg
 import rospy
-import sys
 import urllib
 from urlparse import urlparse
 import uuid
@@ -33,7 +32,7 @@ from python_qt_binding.QtGui import QPixmap, QProgressDialog
 
 from . import launch
 from . import utils
-from . import images  # pyqt4 qrc resources
+# from . import images  # pyqt4 qrc resources
 from .launched_interactions import LaunchedInteractions
 
 ##############################################################################
@@ -59,20 +58,34 @@ class NamespaceScanner(QThread):
         # self.busy_dialog.setRange(0, 0)
 
     def run(self):
-        while not rospy.is_shutdown() and not self.shutdown_requested:
+        # TODO : replace with a connection cache proxy instead of find_service
+        while not self.shutdown_requested:
+            start_time = None
+            timeout = 0.5
             try:
+                start_time = rospy.get_time()
                 service_names = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions',
-                                                                timeout=rospy.rostime.Duration(0.5),
+                                                                timeout=rospy.rostime.Duration(timeout),
                                                                 unique=False
                                                                 )
-                # self.emit(NamespaceScanner.signal_updated)
                 self.namespaces = [rosgraph.names.namespace(service_name) for service_name in service_names]
                 self.signal_updated.emit()
                 break
             except rocon_python_comms.NotFoundException:
-                rospy.loginfo("Remocon : scanning for an interactions manager.")
-                # sys.exit(1)
-                # return []
+                # unfortunately find_service doesn't distinguish between timed out
+                # and not found because ros master is not up yet
+                #
+                # also, ros might not be up yet (this gets started before we get into rqt and
+                # it is rqt that is responsible for firing rospy.init_node).
+                #
+                # In this case, is_shutdown is still, false (because we didn't start yet) and
+                # we get here immediately (i.e. before the timeout triggers).
+                #
+                # So....poor man's way of checking rospy.is_shutdown() without having rospy.init_node around
+                if (rospy.get_time() - start_time) < timeout:
+                    # game over at this point, the rqt plugin will have to be restarted
+                    # so as to catch a new master
+                    break
 
 
 def get_pairings(interactions_namespace):
@@ -152,6 +165,7 @@ class InteractionsRemocon(QObject):
         self._publish_remocon_status()
 
     def shutdown(self):
+        self.stop_all_interactions()
         self.namespace_scanner.shutdown_requested = True
         self.namespace_scanner.wait()
 

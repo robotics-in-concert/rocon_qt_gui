@@ -54,7 +54,6 @@ class InteractionsChooserUI():
         self._init_events()
 
     def shutdown(self):
-        self.interactions_remocon.stop_all_interactions()
         self.interactions_remocon.shutdown()
 
     @Slot()

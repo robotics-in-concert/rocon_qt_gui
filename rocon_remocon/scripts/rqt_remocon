@@ -7,7 +7,7 @@
 # Imports
 ##############################################################################
 
-from rqt_gui.main import Main
+import rqt_gui.main
 import sys
 
 ##############################################################################
@@ -15,5 +15,5 @@ import sys
 ##############################################################################
 
 if __name__ == '__main__':
-    main = Main()
+    main = rqt_gui.main.Main()
     sys.exit(main.main(sys.argv, standalone='rocon_remocon'))
