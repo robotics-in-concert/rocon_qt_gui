@@ -72,6 +72,7 @@ class InteractionsChooserUI():
             index = self.widget.interactions_group_combobox.findData(current_group)
             if index != -1:
                 self.widget.interactions_group_combobox.setCurrentIndex(index)
+            self.refresh_grids()
 
     @Slot()
     def refresh_grids(self):
