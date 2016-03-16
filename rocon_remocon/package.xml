@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rocon_remocon</name>
-  <version>0.8.0</version>
+  <version>0.8.1</version>
   <description>A qt based remocon for interacting with ros systems.</description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>
@@ -13,7 +13,9 @@
   <author>Donguk Lee</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>pyqt4-dev-tools</build_depend> <!-- pyrcc4 -->
 
+  <run_depend>pyqt4-dev-tools</run_depend> <!-- pyrcc4 -->
   <run_depend>python-rospkg</run_depend>
   <run_depend>python_qt_binding</run_depend>
   <run_depend>qt_gui_py_common</run_depend>
@@ -32,6 +34,7 @@
   <run_depend>rocon_qt_library</run_depend>
   <run_depend>roslaunch</run_depend>
   <run_depend>rospy</run_depend>
+  <run_depend>rqt_wrapper</run_depend>
   <run_depend>std_msgs</run_depend>
 
   <export>

@@ -22,16 +22,17 @@ import rosgraph
 import roslaunch
 import rospkg
 import rospy
-import sys
 import urllib
 from urlparse import urlparse
 import uuid
 import yaml
 
-from python_qt_binding.QtCore import QObject, Signal
+from python_qt_binding.QtCore import QObject, Signal, Slot, Qt, QThread
+from python_qt_binding.QtGui import QPixmap, QProgressDialog
 
 from . import launch
 from . import utils
+# from . import images  # pyqt4 qrc resources
 from .launched_interactions import LaunchedInteractions
 
 ##############################################################################
@@ -39,21 +40,60 @@ from .launched_interactions import LaunchedInteractions
 ##############################################################################
 
 
-def get_namespaces():
+class NamespaceScanner(QThread):
     """
     Get the name space where an interactions manager is running.
-    @return name space
-    @rtype str
+
+    :ivar namespaces: list of namespaces for an interactions manager.
+    :ivar shutdown_requested: flag that can break us out of the thread
     """
-    try:
-        service_names = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions',
-                                                        timeout=rospy.rostime.Duration(5.0),
-                                                        unique=False
-                                                        )
-    except rocon_python_comms.NotFoundException:
-        rospy.logerr("Remocon : failed to find an interactions manager, aborting.")
-        sys.exit(1)
-    return [rosgraph.names.namespace(service_name) for service_name in service_names]
+    # PySide signals are always defined as class attributes (GPL Pyqt4 Signals use pyqtSignal)
+    signal_updated = Signal()
+
+    def __init__(self):
+        QThread.__init__(self)  # parent=app
+        self.namespaces = []
+        self.shutdown_requested = False
+        # self.busy_dialog = QProgressDialog()
+        # self.busy_dialog.setRange(0, 0)
+
+    def run(self):
+        # TODO : replace with a connection cache proxy instead of find_service
+        while not self.shutdown_requested:
+            start_time = None
+            timeout = 0.5
+            timout_sequence_count = 0
+            try:
+                start_time = rospy.get_time()
+                service_names = rocon_python_comms.find_service('rocon_interaction_msgs/GetInteractions',
+                                                                timeout=rospy.rostime.Duration(timeout),
+                                                                unique=False
+                                                                )
+                self.namespaces = [rosgraph.names.namespace(service_name) for service_name in service_names]
+                console.logdebug("NamespaceScanner : interactions service found -> signaling the remocon.")
+                self.signal_updated.emit()
+                break
+            except rocon_python_comms.NotFoundException:
+                # unfortunately find_service doesn't distinguish between timed out
+                # and not found because ros master is not up yet
+                #
+                # also, ros might not be up yet (this gets started before we get into rqt and
+                # it is rqt that is responsible for firing rospy.init_node).
+                #
+                # In this case, is_shutdown is still, false (because we didn't start yet) and
+                # we get here immediately (i.e. before the timeout triggers).
+                #
+                # So....poor man's way of checking rospy.is_shutdown() without having rospy.init_node around
+                if (rospy.get_time() - start_time) < timeout:
+                    # can happen the first time it finds the service within the timeout
+                    # so check for multiple occurences
+                    timout_sequence_count += 1
+                    if timout_sequence_count > 3:
+                        rospy.logdebug("NamespaceScanner : ros master probably down, breaking out.")
+                        # game over at this point, the rqt plugin will have to be restarted
+                        # so as to catch a new master
+                        break
+                # console.logdebug("NamespaceScanner : interactions service not found yet...")
 
 
 def get_pairings(interactions_namespace):
@@ -99,13 +139,6 @@ class InteractionsRemocon(QObject):
         console.loginfo("   Node Name: " + self.name)
         console.loginfo("   ROS_MASTER_URI: " + self.ros_master_uri)
         console.loginfo("   ROS_HOSTNAME: " + self.host_name)
-        self.namespaces = get_namespaces()
-        self.active_namespace = None if not self.namespaces else self.namespaces[0]
-        self.rocon_uri = rocon_uri.parse(
-            rocon_uri.generate_platform_rocon_uri('pc', self.name) + "|" + utils.get_web_browser_codename()
-        )
-        self.active_pairing = None
-        self.active_paired_interaction_hashes = []
         self.launched_interactions = LaunchedInteractions()
 
         # terminal for roslaunchers and other shell executables
@@ -114,6 +147,47 @@ class InteractionsRemocon(QObject):
         except (rocon_launch.UnsupportedTerminal, rocon_python_comms.NotFoundException) as e:
             console.warning("Cannot find a suitable terminal, falling back to the current terminal [%s]" % str(e))
             self.roslaunch_terminal = rocon_launch.create_terminal(rocon_launch.terminals.active)
+
+        self.namespaces = []
+        self.active_namespace = None
+        self.rocon_uri = "rocon:/"
+        self.active_pairing = None
+        self.active_paired_interaction_hashes = []
+        # TODO a configurable icon...with a default
+        self.platform_info = rocon_std_msgs.MasterInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
+                                                       rocon_uri=str(self.rocon_uri),
+                                                       icon=rocon_std_msgs.Icon(),
+                                                       description=""
+                                                       )
+        self.service_proxies = None
+        self.subscribers = None
+        self.pairings_table = get_pairings(self.active_namespace)
+        self.interactions_table = get_interactions(self.active_namespace, "rocon:/")
+
+        self.namespace_scanner = NamespaceScanner()
+        self.namespace_scanner.signal_updated.connect(self.interactions_found, Qt.QueuedConnection)
+        # self.namespace_scanner.busy_dialog.show()
+        self.namespace_scanner.start()
+
+        self.remocon_status_publisher = rospy.Publisher("/remocons/" + self.name, interaction_msgs.RemoconStatus, latch=True, queue_size=5)
+        self._publish_remocon_status()
+
+    def shutdown(self):
+        self.stop_all_interactions()
+        self.namespace_scanner.shutdown_requested = True
+        self.namespace_scanner.wait()
+
+    @Slot()
+    def interactions_found(self):
+        # self.namespace_scanner.busy_dialog.cancel()
+        self.namespaces = self.namespace_scanner.namespaces
+        print("Namespaces %s" % self.namespaces)
+        self.active_namespace = None if not self.namespaces else self.namespaces[0]
+        self.rocon_uri = rocon_uri.parse(
+            rocon_uri.generate_platform_rocon_uri('pc', self.name) + "|" + utils.get_web_browser_codename()
+        )
+        self.active_pairing = None
+        self.active_paired_interaction_hashes = []
 
         # be also great to have a configurable icon...with a default
         self.platform_info = rocon_std_msgs.MasterInfo(version=rocon_std_msgs.Strings.ROCON_VERSION,
@@ -133,16 +207,18 @@ class InteractionsRemocon(QObject):
                 (self.active_namespace + "stop_pairing", interaction_srvs.StopPairing)
             ]
         )
-        self.remocon_status_publisher = rospy.Publisher("/remocons/" + self.name, interaction_msgs.RemoconStatus, latch=True, queue_size=5)
         self.subscribers = rocon_python_comms.utils.Subscribers(
             [
                 (self.active_namespace + "pairing_status", interaction_msgs.PairingStatus, self._subscribe_pairing_status_callback)
             ]
         )
+        console.logdebug("Remocon : interactions namespace found -> signalling the ui.")
+        self.signal_updated.emit()
         self._publish_remocon_status()
 
-    def connect(self, refresh_slot):
-        self.signal_updated.connect(refresh_slot)
+    def connect(self, slot_list):
+        for callback in slot_list:
+            self.signal_updated.connect(callback, Qt.QueuedConnection)
 
     def start_pairing(self, name):
         request = interaction_srvs.StartPairingRequest(name)
@@ -159,10 +235,11 @@ class InteractionsRemocon(QObject):
         if interaction is None:
             console.logerror("Couldn't find interaction with hash '%s'" % interaction_hash)
             return (False, "interaction key %s not found in interactions table" % interaction_hash)
-        console.logdebug("Requesting interaction '%s'" % interaction.name)
+        print("\nInteraction: %s" % interaction)
+        console.logdebug("  - requesting permission to start interaction")
         response = self.service_proxies.request_interaction(remocon=self.name, hash=interaction_hash)
         if response.result == interaction_msgs.ErrorCodes.SUCCESS:
-            console.logdebug("  request granted")
+            console.logdebug("  - request granted")
             try:
                 (app_executable, start_app_handler) = self._determine_interaction_type(interaction)
             except rocon_interactions.InvalidInteraction as e:
@@ -170,14 +247,16 @@ class InteractionsRemocon(QObject):
             result = start_app_handler(interaction, app_executable)
             if result:
                 if interaction.is_paired_type():
+                    console.logdebug("  - setting an active pairing with %s" % interaction_hash)
                     self.active_paired_interaction_hashes.append(interaction_hash)
                 self.signal_updated.emit()
                 self._publish_remocon_status()
                 return (result, "success")
             else:
+                console.logerror("Result unknown")
                 return (result, "unknown")
         else:
-            console.logwarn("  request rejected [%s]" % response.message)
+            console.logwarn("Request rejected [%s]" % response.message)
             return False, ("interaction request rejected [%s]" % response.message)
 
     def stop_interaction(self, interaction_hash):

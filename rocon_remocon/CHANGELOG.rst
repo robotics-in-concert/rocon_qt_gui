@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.8.1 (2016-03-16)
+------------------
+* [rocon_remocon] immediately show ui, even when no interactions manager yet found
+* [rocon_remocon] bugfix saving of the group states for the ui combobox
+
 0.8.0 (2015-10-10)
 ------------------
 * major revamp to be similar to the nice qt app manager design

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>concert_qt_teleop</name>
-  <version>0.8.0</version>
+  <version>0.8.1</version>
   <description>An rqt plugin for teleop'ing concert robots</description>
 
   <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>

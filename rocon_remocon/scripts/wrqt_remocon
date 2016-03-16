@@ -7,7 +7,7 @@
 # Imports
 ##############################################################################
 
-import rqt_gui.main
+import rqt_wrapper
 import sys
 
 ##############################################################################
@@ -15,5 +15,5 @@ import sys
 ##############################################################################
 
 if __name__ == '__main__':
-    main = rqt_gui.main.Main()
-    sys.exit(main.main(sys.argv, standalone='rocon_remocon'))
+    rqt_wrapper = rqt_wrapper.RQTWrapper('rocon_remocon')
+    sys.exit(rqt_wrapper.exec_())
