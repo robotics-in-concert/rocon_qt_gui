@@ -352,7 +352,7 @@ class InteractionsRemocon(QObject):
                 console.logdebug("Starting a webapp interaction [%s]" % web_interaction.url)
                 return (web_interaction.url, self._start_webapp_interaction)
         # executable
-        if rocon_python_utils.system.which(interaction.command) is not None:
+        if rocon_python_utils.system.which(interaction.command.split(' ', 1)[0]) is not None:
             console.logdebug("Starting a global executable interaction [%s]")
             return (interaction.command, self._start_global_executable_interaction)
         else:
@@ -432,11 +432,22 @@ class InteractionsRemocon(QObject):
         return True
 
     def _start_global_executable_interaction(self, interaction, filename):
-        console.logwarn("Interactive Client : starting global executable [%s]" % interaction.command)
+        """
+        @param str filename: not really a filename, but the command to run
+
+        The filename could be something like:
+
+        @code
+        /opt/ros/indigo/bin/rqt_plot
+        rqt_plot
+        rqt_plot -t
+        @endcode
+        """
+        console.logdebug("Interactive Client : starting global executable [%s]" % interaction.command)
         name = os.path.basename(filename).replace('.', '_')
         anonymous_name = name + "_" + uuid.uuid4().hex
         process_listener = functools.partial(self._process_listeners, anonymous_name, 1)
-        cmd = [filename]
+        cmd = filename.split(' ')
         remapping_args = []
         for remap in interaction.remappings:
             remapping_args.append(remap.remap_from + ":=" + remap.remap_to)
