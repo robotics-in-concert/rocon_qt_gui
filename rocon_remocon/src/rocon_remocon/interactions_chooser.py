@@ -95,7 +95,7 @@ class InteractionsChooserUI():
                 is_running = True
                 enabled = True
             elif active_pairing is None:
-                enabled = True
+                enabled = not p.requires_interaction
             item = icon.QModelIconItem(p, enabled=enabled, running=is_running)
             self.pairings_view_model.appendRow(item)
 
@@ -161,7 +161,7 @@ class InteractionsChooserUI():
             is_running = (active_pairing.name == pairing.name)
             is_enabled = is_running
         else:
-            is_enabled = True
+            is_enabled = not pairing.requires_interaction
             is_running = False
         self.selected_pairing = pairing
         self.dialog = PairingDialog(self.widget,
