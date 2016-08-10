@@ -64,7 +64,7 @@ class PairingDialog(QDialog):
         self.stop_button.pressed.connect(self._press_stop_button)
 
     def _press_start_button(self):
-        response = self._start_pairing_hook(self.pairing.name)
+        response = self._start_pairing_hook(self.pairing)
         if response.result == interaction_msgs.ErrorCodes.SUCCESS:
             self.start_button.setEnabled(False)
             self.stop_button.setEnabled(True)
@@ -72,7 +72,7 @@ class PairingDialog(QDialog):
             show_message(self, str(response.result), response.message)
 
     def _press_stop_button(self):
-        response = self._stop_pairing_hook(self.pairing.name)
+        response = self._stop_pairing_hook(self.pairing)
         if response.result == interaction_msgs.ErrorCodes.SUCCESS:
             self.start_button.setEnabled(True)
             self.stop_button.setEnabled(False)

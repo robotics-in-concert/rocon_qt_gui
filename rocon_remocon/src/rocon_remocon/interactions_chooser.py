@@ -42,6 +42,7 @@ class InteractionsChooserUI():
         self.interactions_view_model = QStandardItemModel()
         self.interactions_remocon = InteractionsRemocon(rocon_master_uri, host_name)
         self.interactions_remocon.connect([self.update_group_combobox, self.refresh_grids])
+        self.interactions_remocon.connect([self.update_pairings_group_combobox, self.refresh_grids])
         self.default_group = "All"
 
         rospack = rospkg.RosPack()
@@ -78,6 +79,27 @@ class InteractionsChooserUI():
             self.refresh_grids()
 
     @Slot()
+    def update_pairings_group_combobox(self):
+        """
+        The underyling ros part of the remocon might get fresh data about the group list.
+        Connect to this slot to update the combobox in the ui.
+        """
+        new_groups = copy.copy(self.interactions_remocon.pairings_table.groups())
+
+        # did the underlying groups change - if so, update the combobox
+        current_group = self.widget.pairings_group_combobox.currentText()
+        current_size = self.widget.pairings_group_combobox.count()
+        target_group = current_group if current_size != 1 else self.default_group
+        current_group_list = [self.widget.pairings_group_combobox.itemText(i) for i in range(self.widget.pairings_group_combobox.count())]
+        if set(current_group_list) != set(['All'] + new_groups):
+            self.widget.pairings_group_combobox.clear()
+            self.widget.pairings_group_combobox.addItems(['All'] + new_groups)
+            index = self.widget.pairings_group_combobox.findText(target_group)
+            if index != -1:
+                self.widget.pairings_group_combobox.setCurrentIndex(index)
+            self.refresh_grids()
+
+    @Slot()
     def refresh_grids(self):
         """
         This just does a complete redraw of the interactions with the
@@ -88,20 +110,26 @@ class InteractionsChooserUI():
         self.interactions_view_model.clear()
 
         active_pairing = copy.copy(self.interactions_remocon.active_pairing)
+        group = self.widget.pairings_group_combobox.currentText()
         for p in self.interactions_remocon.pairings_table.sorted():
+            if group != "All" and p.group != group:
+                continue
             is_running = False
             enabled = False
             if active_pairing is not None and p.name == active_pairing.name:
                 is_running = True
                 enabled = True
             elif active_pairing is None:
-                enabled = not p.requires_interaction
+                enabled = True
+                # enabled = not p.requires_interaction
             item = icon.QModelIconItem(p, enabled=enabled, running=is_running)
             self.pairings_view_model.appendRow(item)
 
         group = self.widget.interactions_group_combobox.currentText()
         for i in self.interactions_remocon.interactions_table.sorted():
             if group != "All" and i.group != group:
+                continue
+            if i.hidden:
                 continue
             extra_tooltip_info = ""
             if i.required_pairings:
@@ -133,6 +161,7 @@ class InteractionsChooserUI():
         for ns in self.interactions_remocon.namespaces:
             self.widget.namespace_checkbox.addItem(ns)
         self.refresh_grids()
+        self.widget.pairings_group_combobox.addItems(['All'] + self.interactions_remocon.pairings_table.groups())
         self.widget.interactions_group_combobox.addItems(['All'] + self.interactions_remocon.interactions_table.groups())
         # TODO namespace checkbox to self.interactions_remocon.active_namespace
 
@@ -145,6 +174,7 @@ class InteractionsChooserUI():
         self.widget.pairings_grid.clicked.connect(self._pairing_single_click)
         self.widget.interactions_grid.clicked.connect(self._interaction_single_click)
         self.widget.button_stop_all_interactions.clicked.connect(self.interactions_remocon.stop_all_interactions)
+        self.widget.pairings_group_combobox.currentIndexChanged.connect(self.refresh_grids)
         self.widget.interactions_group_combobox.currentIndexChanged.connect(self.refresh_grids)
 
     def _event_change_namespace(self):
@@ -161,7 +191,7 @@ class InteractionsChooserUI():
             is_running = (active_pairing.name == pairing.name)
             is_enabled = is_running
         else:
-            is_enabled = not pairing.requires_interaction
+            is_enabled = True  # not pairing.requires_interaction
             is_running = False
         self.selected_pairing = pairing
         self.dialog = PairingDialog(self.widget,

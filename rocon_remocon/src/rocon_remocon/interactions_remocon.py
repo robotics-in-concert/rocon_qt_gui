@@ -220,14 +220,35 @@ class InteractionsRemocon(QObject):
         for callback in slot_list:
             self.signal_updated.connect(callback, Qt.QueuedConnection)
 
-    def start_pairing(self, name):
-        request = interaction_srvs.StartPairingRequest(name)
+    def start_pairing(self, pairing):
+        required_interaction = None
+        if pairing.requires_interaction:
+            required_interaction = self.interactions_table.find_by_name(pairing.requires_interaction)
+            if required_interaction is None:
+                response = interaction_srvs.StartPairingResponse()
+                response.result = interaction_msgs.ErrorCodes.REQUIRED_INTERACTION_IS_NOT_AVAILABLE
+                response.message = interaction_msgs.ErrorCodes.MSG_REQUIRED_INTERACTION_IS_NOT_AVAILABLE
+                console.logwarn("%s [%s]" % response.message, pairing.requires_interaction)
+                return response
+        request = interaction_srvs.StartPairingRequest(pairing.name)
         response = self.service_proxies.start_pairing(request)
+        if response.result == interaction_msgs.ErrorCodes.SUCCESS:
+            if required_interaction is not None:
+                (result, unused_message) = self.start_interaction(required_interaction.hash)
+                if not result:
+                    self.stop_pairing(pairing)
+                    response.result = interaction_msgs.ErrorCodes.REQUIRED_INTERACTION_FAILED
+                    response.message = interaction_msgs.ErrorCodes.MSG_REQUIRED_INTERACTION_FAILED
         return response
 
-    def stop_pairing(self, name):
-        request = interaction_srvs.StopPairingRequest(name)
+    def stop_pairing(self, pairing):
+        request = interaction_srvs.StopPairingRequest(pairing.name)
         response = self.service_proxies.stop_pairing(request)
+        if pairing.requires_interaction:
+            interaction = self.interactions_table.find_by_name(pairing.requires_interaction)
+            # shouldn't need to check for error here since it already started it
+            if interaction is not None:
+                self.stop_interaction(interaction.hash)
         return response
 
     def start_interaction(self, interaction_hash):
