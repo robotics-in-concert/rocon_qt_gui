@@ -228,7 +228,7 @@ class InteractionsRemocon(QObject):
                 response = interaction_srvs.StartPairingResponse()
                 response.result = interaction_msgs.ErrorCodes.REQUIRED_INTERACTION_IS_NOT_AVAILABLE
                 response.message = interaction_msgs.ErrorCodes.MSG_REQUIRED_INTERACTION_IS_NOT_AVAILABLE
-                console.logwarn("%s [%s]" % response.message, pairing.requires_interaction)
+                console.logwarn("%s [%s]" % (response.message, pairing.requires_interaction))
                 return response
         request = interaction_srvs.StartPairingRequest(pairing.name)
         response = self.service_proxies.start_pairing(request)
