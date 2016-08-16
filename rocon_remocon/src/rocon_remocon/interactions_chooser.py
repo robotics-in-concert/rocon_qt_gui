@@ -89,7 +89,7 @@ class InteractionsChooserUI():
         # did the underlying groups change - if so, update the combobox
         current_group = self.widget.pairings_group_combobox.currentText()
         current_size = self.widget.pairings_group_combobox.count()
-        target_group = current_group if current_size != 1 else self.default_group
+        target_group = current_group if current_size != 1 else self.default_pairings_group
         current_group_list = [self.widget.pairings_group_combobox.itemText(i) for i in range(self.widget.pairings_group_combobox.count())]
         if set(current_group_list) != set(['All'] + new_groups):
             self.widget.pairings_group_combobox.clear()
