@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>concert_qt_image_stream</name>
-  <version>0.8.1</version>
+  <version>0.9.0</version>
   <description>An rqt plugin for image_stream'ing concert robots</description>
 
   <maintainer email="dwlee@yujinrobot.com">Donguk Lee</maintainer>
