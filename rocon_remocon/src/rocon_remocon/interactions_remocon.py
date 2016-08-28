@@ -227,7 +227,7 @@ class InteractionsRemocon(QObject):
             if required_interaction is None:
                 response = interaction_srvs.StartPairingResponse()
                 response.result = interaction_msgs.ErrorCodes.REQUIRED_INTERACTION_IS_NOT_AVAILABLE
-                response.message = interaction_msgs.ErrorCodes.MSG_REQUIRED_INTERACTION_IS_NOT_AVAILABLE
+                response.message = interaction_msgs.ErrorCodes.MSG_REQUIRED_INTERACTION_IS_NOT_AVAILABLE + " [{0}]".format(pairing.requires_interaction)
                 console.logwarn("%s [%s]" % (response.message, pairing.requires_interaction))
                 return response
         request = interaction_srvs.StartPairingRequest(pairing.name)
