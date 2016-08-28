@@ -2,6 +2,10 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* [rocon_remocon] dont show the hidden group
+
 0.8.1 (2016-03-16)
 ------------------
 * [rocon_remocon] immediately show ui, even when no interactions manager yet found
