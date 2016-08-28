@@ -64,6 +64,7 @@ class InteractionsChooserUI():
         Connect to this slot to update the combobox in the ui.
         """
         new_groups = copy.copy(self.interactions_remocon.interactions_table.groups())
+        new_groups = [g for g in new_groups if g != "Hidden"]
 
         # did the underlying groups change - if so, update the combobox
         current_group = self.widget.interactions_group_combobox.currentText()
