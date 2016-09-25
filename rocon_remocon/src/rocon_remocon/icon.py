@@ -43,7 +43,7 @@ class QModelIconItem(QStandardItem):
         self.setSizeHint(QSize(100, 100))
         self.setIcon(rocon_icon_to_qicon(implementation.icon))
         f = QFont()
-        f.setPointSize(10)
+        f.setPointSize(8)
         self.setFont(f)
         self.setToolTip(implementation.description + extended_tooltip_info)
         self.setEditable(False)

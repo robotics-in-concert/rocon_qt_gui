@@ -151,11 +151,15 @@ class InteractionsChooserUI():
     def _init_ui(self):
         self.widget.pairings_grid.setViewMode(QListView.IconMode)
         self.widget.pairings_grid.setModel(self.pairings_view_model)
+        self.widget.pairings_grid.setWordWrap(True)
         self.widget.pairings_grid.setWrapping(True)
+        # really need to get away from listview, or subclass it if we want to control better how many lines of text show up
+        # self.widget.pairings_grid.setTextElideMode(Qt.ElideNone)
         self.widget.pairings_grid.setIconSize(QSize(60, 60))
         self.widget.pairings_grid.setSpacing(10)
         self.widget.interactions_grid.setViewMode(QListView.IconMode)
         self.widget.interactions_grid.setModel(self.interactions_view_model)
+        self.widget.interactions_grid.setWordWrap(True)
         self.widget.interactions_grid.setWrapping(True)
         self.widget.interactions_grid.setIconSize(QSize(60, 60))
         self.widget.interactions_grid.setSpacing(10)
