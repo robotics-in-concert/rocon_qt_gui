@@ -2,8 +2,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.9.1 (2016-10-12)
+------------------
 * [rocon_remocon] dont show the hidden group
 
 0.8.1 (2016-03-16)
