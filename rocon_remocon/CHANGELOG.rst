@@ -2,6 +2,10 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* [rocon_remocon] allow roslaunch style arg substitutions for global executables
+
 0.9.1 (2016-10-12)
 ------------------
 * [rocon_remocon] dont show the hidden group
