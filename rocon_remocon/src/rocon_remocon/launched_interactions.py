@@ -59,4 +59,3 @@ class LaunchedInteractions(object):
         for interaction_hash, launch_details in self.launched_interactions.iteritems():
             s += console.cyan + "  %s" % interaction_hash + console.reset + " : " + console.yellow + "%s" % launch_details.keys() + console.reset + "\n"
         return s
-            

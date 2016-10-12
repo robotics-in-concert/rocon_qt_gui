@@ -375,7 +375,8 @@ class InteractionsRemocon(QObject):
         # executable
         if rocon_python_utils.system.which(interaction.command.split(' ', 1)[0]) is not None:
             console.logdebug("Starting a global executable interaction [%s]")
-            return (interaction.command, self._start_global_executable_interaction)
+            parsed_interaction_command = roslaunch.substitution_args.resolve_args(interaction.command)
+            return (parsed_interaction_command, self._start_global_executable_interaction)
         else:
             raise rocon_interactions.InvalidInteraction("could not find a valid rosrunnable or global executable for '%s' (mispelt, not installed?)" % interaction.command)
 
