@@ -12,12 +12,14 @@ import rocon_python_utils
 import rospkg
 import rocon_std_msgs.msg as rocon_std_msgs
 
-from python_qt_binding.QtGui import QLabel, QTextEdit, QSizePolicy, QFont, QCheckBox
+from python_qt_binding.QtGui import QLabel, QTextEdit, QSizePolicy, QFont, QCheckBox, QMessageBox
 
 ##############################################################################
 # Methods
 ##############################################################################
 
+def show_message(parent, title, message):
+     QMessageBox.warning(parent, str(title), str(message), QMessageBox.Ok | QMessageBox.Ok)
 
 def setup_home_dirs():
     if not os.path.isdir(get_home()):

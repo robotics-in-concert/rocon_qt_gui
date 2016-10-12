@@ -11,7 +11,6 @@ from __future__ import division
 
 import os
 import rocon_interaction_msgs.msg as interaction_msgs
-from rocon_qt_library.utils import show_message
 import rospkg
 
 from python_qt_binding import loadUi
@@ -20,6 +19,7 @@ from python_qt_binding.QtGui import QDialog, QCursor, QSpacerItem, QCheckBox
 
 
 from . import icon
+from . import utils
 
 ##############################################################################
 # Dialog
@@ -69,7 +69,7 @@ class PairingDialog(QDialog):
             self.start_button.setEnabled(False)
             self.stop_button.setEnabled(True)
         else:
-            show_message(self, str(response.result), response.message)
+            utils.show_message(self, str(response.result), response.message)
 
     def _press_stop_button(self):
         response = self._stop_pairing_hook(self.pairing)
@@ -77,7 +77,7 @@ class PairingDialog(QDialog):
             self.start_button.setEnabled(True)
             self.stop_button.setEnabled(False)
         else:
-            show_message(self, str(response.result), response.message)
+            utils.show_message(self, str(response.result), response.message)
 
     def showEvent(self, event):
         geom = self.frameGeometry()

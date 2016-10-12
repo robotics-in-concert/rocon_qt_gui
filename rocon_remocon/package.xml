@@ -31,7 +31,6 @@
   <run_depend>rocon_python_utils</run_depend>
   <run_depend>rocon_std_msgs</run_depend>
   <run_depend>rocon_uri</run_depend>
-  <run_depend>rocon_qt_library</run_depend>
   <run_depend>roslaunch</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>rqt_wrapper</run_depend>

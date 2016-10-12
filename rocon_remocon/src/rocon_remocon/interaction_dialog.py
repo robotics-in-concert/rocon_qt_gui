@@ -16,9 +16,9 @@ from python_qt_binding.QtCore import Qt, QEvent, SIGNAL
 from python_qt_binding.QtGui import QDialog, QCursor, QSpacerItem, QCheckBox
 
 import rocon_interaction_msgs.msg as interaction_msgs
-from rocon_qt_library.utils import show_message
 
 from . import icon
+from . import utils
 
 ##############################################################################
 # Dialog
@@ -83,7 +83,7 @@ class InteractionDialog(QDialog):
             self.start_button.setEnabled(False)
             self.stop_button.setEnabled(True)
         else:
-            show_message(self, str(result), message)
+            utils.show_message(self, str(result), message)
 
     def _press_stop_button(self):
         (result, message) = self._stop_interaction_hook(self.interaction.hash)
@@ -91,7 +91,7 @@ class InteractionDialog(QDialog):
             self.start_button.setEnabled(True)
             self.stop_button.setEnabled(False)
         else:
-            show_message(self, str(result), message)
+            utils.show_message(self, str(result), message)
 
     def showEvent(self, event):
         geom = self.frameGeometry()
