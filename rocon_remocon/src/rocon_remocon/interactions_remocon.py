@@ -22,6 +22,7 @@ import rosgraph
 import roslaunch
 import rospkg
 import rospy
+import shlex
 import urllib
 from urlparse import urlparse
 import uuid
@@ -469,12 +470,13 @@ class InteractionsRemocon(QObject):
         name = os.path.basename(filename).replace('.', '_')
         anonymous_name = name + "_" + uuid.uuid4().hex
         process_listener = functools.partial(self._process_listeners, anonymous_name, 1)
-        cmd = filename.split(' ')
+        cmd = shlex.split(filename)
         remapping_args = []
         for remap in interaction.remappings:
             remapping_args.append(remap.remap_from + ":=" + remap.remap_to)
         cmd.extend(remapping_args)
         cmd.extend(self._prepare_command_line_parameters(interaction.parameters))
+
         console.logdebug("Global executable command: '%s'" % cmd)
         process = rocon_python_utils.system.Popen(cmd, postexec_fn=process_listener)
         self.launched_interactions.add(
