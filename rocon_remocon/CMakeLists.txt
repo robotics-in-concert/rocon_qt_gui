@@ -5,6 +5,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rocon_remocon)
 
+find_package(Qt5 QUIET COMPONENTS 
+  Core 
+  Widgets)
+
 ##############################################################################
 # Catkin
 ##############################################################################
@@ -20,13 +24,23 @@ catkin_python_setup()
 
 set(RESOURCES_DIR resources)
 
-add_custom_target(
+if (Qt5_FOUND)
+  add_custom_target(
+    resources_${PROJECT_NAME}
+    ALL
+    COMMAND pyrcc5 -o src/${PROJECT_NAME}/images.py ${RESOURCES_DIR}/images.qrc
+    WORKING_DIRECTORY
+      ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+else()
+  add_custom_target(
     resources_${PROJECT_NAME}
     ALL
     COMMAND pyrcc4 -o src/${PROJECT_NAME}/images.py ${RESOURCES_DIR}/images.qrc
     WORKING_DIRECTORY
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+      ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+endif()
 
 ##############################################################################
 # Installs

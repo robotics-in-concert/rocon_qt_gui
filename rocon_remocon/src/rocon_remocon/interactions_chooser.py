@@ -17,10 +17,15 @@ import rospy
 # We prefer LGPL, so convert over later so we can get proper indexing
 from python_qt_binding import loadUi  # what is PySide's equivalent?
 from python_qt_binding.QtCore import Qt, QSize, QEvent, Slot
-from python_qt_binding.QtGui import QListView, QWidget, QStandardItemModel  # QIcon, QColor, QMainWindow, QMessageBox
 # from PySide.QtUiTools import QUiLoader
 # from PySide.QtCore import QSize, Slot, QFile
 # from PySide.QtGui import QListView, QWidget, QStandardItemModel  # QIcon, QColor, QMainWindow, QMessageBox
+
+try:
+    from python_qt_binding.QtGui import QStandardItemModel
+    from python_qt_binding.QtWidgets import QListView, QWidget
+except ImportError:
+    from python_qt_binding.QtGui import QListView, QWidget, QStandardItemModel # QIcon, QColor, QMainWindow, QMessageBox
 
 from . import utils
 from . import icon

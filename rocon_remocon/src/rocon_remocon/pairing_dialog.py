@@ -14,10 +14,14 @@ import rocon_interaction_msgs.msg as interaction_msgs
 import rospkg
 
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import Qt, QEvent, SIGNAL
-from python_qt_binding.QtGui import QDialog, QCursor, QSpacerItem, QCheckBox
-
-
+try:
+    from python_qt_binding.QtCore import Qt, QEvent, Signal
+    from python_qt_binding.QtGui import QCursor
+    from python_qt_binding.QtWidgets import QDialog, QSpacerItem, QCheckBox
+except ImportError:
+    from python_qt_binding.QtCore import Qt, QEvent, SIGNAL
+    from python_qt_binding.QtGui import QDialog, QCursor, QSpacerItem, QCheckBox
+    
 from . import icon
 from . import utils
 

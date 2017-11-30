@@ -29,7 +29,11 @@ import uuid
 import yaml
 
 from python_qt_binding.QtCore import QObject, Signal, Slot, Qt, QThread
-from python_qt_binding.QtGui import QPixmap, QProgressDialog
+try:
+    from python_qt_binding.QtGui import QPixmap, QProgressDialog
+except ImportError:
+    from python_qt_binding.QtGui import QPixmap
+    from python_qt_binding.QtWidgets import QProgressDialog
 
 from . import launch
 from . import utils

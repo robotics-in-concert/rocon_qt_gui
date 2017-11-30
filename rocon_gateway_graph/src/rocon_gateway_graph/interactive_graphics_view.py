@@ -8,8 +8,13 @@
 
 from __future__ import division
 
-from python_qt_binding.QtCore import QPointF, QRectF, Qt
-from python_qt_binding.QtGui import QGraphicsView, QTransform
+try:
+    from python_qt_binding.QtCore import QPointF, QRectF, Qt
+    from python_qt_binding.QtGui import QTransform
+    from python_qt_binding.QtWidgets import QGraphicsView
+except ImportError:
+    from python_qt_binding.QtCore import QPointF, QRectF, Qt
+    from python_qt_binding.QtGui import QGraphicsView, QTransform
 
 ##############################################################################
 # Class

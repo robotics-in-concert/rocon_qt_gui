@@ -10,9 +10,15 @@ from __future__ import division
 import os
 
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel
-from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QCompleter, QBrush, QColor, QPen
-from python_qt_binding.QtSvg import QSvgGenerator
+try:
+    from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel
+    from python_qt_binding.QtGui import QIcon, QImage, QPainter, QBrush, QColor, QPen
+    from python_qt_binding.QtWidgets import QFileDialog, QGraphicsScene, QWidget, QCompleter
+    from python_qt_binding.QtSvg import QSvgGenerator
+except ImportError:
+    from python_qt_binding.QtCore import QFile, QIODevice, Qt, Signal, QAbstractListModel
+    from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QCompleter, QBrush, QColor, QPen
+    from python_qt_binding.QtSvg import QSvgGenerator
 
 import rosservice
 import rostopic

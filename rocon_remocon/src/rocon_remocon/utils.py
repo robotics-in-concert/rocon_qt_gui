@@ -12,7 +12,11 @@ import rocon_python_utils
 import rospkg
 import rocon_std_msgs.msg as rocon_std_msgs
 
-from python_qt_binding.QtGui import QLabel, QTextEdit, QSizePolicy, QFont, QCheckBox, QMessageBox
+try:
+    from python_qt_binding.QtGui import QFont
+    from python_qt_binding.QtWidgets import QLabel, QTextEdit, QSizePolicy, QCheckBox, QMessageBox
+except ImportError:
+    from python_qt_binding.QtGui import QLabel, QTextEdit, QSizePolicy, QFont, QMessageBox
 
 ##############################################################################
 # Methods

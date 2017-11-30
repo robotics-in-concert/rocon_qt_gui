@@ -13,9 +13,7 @@
   <author>Donguk Lee</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>pyqt4-dev-tools</build_depend> <!-- pyrcc4 -->
 
-  <run_depend>pyqt4-dev-tools</run_depend> <!-- pyrcc4 -->
   <run_depend>python-rospkg</run_depend>
   <run_depend>python_qt_binding</run_depend>
   <run_depend>qt_gui_py_common</run_depend>
