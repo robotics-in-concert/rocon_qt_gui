@@ -5,6 +5,7 @@ Changelog
 Forthcoming
 -----------
 * [rocon_remocon] allow roslaunch style arg substitutions for global executables
+* Qt5 fix
 
 0.9.1 (2016-10-12)
 ------------------
